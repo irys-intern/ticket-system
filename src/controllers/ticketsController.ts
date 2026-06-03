@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { AuthRequest } from '../middleware/authorization';
-import { asyncHandler } from '../middleware/errorHandler';
+import type { Request, Response } from 'express';
+import type { AuthRequest } from '../middleware/authorization.ts';
+import { asyncHandler } from '../middleware/errorHandler.ts';
 
 export const createTicket = asyncHandler(
   async (req: AuthRequest, res: Response): Promise<void> => {

@@ -13,7 +13,6 @@
 - Add protected route handling and role-based UI
 
 ## Backend
-- Initialize Node.js + Express + TypeScript app
 - Add Better Auth integration for auth and session management
 - Define user roles: user, agent, admin
 - Build REST API endpoints:
@@ -32,11 +31,7 @@
 
 ## Database
 - Design PostgreSQL schema with Drizzle ORM
-- Create tables:
-  - users
-  - tickets
-  - comments
-  - assignments
+- Create table(s):
   - audit_events
 - Enforce categories, priority, status enums
 - Add relationships and foreign keys
@@ -49,8 +44,6 @@
 - Configure environment variables
 
 ## Testing & Quality
-- Enable TypeScript strict mode
-- Configure ESLint and Prettier
 - Add automated tests for backend API and validation
 - Add frontend component and route tests
 - Avoid use of `any`

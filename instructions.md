@@ -62,21 +62,25 @@ Fields:
 * MEDIUM
 * HIGH
 * CRITICAL
+
+## Ticket Status Workflow
 Default status:
 * OPEN
-## Ticket Status Workflow
+
 Supported statuses:
 * OPEN
 * IN_PROGRESS
 * WAITING_FOR_RESPONSE
 * RESOLVED
 * CLOSED
+
 Valid transitions:
 * OPEN → IN_PROGRESS
 * IN_PROGRESS → WAITING_FOR_RESPONSE
 * WAITING_FOR_RESPONSE → IN_PROGRESS
 * IN_PROGRESS → RESOLVED
 * RESOLVED → CLOSED
+
 Enforce validation on the backend.
 ## Assignment
 Agents and admins must be able to:
@@ -94,6 +98,7 @@ Track the following events:
 * Ticket reassigned
 * Status changed
 * Comment added
+
 Display events on the ticket detail page.
 ## Search & Filtering
 Support:
@@ -105,6 +110,7 @@ Support:
 Search fields:
 * Ticket title
 * Ticket description
+
 Implement server-side pagination.
 # Documentation Requirements
 Repository must contain:

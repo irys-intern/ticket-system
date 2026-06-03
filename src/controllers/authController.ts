@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
+import type { Request, Response } from 'express';
+import { asyncHandler } from '../middleware/errorHandler.ts';
 
 export const register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   // TODO: Implement registration
