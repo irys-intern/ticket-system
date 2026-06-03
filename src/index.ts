@@ -1,5 +1,46 @@
-const greetUser = (username: string): string => {
-  return `Hello, ${username}! Your TypeScript app is running successfully.`;
-};
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import { env } from './config/env';
+import { initializeDatabase } from './db/index';
+import { errorHandler } from './middleware/errorHandler';
+import apiRouter from './routes/index';
 
-console.log(greetUser("Developer"));
+const app = express();
+
+// Middleware
+app.use(cors({ origin: env.frontend.url }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// API Routes
+app.use('/api', apiRouter);
+
+// 404 Handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+// Error handling (must be last)
+app.use(errorHandler);
+
+// Start server
+async function start(): Promise<void> {
+  try {
+    await initializeDatabase();
+    
+    app.listen(env.port, () => {
+      console.log(`✓ Server running on port ${env.port}`);
+      console.log(`✓ Environment: ${env.nodeEnv}`);
+    });
+  } catch (error) {
+    console.error('✗ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+start();
