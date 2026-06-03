@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import * as usersController from '../controllers/usersController';
-import { requireAuth, requireRole } from '../middleware/authorization';
-import { UserRole } from '../types/index';
+import * as usersController from '../controllers/usersController.ts';
+import { requireAuth, requireRole } from '../middleware/authorization.ts';
+import { UserRole } from '../types/index.ts';
 
 const usersRouter = Router();
 

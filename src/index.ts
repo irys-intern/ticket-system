@@ -1,9 +1,9 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import cors from 'cors';
-import { env } from './config/env';
-import { initializeDatabase } from './db/index';
-import { errorHandler } from './middleware/errorHandler';
-import apiRouter from './routes/index';
+import { env } from './config/env.ts';
+import { initializeDatabase } from './db/index.ts';
+import { errorHandler } from './middleware/errorHandler.ts';
+import apiRouter from './routes/index.ts';
 
 const app = express();
 

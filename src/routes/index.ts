@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import authRouter from './auth';
-import ticketsRouter from './tickets';
-import usersRouter from './users';
+import authRouter from './auth.ts';
+import ticketsRouter from './tickets.ts';
+import usersRouter from './users.ts';
 
 const apiRouter = Router();
 

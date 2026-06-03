@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import * as ticketsController from '../controllers/ticketsController';
-import { requireAuth, requireRole } from '../middleware/authorization';
-import { UserRole } from '../types/index';
+import * as ticketsController from '../controllers/ticketsController.ts';
+import { requireAuth, requireRole } from '../middleware/authorization.ts';
+import { UserRole } from '../types/index.ts';
 
 const ticketsRouter = Router();
 
