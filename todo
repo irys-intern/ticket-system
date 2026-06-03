@@ -1,0 +1,62 @@
+# Ticket System Project TODO
+
+## Frontend
+- Setup SvelteKit project with TypeScript and Tailwind CSS
+- Configure TanStack Query for data fetching
+- Integrate Zod for form validation
+- Build pages:
+  - Login / Register
+  - Dashboard by role
+  - Create ticket form
+  - Ticket detail page with comments and audit trail
+  - Search and filter UI
+- Add protected route handling and role-based UI
+
+## Backend
+- Initialize Node.js + Express + TypeScript app
+- Add Better Auth integration for auth and session management
+- Define user roles: user, agent, admin
+- Build REST API endpoints:
+  - /auth/register
+  - /auth/login
+  - /auth/logout
+  - /tickets
+  - /tickets/:id
+  - /tickets/:id/comments
+  - /tickets/:id/assign
+  - /tickets/:id/status
+  - /users
+- Implement authorization middleware for role-based access
+- Validate ticket status transitions
+- Add server-side pagination, search, and filtering
+
+## Database
+- Design PostgreSQL schema with Drizzle ORM
+- Create tables:
+  - users
+  - tickets
+  - comments
+  - assignments
+  - audit_events
+- Enforce categories, priority, status enums
+- Add relationships and foreign keys
+- Create Drizzle migrations
+
+## Cache / Infrastructure
+- Add Redis support for session caching or query caching
+- Create Dockerfile and docker-compose.yml
+- Include services: app, postgres, redis
+- Configure environment variables
+
+## Testing & Quality
+- Enable TypeScript strict mode
+- Configure ESLint and Prettier
+- Add automated tests for backend API and validation
+- Add frontend component and route tests
+- Avoid use of `any`
+
+## Documentation
+- Write README with setup, env vars, workflow, architecture, API docs
+- Add architecture diagram notes
+- Add database ERD notes
+- Document auth flow and deployment steps
