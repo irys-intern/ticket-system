@@ -11,7 +11,7 @@
 		"sourceMap": true,
 		"strict": true,
 		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
+		"moduleResolution": "NodeNext"
 	},
 	"include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "drizzle.config.ts"]
 }
