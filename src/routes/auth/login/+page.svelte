@@ -1,5 +1,7 @@
 <script lang="ts">
-  let name = $state('');
+  import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
+
   let email = $state('');
   let password = $state('');
   let submitting = $state(false);
@@ -13,27 +15,26 @@
     errors = [];
 
     try {
-      const response = await fetch('/auth/register', {
+      const response = await fetch('/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        errors = result.errors ?? [result.message ?? 'Unable to register'];
+        errors = result.errors ?? [result.message ?? 'Unable to log in'];
       } else {
-        successMessage = result.message ?? 'Registration completed successfully. Please <a href="/auth/login" class="underline">log in</a>.';
-        name = '';
+        successMessage = result.message ?? 'Login completed successfully. Please <a href="/" class="underline">return home</a>.';
         email = '';
         password = '';
-        location.href = '/auth/login'; // Redirect to login page after successful registration
+        await goto(resolve("/", { definitelyNotAnErrorSuppressor: "teehee"}), { replaceState: true });
       }
     } catch (error) {
-      errors = ['Unable to reach the registration service. Please try again later.'];
+      errors = ['Unable to reach the login service. Please try again later.'];
       console.error(error);
     } finally {
       submitting = false;
@@ -41,13 +42,14 @@
   }
 </script>
 
-<section class="register-page px-4 py-8 max-w-lg mx-auto">
-  <h1 class="text-3xl font-bold mb-4">Create an account</h1>
-  <p class="mb-6 text-slate-600">Sign up to submit tickets and manage requests.</p>
+<section class="login-page px-4 py-8 max-w-lg mx-auto">
+  <h1 class="text-3xl font-bold mb-4">Log in to your account</h1>
+  <p class="mb-6 text-slate-600">Sign in to submit tickets and manage requests.</p>
 
   {#if successMessage}
     <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
-      {successMessage}
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+      {@html successMessage}
     </div>
   {/if}
 
@@ -63,21 +65,10 @@
 
   <form onsubmit={handleSubmit} class="space-y-4">
     <div>
-      <label for="name" class="block text-sm font-medium mb-1">Name</label>
-      <input
-        id="name"
-        type="text"
-        bind:value={name}
-        required
-        class="w-full rounded border px-3 py-2"
-        placeholder="Your name"
-      />
-    </div>
-
-    <div>
       <label for="email" class="block text-sm font-medium mb-1">Email</label>
       <input
         id="email"
+        name="email"
         type="email"
         bind:value={email}
         required
@@ -90,6 +81,7 @@
       <label for="password" class="block text-sm font-medium mb-1">Password</label>
       <input
         id="password"
+        name="password"
         type="password"
         bind:value={password}
         required
@@ -104,7 +96,7 @@
       class="w-full rounded bg-slate-900 text-white py-2 disabled:opacity-60"
       disabled={submitting}
     >
-      {submitting ? 'Registering...' : 'Register'}
+      {submitting ? 'Logging in...' : 'Log in'}
     </button>
   </form>
 </section>

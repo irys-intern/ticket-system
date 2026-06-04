@@ -1,30 +1,26 @@
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from "express";
 
-export interface AppError extends Error {
+interface ErrorResponse extends Error {
   status?: number;
   details?: unknown;
 }
 
-export const errorHandler = (
-  err: AppError,
-  _req: Request,
+export function errorHandler(
+  err: ErrorResponse,
+  req: Request,
   res: Response,
-  _next: NextFunction
-): void => {
-  const status = err.status || 500;
-  const message = err.message || 'Internal Server Error';
-
-  console.error(`[${status}]`, message, err.details);
-
-  res.status(status).json({
+  next: NextFunction
+): void {
+  const status = err.status && Number.isInteger(err.status) ? err.status : 500;
+  const body = {
     success: false,
-    message,
-    ...(process.env.NODE_ENV === 'development' && { details: err.details }),
-  });
-};
-
-export const asyncHandler =
-  (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
-  (req: Request, res: Response, next: NextFunction): void => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    message: err.message || "Internal Server Error",
+    ...(err.details ? { details: err.details } : {}),
   };
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(status).json(body);
+}

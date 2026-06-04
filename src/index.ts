@@ -3,7 +3,6 @@ import cors from 'cors';
 import { env } from './config/env.ts';
 import { initializeDatabase } from './db/index.ts';
 import { errorHandler } from './middleware/errorHandler.ts';
-import apiRouter from './routes/index.ts';
 
 const app = express();
 
@@ -18,7 +17,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API Routes
-app.use('/api', apiRouter);
+// app.use('/api', apiRouter);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
