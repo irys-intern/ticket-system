@@ -1,11 +1,9 @@
 # Ticket System Project TODO
 
 ## Frontend
-- Setup SvelteKit project with TypeScript and Tailwind CSS
 - Configure TanStack Query for data fetching
 - Integrate Zod for form validation
 - Build pages:
-  - Login / Register
   - Dashboard by role
   - Create ticket form
   - Ticket detail page with comments and audit trail
@@ -13,12 +11,8 @@
 - Add protected route handling and role-based UI
 
 ## Backend
-- Add Better Auth integration for auth and session management
 - Define user roles: user, agent, admin
 - Build REST API endpoints:
-  - /auth/register
-  - /auth/login
-  - /auth/logout
   - /tickets
   - /tickets/:id
   - /tickets/:id/comments
@@ -38,9 +32,7 @@
 - Create Drizzle migrations
 
 ## Cache / Infrastructure
-- Add Redis support for session caching or query caching
 - Create Dockerfile and docker-compose.yml
-- Include services: app, postgres, redis
 - Configure environment variables
 
 ## Testing & Quality
