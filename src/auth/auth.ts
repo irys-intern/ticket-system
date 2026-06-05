@@ -9,8 +9,5 @@ export const auth = betterAuth({
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 3,
         updateAge: 60 * 60 * 24,
-    },
-    validate: async (sessionId: string) => {
-        // Implement your session validation logic here
     }
 });

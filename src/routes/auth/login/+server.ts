@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../../db/index.ts';
 import { usersTable } from '../../../db/schema.ts';
 import { loginSchema } from '../../../utils/validators.ts';
+import { sessionStore } from '../../../auth/redis-session.ts';
 
 let successfulLogin = false;
 
@@ -43,10 +44,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     if (!successfulLogin) {
       return json({ success: false, errors: ['Invalid email or password'] }, { status: 401 });
     }
+    const sessionToken = await sessionStore.createSession(user[0].id.toString(), user[0].email, user[0].role, 60 * 60 * 24);
     cookies.set('sessionId', sessionToken, {
         httpOnly: true,
-        sameSite: 'strict',
         secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
         maxAge: 60 * 60 * 24,
         path: '/',
     });
