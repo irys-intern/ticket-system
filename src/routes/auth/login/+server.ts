@@ -44,7 +44,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     if (!successfulLogin) {
       return json({ success: false, errors: ['Invalid email or password'] }, { status: 401 });
     }
-    const sessionToken = await sessionStore.createSession(user[0].id.toString(), user[0].email, user[0].role, 60 * 60 * 24);
+    const sessionToken = await sessionStore.createSession(user[0].id.toString(), user[0].email, user[0].name, user[0].role, 60 * 60 * 24);
     cookies.set('sessionId', sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
