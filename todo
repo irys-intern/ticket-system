@@ -24,9 +24,6 @@
 - Add server-side pagination, search, and filtering
 
 ## Database
-- Design PostgreSQL schema with Drizzle ORM
-- Create table(s):
-  - audit_events
 - Enforce categories, priority, status enums
 - Add relationships and foreign keys
 - Create Drizzle migrations

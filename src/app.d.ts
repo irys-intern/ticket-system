@@ -3,8 +3,8 @@
 declare global {
 	namespace App {
 		interface Locals {
-			session: { userId: string; email: string; role: string } | null;
-			user: { userId: string; email: string; role: string } | null;
+			session: { userId: string; email: string; name: string, role: string } | null;
+			user: { userId: string; email: string; name: string, role: string } | null;
 		}
 	}
 }

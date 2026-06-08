@@ -1,20 +1,22 @@
 import { client } from '../lib/redis.ts';
 
 export interface Session {
+    email: string;
     userId: string;
     createdAt: number;
-    email: string;
+    name: string;
     role: string;
 }
 
 export const sessionStore = {
-    async createSession(userId: string, email: string, role: string, maxAge: number): Promise<string> {
+    async createSession(userId: string, email: string, name: string, role: string, maxAge: number): Promise<string> {
         const sessionId = crypto.randomUUID();
         const sessionData: Session = {
             userId,
             createdAt: Date.now(),
-            email,
+            name,
             role,
+            email
         };
         await client.set(`session:${sessionId}`, JSON.stringify(sessionData));
         await client.expire(`session:${sessionId}`, maxAge);
