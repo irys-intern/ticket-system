@@ -1,6 +1,7 @@
 import { client } from '../lib/redis.ts';
 
 export interface Session {
+    email: string;
     userId: string;
     createdAt: number;
     name: string;
@@ -15,6 +16,7 @@ export const sessionStore = {
             createdAt: Date.now(),
             name,
             role,
+            email
         };
         await client.set(`session:${sessionId}`, JSON.stringify(sessionData));
         await client.expire(`session:${sessionId}`, maxAge);

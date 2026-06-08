@@ -1,15 +1,15 @@
 import { z } from 'zod';
-import { TicketStatus, TicketPriority, TicketCategory } from '../types/index';
+import { TicketStatus, TicketPriority, TicketCategory } from '../types/index.ts';
 
 // Auth schemas
 export const registerSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   name: z.string().min(1, 'Name is required'),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -17,7 +17,7 @@ export const loginSchema = z.object({
 export const createTicketSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required'),
-  priority: z.enum([TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH, TicketPriority.URGENT]),
+  priority: z.enum([TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH, TicketPriority.CRITICAL]),
   category: z.enum([
     TicketCategory.BUG,
     TicketCategory.FEATURE_REQUEST,
@@ -37,7 +37,7 @@ export const updateTicketSchema = createTicketSchema.partial().extend({
 });
 
 export const assignTicketSchema = z.object({
-  userId: z.string().uuid('Invalid user ID'),
+  userId: z.uuid('Invalid user ID'),
 });
 
 // Comment schemas
