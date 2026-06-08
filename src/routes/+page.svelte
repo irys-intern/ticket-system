@@ -1,4 +1,5 @@
 <script>
+    import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	let userRole = $state('guest');
 	let userName = $state('Guest User');
@@ -13,7 +14,11 @@
 
 <div class="dashboard">
 	<h1>Ticket System Dashboard</h1>
-    <h2>Welcome, {userName}!</h2>
+    <h2>Welcome, {userName}!
+        {#if userRole !== "guest"}
+        <a href={resolve('/auth/logout', {})}>Logout</a>
+        {/if}
+    </h2>
     <p>Your role: <b>{userRole}</b></p>
     <p class="text-sm text-gray-600 mb-6">This dashboard content is dynamically rendered based on your user role.</p>
 	{#if userRole === 'admin'}
@@ -78,28 +83,21 @@
 		font-family: Arial, sans-serif;
 	}
 
-	.role-selector {
+    a {
+        color: #007bff;
+        text-decoration: none;
+        margin-left: 15px;
+    }
+
+	h1 {
+		color: #111;
 		margin-bottom: 30px;
-		padding: 15px;
-		background: #f5f5f5;
-		border-radius: 8px;
+        font-size: 32px;
 	}
-
-	.role-selector label {
-		font-weight: bold;
-	}
-
-	.role-selector select {
-		margin-left: 10px;
-		padding: 8px;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		font-size: 14px;
-	}
-
 	h2 {
 		color: #333;
 		margin-bottom: 20px;
+        font-size: 24px;
 	}
 
 	.card {
