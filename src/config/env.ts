@@ -25,7 +25,11 @@ export const env = {
   },
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   superPassword: process.env.SUPERUSER_PASSWORD,
+=======
+  superPassword: process.env.SUPERUSER_PASSWORD || 'super-secret-password',
+>>>>>>> dashboards
 =======
   superPassword: process.env.SUPERUSER_PASSWORD || 'super-secret-password',
 >>>>>>> dashboards
