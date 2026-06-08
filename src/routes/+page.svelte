@@ -61,7 +61,7 @@
 			</div>
 			<div class="card">
 				<h3>Actions</h3>
-				<button>Create New Ticket</button>
+				<button onclick={() => window.location.href = '/create_ticket'}>Create New Ticket</button>
 				<button>View My Tickets</button>
 			</div>
 		</div>
