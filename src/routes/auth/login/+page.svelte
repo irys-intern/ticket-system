@@ -45,6 +45,7 @@
 <section class="login-page px-4 py-8 max-w-lg mx-auto">
   <h1 class="text-3xl font-bold mb-4">Log in to your account</h1>
   <p class="mb-6 text-slate-600">Sign in to submit tickets and manage requests.</p>
+  <p class="mb-6 text-slate-600">Alternatively, <a href={resolve("/auth/register", {})}>register</a>.</p>
 
   {#if successMessage}
     <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">

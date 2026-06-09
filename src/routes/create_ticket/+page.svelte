@@ -6,6 +6,7 @@ let priority = $state('low');
 let successMessage = $state('');
 let errors: string[] = $state([]);
 import { onMount } from 'svelte';
+import { resolve } from '$app/paths'
 onMount(() => {
     document.title = 'Create Ticket';
 });
@@ -32,6 +33,7 @@ async function handleSubmit(event: Event) {
     }
 };
 </script>
+<a href={resolve("/", {})}>Return home</a>
 <h1 class="text-2xl font-bold mb-4">Create Ticket</h1>
 {#if successMessage }
     <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">

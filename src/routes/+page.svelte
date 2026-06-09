@@ -45,7 +45,7 @@
 			</div>
 			<div class="card">
 				<h3>Admin Tools</h3>
-				<button>Manage Users</button>
+				<button onclick={() => location.href = "/admin/users"}>Manage Users</button>
 				<button>Manage Assignments</button>
 				<button>View Audits</button>
 			</div>
@@ -60,7 +60,7 @@
             </div>
             <div class="card">
                 <h3>Agent Tools</h3>
-                <button>Update Ticket Status</button>
+                <button>View Open Tickets</button>
                 <button>View Knowledge Base</button>
             </div>
         </div>
@@ -81,8 +81,9 @@
 	{:else}
 		<div class="guest-dashboard">
 			<div class="card">
-				<p>You have limited access. Please log in to create and manage tickets.</p>
+				<p>You have limited access. Please log in or register to create and manage tickets.</p>
 				<button onclick={() => window.location.href = '/auth/login'}>Login</button>
+				<button onclick={() => window.location.href = '/auth/register'}>Register</button>
 			</div>
 		</div>
 	{/if}

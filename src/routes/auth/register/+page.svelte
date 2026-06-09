@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
+
   let name = $state('');
   let email = $state('');
   let password = $state('');
@@ -44,6 +46,8 @@
 <section class="register-page px-4 py-8 max-w-lg mx-auto">
   <h1 class="text-3xl font-bold mb-4">Create an account</h1>
   <p class="mb-6 text-slate-600">Sign up to submit tickets and manage requests.</p>
+    <p class="mb-6 text-slate-600">Alternatively, <a href={resolve("/auth/login", {})}>log in</a>.</p>
+
 
   {#if successMessage}
     <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
