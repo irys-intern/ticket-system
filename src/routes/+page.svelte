@@ -46,8 +46,8 @@
 			<div class="card">
 				<h3>Admin Tools</h3>
 				<button>Manage Users</button>
-				<button>View Reports</button>
-				<button>System Settings</button>
+				<button>Manage Assignments</button>
+				<button>View Audits</button>
 			</div>
 		</div>
 	{:else if userRole === 'agent'}
