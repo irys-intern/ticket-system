@@ -56,7 +56,7 @@
             <div class="card">
                 <h3>Assigned Tickets</h3>
                 <p>You have {assignedAgentTickets.length} tickets assigned to you.</p>
-                <button>View My Tickets</button>
+                <button onclick={() => window.location.href = '/tickets'}>View My Tickets</button>
             </div>
             <div class="card">
                 <h3>Agent Tools</h3>
@@ -75,7 +75,7 @@
 			<div class="card">
 				<h3>Actions</h3>
 				<button onclick={() => window.location.href = '/create_ticket'}>Create New Ticket</button>
-				<button>View My Tickets</button>
+				<button onclick={() => window.location.href = '/tickets'}>View My Tickets</button>
 			</div>
 		</div>
 	{:else}
@@ -97,54 +97,6 @@
 	}
 
     a {
-        color: #007bff;
-        text-decoration: none;
         margin-left: 15px;
     }
-
-	h1 {
-		color: #111;
-		margin-bottom: 30px;
-        font-size: 32px;
-	}
-	h2 {
-		color: #333;
-		margin-bottom: 20px;
-        font-size: 24px;
-	}
-
-	.card {
-		background: white;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 15px;
-		margin-bottom: 15px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
-
-	.card h3 {
-		margin-top: 0;
-		color: #555;
-	}
-
-	.card p {
-		margin: 8px 0;
-		color: #666;
-	}
-
-	button {
-		background: #007bff;
-		color: white;
-		padding: 10px 15px;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		margin-right: 10px;
-		margin-bottom: 10px;
-		font-size: 14px;
-	}
-
-	button:hover {
-		background: #0056b3;
-	}
 </style>

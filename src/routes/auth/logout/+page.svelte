@@ -21,7 +21,7 @@
         errors = result.errors ?? [result.message ?? 'Unable to log out'];
       } else {
         successMessage = result.message ?? 'You have been logged out successfully. Please <a href="/" class="underline">return home</a>.';
-        await goto(resolve("/", { definitelyNotAnErrorSuppressor: "teehee"}), { replaceState: true });
+        await goto(resolve("/", {}), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the logout service. Please try again later.'];
@@ -30,7 +30,7 @@
   }
 
   function backToHome() {
-    goto(resolve("/", { definitelyNotAnErrorSuppressor: "teehee"}), { replaceState: true });
+    goto(resolve("/", {}), { replaceState: true });
   }
 </script>
 <section class="logout-page px-4 py-8 max-w-lg mx-auto">
@@ -56,6 +56,6 @@
 
   <form onsubmit={handleSubmit} class="space-x-4">
     <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-900 transition" style="background-color: #dc2626; hover:bg-color: #ea580c; cursor: pointer;">Log Out</button>
-    <button onclick={backToHome} class="px-4 py-2 bg-white text-black rounded" style="background-color: #cccccc; hover:bg-color: #aaaaaa; cursor: pointer;">Cancel</button>
+    <button type="button" onclick={backToHome} class="px-4 py-2 bg-white text-black rounded" style="background-color: #cccccc; hover:bg-color: #aaaaaa; cursor: pointer;">Cancel</button>
   </form>
 </section>

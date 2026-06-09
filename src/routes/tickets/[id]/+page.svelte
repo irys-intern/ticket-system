@@ -11,7 +11,7 @@
     onMount(async () => {
         try {
             const id = page.params.id;
-            const response = await fetch(`/ticket/${id}`);
+            const response = await fetch(`/tickets/${id}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch ticket');
             }
@@ -30,49 +30,6 @@
     
     getTicket();
 </script>
-<style>
-    a {
-        color: #007bff;
-        text-decoration: none;
-    }
-	h1 {
-		color: #111;
-		margin-bottom: 30px;
-        font-size: 32px;
-	}
-
-	.card {
-		background: white;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 15px;
-		margin-bottom: 15px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
-
-    button {
-		background: #007bff;
-		color: white;
-		padding: 10px 15px;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		margin-right: 10px;
-		margin-bottom: 10px;
-		font-size: 14px;
-	}
-
-    button.danger {
-        background: #ff1a1a;
-    }
-    button.danger:hover {
-        background: #af1212;
-    }
-
-	button:hover {
-		background: #0056b3;
-	}
-</style>
 <div class="card">
     <a href={resolve("/", {})}>Return home</a>
     {#if loading}
