@@ -3,13 +3,26 @@
 	import { onMount } from 'svelte';
 	let userRole = $state('guest');
 	let userName = $state('Guest User');
+	let openTicketsUser = $state('loading...');
+	let resolvedTicketsUser = $state('loading...');
+	let assignedAgentTickets = $state('loading...');
+	let adminTotal = $state('loading...');
+	let adminOpen = $state('loading...');
+	let adminUsers = $state('loading...');
 
 	onMount(async () => {
 		const response = await fetch('/');
 		const data = await response.json();
 		userRole = data.userRole || 'guest';
 		userName = data.userName || 'Guest User';
+		openTicketsUser = data.openTicketsUser || [];
+		resolvedTicketsUser = data.resolvedTicketsUser || [];
+		assignedAgentTickets = data.assignedAgentTickets || [];
+		adminTotal = data.adminTotal || 0;
+		adminOpen = data.adminOpen || 0;
+		adminUsers = data.adminUsers || 0;
 	});
+
 </script>
 
 <div class="dashboard">
@@ -26,9 +39,9 @@
 			<h2>Admin Dashboard</h2>
 			<div class="card">
 				<h3>System Statistics</h3>
-				<p>Total Tickets: 1,245</p>
-				<p>Open Tickets: 342</p>
-				<p>Users: 89</p>
+				<p>Total Tickets: {adminTotal}</p>
+				<p>Open Tickets (unassigned): {adminOpen}</p>
+				<p>Users: {adminUsers}</p>
 			</div>
 			<div class="card">
 				<h3>Admin Tools</h3>
@@ -42,7 +55,7 @@
             <h2>Agent Dashboard</h2>
             <div class="card">
                 <h3>Assigned Tickets</h3>
-                <p>You have 15 tickets assigned to you.</p>
+                <p>You have {assignedAgentTickets.length} tickets assigned to you.</p>
                 <button>View My Tickets</button>
             </div>
             <div class="card">
@@ -56,8 +69,8 @@
 			<h2>My Tickets</h2>
 			<div class="card">
 				<h3>Your Statistics</h3>
-				<p>Open Tickets: 3</p>
-				<p>Resolved Tickets: 12</p>
+				<p>Open Tickets: {openTicketsUser.length}</p>
+				<p>Resolved Tickets: {resolvedTicketsUser.length}</p>
 			</div>
 			<div class="card">
 				<h3>Actions</h3>
