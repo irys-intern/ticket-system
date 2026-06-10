@@ -4,7 +4,6 @@ import {
   varchar,
   text,
   timestamp,
-  jsonb,
   serial,
   integer,
 } from 'drizzle-orm/pg-core';
@@ -77,7 +76,6 @@ export const auditEventsTable = pgTable('audit_events', {
   ticketId: integer('ticket_id').references(() => ticketsTable.id).notNull(),
   userId: integer('user_id').references(() => usersTable.id).notNull(),
   action: varchar('action', { length: 255 }).notNull(),
-  changes: jsonb('changes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

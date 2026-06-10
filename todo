@@ -13,12 +13,9 @@
 ## Backend
 - Define user roles: user, agent, admin
 - Build REST API endpoints:
-  - /tickets
-  - /tickets/:id
   - /tickets/:id/comments
   - /tickets/:id/assign
   - /tickets/:id/status
-  - /users
 - Implement authorization middleware for role-based access
 - Validate ticket status transitions
 - Add server-side pagination, search, and filtering
@@ -26,7 +23,6 @@
 ## Database
 - Enforce categories, priority, status enums
 - Add relationships and foreign keys
-- Create Drizzle migrations
 
 ## Cache / Infrastructure
 - Create Dockerfile and docker-compose.yml
