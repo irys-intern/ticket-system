@@ -43,6 +43,7 @@
 <div class="p-6 bg-gray-50 min-h-screen">
 	<div class="max-w-6xl mx-auto">
 		<div class="items-center justify-between mb-6">
+            <a href={resolve("/", {})}>Return home</a>
 			<h1 class="text-2xl font-semibold text-gray-800">Audit Log</h1>
 			<div>
 				<input
