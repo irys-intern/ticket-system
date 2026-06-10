@@ -1,7 +1,6 @@
-import { json, type RequestHandler } from "@sveltejs/kit";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 import { db } from "../../db/index.ts";
 import { ticketsTable } from "../../db/schema.ts";
-import { error } from "node:console";
 import { eq } from "drizzle-orm";
 
 export const GET: RequestHandler = async ({locals}) => {

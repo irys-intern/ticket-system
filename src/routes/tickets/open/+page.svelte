@@ -2,19 +2,19 @@
 
 <script lang="ts">
     import { onMount } from "svelte";
-    import type { Ticket } from "../../types/index.ts";
+    import type { Ticket } from "../../../types/index.ts";
   import { resolve } from "$app/paths";
 
-    const statuses = ['all', 'open', 'in-progress', 'closed'];
-    let statusFilter = $state('all');
+    const severities = ['all', 'low', 'medium', 'high', 'critical'];
+    let severityFilter = $state('all');
     let errors: string[] = $state([]);
     let tickets: Ticket[] = $state([]);
-    let filteredTickets: Ticket[] = $derived(statusFilter === 'all'
+    let filteredTickets: Ticket[] = $derived(severityFilter === 'all'
                 ? tickets
-                : tickets.filter((ticket: Ticket) => ticket.status === statusFilter));
+                : tickets.filter((ticket: Ticket) => ticket.priority === severityFilter));
 
     onMount(async () => {
-        const response = await fetch('/tickets');
+        const response = await fetch('/tickets/open');
         const result = await response.json();
 
         if (!response.ok) {
@@ -50,13 +50,13 @@
 <section>
     <a href={resolve("/", {})}>Return home</a>
     <div class="card">
-        <h1>My Tickets</h1>
+        <h1>Open Tickets</h1>
 
         <label>
-            Show by status
-            <select bind:value={statusFilter}>
-                {#each statuses as status (status)}
-                    <option value={status}>{status}</option>
+            Show by severity
+            <select bind:value={severityFilter}>
+                {#each severities as severity (severity)}
+                    <option value={severity}>{severity}</option>
                 {/each}
             </select>
         </label>

@@ -31,14 +31,19 @@
     getTicket();
 </script>
 <div class="card">
-    <a href={resolve("/", {})}>Return home</a>
+    {#if user.role === 'agent'||user.role === 'admin'}
+        <a href={resolve('/tickets/open',{})}>Open tickets</a><br>
+    {/if}
+    <a href={resolve('/', {})}>Return home</a>
     {#if loading}
         <p>Loading...</p>
     {:else if error}
         <p style="color: red;">Error: {error}</p>
     {:else if ticket}
         <h1>Ticket #{ticket.id}</h1>
+        <p><strong>Category:</strong> {ticket.category.replace('_', ' ')}</p>
         <p><strong>Title:</strong> {ticket.title}</p>
+        <p><strong>Priority:</strong> {ticket.priority}</p>
         <p><strong>Description:</strong> {ticket.description}</p>
         <p><strong>Status:</strong> {ticket.status}</p><br>
         {#if user.role === 'agent'}
@@ -53,7 +58,7 @@
         {:else if user.role === 'user'}
             <button>Write comment</button>
             <button class="danger">Close ticket</button>
-            {:else if user.role === 'admin'}
+        {:else if user.role === 'admin'}
             <button>Assign agent</button>
             <button class="danger">Close ticket</button>
         {/if}

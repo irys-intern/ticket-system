@@ -27,7 +27,7 @@ async function handleSubmit(event: Event) {
         description = '';
         category = 'bug';
         priority = 'low';
-        location.href = `/ticket/${result.ticketId}`
+        location.href = `/tickets/${result.ticketId}`
     } else {
         errors = result.errors ?? [ result.message ?? 'Failed to create ticket. Please try again.'];
     }

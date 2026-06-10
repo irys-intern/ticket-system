@@ -46,7 +46,7 @@
 			<div class="card">
 				<h3>Admin Tools</h3>
 				<button onclick={() => location.href = "/admin/users"}>Manage Users</button>
-				<button>Manage Assignments</button>
+				<button onclick={() => window.location.href = '/tickets/open'}>Manage Assignments</button>
 				<button>View Audits</button>
 			</div>
 		</div>
@@ -60,7 +60,7 @@
             </div>
             <div class="card">
                 <h3>Agent Tools</h3>
-                <button>View Open Tickets</button>
+                <button onclick={() => window.location.href = '/tickets/open'}>View Open Tickets</button>
                 <button>View Knowledge Base</button>
             </div>
         </div>
