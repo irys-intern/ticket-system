@@ -30,6 +30,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             updatedAt: new Date(),
             category: validatedData.category
         }).returning();
+        await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "ticket created", ticketId: newTicket.id})
+        })
         return json({ success: true, ticketId: newTicket.id }, { status: 201 });
     } catch (error) {
         console.error('Error creating ticket:', error);
