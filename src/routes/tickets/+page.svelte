@@ -3,9 +3,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import type { Ticket } from "../../types/index.ts";
-  import { resolve } from "$app/paths";
+    import { resolve } from "$app/paths";
 
-    const statuses = ['all', 'open', 'in-progress', 'closed'];
+    const statuses = ['all', 'open', 'in_progress', 'closed'];
     let statusFilter = $state('all');
     let errors: string[] = $state([]);
     let tickets: Ticket[] = $state([]);

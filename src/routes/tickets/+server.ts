@@ -19,6 +19,10 @@ export const GET: RequestHandler = async ({locals}) => {
                                .from(ticketsTable)
                                .where(eq(ticketsTable.assignedTo, parseInt(userId)))
         return json({ tickets: dbHits })
+    } else if (userRole === 'admin') {
+        const dbHits = await db.select()
+                               .from(ticketsTable)
+        return json({ tickets: dbHits })
     } else {
         throw error(401, "Unauthenticated");
     }
