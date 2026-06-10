@@ -25,25 +25,25 @@
          
     })
     async function claimTicket() {
-        const fet = await fetch(window.location.href, {
+        await fetch(window.location.href, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'claim'})
         });
-        console.log(await fet.json())
+        
         window.location.reload()
     }
     async function forfeitTicket() {
-        const fet = await fetch(window.location.href, {
+        await fetch(window.location.href, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'forfeit'})
         });
-        console.log(await fet.json())
+        
         window.location.reload()
     }
 </script>

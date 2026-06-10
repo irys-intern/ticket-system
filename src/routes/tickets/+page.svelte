@@ -23,7 +23,6 @@
         }
 
         tickets = result.tickets ?? [];
-        console.log(result.tickets)
     });
 
     ;
