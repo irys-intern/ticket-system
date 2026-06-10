@@ -24,11 +24,28 @@
         }
          
     })
-    async function getTicket() {
-        
+    async function claimTicket() {
+        const fet = await fetch(window.location.href, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'claim'})
+        });
+        console.log(await fet.json())
+        window.location.reload()
     }
-    
-    getTicket();
+    async function forfeitTicket() {
+        const fet = await fetch(window.location.href, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'forfeit'})
+        });
+        console.log(await fet.json())
+        window.location.reload()
+    }
 </script>
 <div class="card">
     {#if user.role === 'agent'||user.role === 'admin'}
@@ -47,13 +64,13 @@
         <p><strong>Description:</strong> {ticket.description}</p>
         <p><strong>Status:</strong> {ticket.status}</p><br>
         {#if user.role === 'agent'}
-            {#if user.userId === ticket.assignedTo}
+            {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
                 <button>Update Status</button>
                 <button>Write Comment</button>
-                <button class="danger">Forfeit ticket</button>
+                <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
                 <button class="danger">Close ticket</button>
             {:else if ticket.assignedTo === '' || !ticket.assignedTo}
-                <button>Claim ticket</button>
+                <button onclick={claimTicket}>Claim ticket</button>
             {/if}
         {:else if user.role === 'user'}
             <button>Write comment</button>
