@@ -8,6 +8,7 @@
     let ticket: Ticket | null = $state(null);
     let loading = $state(true);
     let error: string | null = $state(null);
+    let assignmentStringState = $state("")
     onMount(async () => {
         try {
             const id = page.params.id;
@@ -17,6 +18,7 @@
             }
             
             ticket = await response.json();
+            if (user.role === 'admin') assignmentStringState = await assignmentString(ticket?.assignedTo)
         } catch (err) {
             error = err instanceof Error ? err.message : 'An error occurred';
         } finally {
@@ -46,6 +48,15 @@
         
         window.location.reload()
     }
+    async function assignmentString(userId: string|undefined) {
+        if (!userId) {
+            console.log("No userId")
+            return ""
+        }
+        const res = await fetch(`/admin/users/${userId}`);
+        const resp = await res.json();
+        return `${resp.user.name} (${userId})`
+    }
 </script>
 <div class="card">
     {#if user.role === 'agent'||user.role === 'admin'}
@@ -64,18 +75,21 @@
         <p><strong>Description:</strong> {ticket.description}</p>
         <p><strong>Status:</strong> {ticket.status}</p><br>
         {#if user.role === 'agent'}
-            {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
-                <button>Update Status</button>
-                <button>Write Comment</button>
-                <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
-                <button class="danger">Close ticket</button>
-            {:else if ticket.assignedTo === '' || !ticket.assignedTo}
-                <button onclick={claimTicket}>Claim ticket</button>
-            {/if}
+        {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
+        <button>Update Status</button>
+        <button>Write Comment</button>
+        <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
+        <button class="danger">Close ticket</button>
+        {:else if ticket.assignedTo === '' || !ticket.assignedTo}
+        <button onclick={claimTicket}>Claim ticket</button>
+        {/if}
         {:else if user.role === 'user'}
-            <button>Write comment</button>
-            <button class="danger">Close ticket</button>
+        <button>Write comment</button>
+        <button class="danger">Close ticket</button>
         {:else if user.role === 'admin'}
+            {#if ticket.assignedTo}
+                <p><strong>Assigned to:</strong> {assignmentStringState}</p>
+            {/if}
             <button>Assign agent</button>
             <button class="danger">Close ticket</button>
         {/if}
