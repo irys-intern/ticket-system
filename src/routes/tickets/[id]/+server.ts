@@ -79,6 +79,13 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             },
             body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "status changed", ticketId: params.id})
+            })
             return json({success: true})
         }
 
