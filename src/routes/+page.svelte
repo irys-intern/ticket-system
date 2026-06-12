@@ -47,7 +47,7 @@
 				<h3>Admin Tools</h3>
 				<button onclick={() => location.href = "/admin/users"}>Manage Users</button>
 				<button onclick={() => window.location.href = '/tickets'}>Manage Assignments</button>
-				<button>View Audits</button>
+				<button onclick={() => location.href="/admin/audit"}>View Audits</button>
 			</div>
 		</div>
 	{:else if userRole === 'agent'}
