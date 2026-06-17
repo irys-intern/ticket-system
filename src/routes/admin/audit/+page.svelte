@@ -6,7 +6,7 @@
 	let query = $state('');
 	let pageState = $state(1);
 	const perPage = 10;
-    let filtered;
+    let filtered: AuditEvent[];
     let total = $state(0);
     let pages = $state(0);
     let page = $state(0);
@@ -26,11 +26,21 @@
         pageItems = filtered.slice((page - 1) * perPage, page * perPage);
     })
     function getUserString(userId: string) {
-        const user = users.find((u) => u.id === userId);
+		const user = users.find((u) => u.id === userId);
         return user ? `${user.name} (${user.id})` : `User ${userId}`;
     }
-    function prev() { if (page > 1) pageState -= 1; }
-    function next() { if (page < pages) pageState += 1; }
+	
+    function prev() {
+		if (page > 1) pageState -= 1;
+		page = Math.min(Math.max(1, pageState), pages);
+		pageItems = filtered.slice((page - 1) * perPage, page * perPage);
+	}
+    function next() {
+		if (page < pages) pageState += 1;
+		page = Math.min(Math.max(1, pageState), pages);
+		pageItems = filtered.slice((page - 1) * perPage, page * perPage);
+	}
+	
 
 
 </script>

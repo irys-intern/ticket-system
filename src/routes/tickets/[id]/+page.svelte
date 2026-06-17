@@ -61,6 +61,7 @@
 
     async function assignSelectedAgent() {
         if (!ticket || !selectedAgentId) return;
+        if (ticket.assignedTo === selectedAgentId) return;
         if (parseInt(selectedAgentId) === -1) {
             console.log(
                 (await fetch(window.location.href, {
@@ -182,24 +183,29 @@
         <p><strong>Priority:</strong> {ticket.priority}</p>
         <p><strong>Description:</strong> {ticket.description}</p>
         <p><strong>Status:</strong> {ticket.status}</p><br>
-        {#if user.role === 'agent' && !(ticket.status==='closed')}
+        {#if user.role === 'agent'}
         {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
+        <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
         <button>Update Status</button>
-        <button>Write Comment</button>
         <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
         <button class="danger" onclick={closeTicketAgent}>Close ticket</button>
         {:else if ticket.assignedTo === '' || !ticket.assignedTo}
         <button onclick={claimTicket}>Claim ticket</button>
         {/if}
-        {:else if user.role === 'user' && !(ticket.status === 'closed')}
-        <button>Write comment</button>
+        {:else if user.role === 'user'}
+        <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
+        {#if !(ticket.status === 'closed')}
         <button class="danger" onclick={closeTicketUser}>Close ticket</button>
-        {:else if user.role === 'admin' && !(ticket.status==='closed')}
-            {#if ticket.assignedTo}
-                <p><strong>Assigned to:</strong> {assignmentStringState}</p>
+        {/if}
+        {:else if user.role === 'admin'}
+        {#if ticket.assignedTo}
+        <p><strong>Assigned to:</strong> {assignmentStringState}</p>
+        {/if}
+        <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
+        {#if !(ticket.status === 'closed')}
+                <button onclick={openAssignModal}>Assign agent</button>
+                <button class="danger" onclick={closeTicketAdmin}>Close ticket</button>
             {/if}
-            <button onclick={openAssignModal}>Assign agent</button>
-            <button class="danger" onclick={closeTicketAdmin}>Close ticket</button>
             {#if showAssignModal}
                 <div class="modal">
                     <div class="modal-content">
