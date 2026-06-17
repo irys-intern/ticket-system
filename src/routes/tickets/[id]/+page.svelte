@@ -96,6 +96,37 @@
         window.location.reload()
     }
 
+    async function updateStatus() {
+        if (!ticket) return;
+        const statuses = ["open", "in_progress", "waiting_for_response", "resolved"]
+
+        const newStatus = statuses[statuses.indexOf(ticket.status)+1]
+        if (!newStatus || newStatus.trim() === "") return;
+        if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
+        // const res = 
+        await fetch(window.location.href, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({agent: user.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim()})
+        });
+        // console.log(await (res.json()))
+        window.location.reload();
+    }
+    async function updateStatusBack() {
+        if (!ticket) return;
+        if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
+        await fetch(window.location.href, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({agent: user.userId, ticketId: ticket.id, action: 'update_status', status: "in_progress"})
+        });
+        window.location.reload();
+    }
+
     async function forfeitTicket() {
         await fetch(window.location.href, {
             method: "POST",
@@ -135,12 +166,12 @@
             await fetch(window.location.href+"/comments", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, comment: reason})
+                body: JSON.stringify({ticketId: ticket?.id, content: reason})
             })
             const res = await fetch(window.location.href, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, action: 'close'})
+                body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'close'})
             })
             if (res.ok) {
                 window.location.reload()
@@ -154,7 +185,7 @@
             await fetch(window.location.href+"/comments", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, comment: reason})
+                body: JSON.stringify({ticketId: ticket?.id, content: reason})
             })
             const res = await fetch(window.location.href, {
                 method: "POST",
@@ -183,26 +214,38 @@
         <p><strong>Priority:</strong> {ticket.priority}</p>
         <p><strong>Description:</strong> {ticket.description}</p>
         <p><strong>Status:</strong> {ticket.status}</p><br>
+
+        <!--AGENT-->
         {#if user.role === 'agent'}
         {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
         <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
-        <button>Update Status</button>
-        <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
+
+        {#if ticket.status !== 'resolved'}
+            <button onclick={updateStatus}>Update Status</button>
+            {#if ticket.status.toString() === 'waiting_for_response'}
+            <button onclick={updateStatusBack}>Mark as "in progress"</button>
+            {/if}
+            <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
+            {/if}
         <button class="danger" onclick={closeTicketAgent}>Close ticket</button>
-        {:else if ticket.assignedTo === '' || !ticket.assignedTo}
+        {:else if (ticket.assignedTo === '' || !ticket.assignedTo) && !(ticket.status === 'closed')}
         <button onclick={claimTicket}>Claim ticket</button>
         {/if}
+
+        <!--USER-->
         {:else if user.role === 'user'}
         <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
         {#if !(ticket.status === 'closed')}
         <button class="danger" onclick={closeTicketUser}>Close ticket</button>
         {/if}
+
+        <!--ADMIN-->
         {:else if user.role === 'admin'}
         {#if ticket.assignedTo}
         <p><strong>Assigned to:</strong> {assignmentStringState}</p>
         {/if}
         <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
-        {#if !(ticket.status === 'closed')}
+            {#if !(ticket.status === 'closed')}
                 <button onclick={openAssignModal}>Assign agent</button>
                 <button class="danger" onclick={closeTicketAdmin}>Close ticket</button>
             {/if}

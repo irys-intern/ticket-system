@@ -14,9 +14,9 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'agent', 'admin']);
 export const ticketStatusEnum = pgEnum('ticket_status', [
   'open',
   'in_progress',
+  'waiting_for_response',
   'resolved',
   'closed',
-  'reopened',
 ]);
 export const ticketPriorityEnum = pgEnum('ticket_priority', [
   'low',

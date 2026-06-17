@@ -12,8 +12,6 @@
 
 ## Backend
 - Define user roles: user, agent, admin
-- Build REST API endpoints:
-  - /tickets/:id/comments
 - Validate ticket status transitions
 - Add server-side pagination, search, and filtering
 

@@ -32,7 +32,7 @@ export const updateTicketSchema = createTicketSchema.partial().extend({
     TicketStatus.IN_PROGRESS,
     TicketStatus.RESOLVED,
     TicketStatus.CLOSED,
-    TicketStatus.REOPENED,
+    TicketStatus.WAITING_FOR_RESPONSE,
   ]).optional(),
 });
 

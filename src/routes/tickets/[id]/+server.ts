@@ -104,6 +104,18 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             })
             await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})
+        } else if (data.action === 'update_status') {
+            const statussy = ["open", "in_progress", "waiting_for_response", "resolved"]
+            if (statussy.indexOf(data.status)===-1) return json({ok:false, success:false})
+                await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "status changed", ticketId: params.id})
+            });
+            await db.update(ticketsTable).set({status: data.status}).where(eq(ticketsTable.id, parseInt(params.id)));
+            return json({ok: true, success: true})
         }
 
         return json({success: false, body: 'Invalid action'})
