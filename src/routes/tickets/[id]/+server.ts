@@ -87,6 +87,23 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             return json({success: true})
+        } else if (data.action === 'close') {
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "status changed", ticketId: params.id})
+            })
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+            })
+            await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            return json({ok: true, success: true})
         }
 
         return json({success: false, body: 'Invalid action'})
@@ -125,9 +142,47 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             return json({success: true})
+        } else if (data.action === 'close') {
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "status changed", ticketId: params.id})
+            })
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+            })
+            await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            return json({ok: true, success: true})
         }
 
         return json({success: false, body: 'Invalid action'})
+    } else if (user.role === 'user') {
+        if (data.action === 'close') {
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "status changed", ticketId: params.id})
+            })
+            await fetch('/admin/audit', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+            })
+            await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            return json({ok: true, success: true})
+        } else {
+            return json({ok:false, success:false})
+        }
     } else {
         return json({success: false, body: `user.role is set to ${user.role}`})
     }

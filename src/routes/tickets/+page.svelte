@@ -6,7 +6,7 @@
     import { resolve } from "$app/paths";
 
     const statuses = ['all', 'open', 'in_progress', 'closed'];
-    let statusFilter = $state('all');
+    let statusFilter = $state('open');
     let errors: string[] = $state([]);
     let tickets: Ticket[] = $state([]);
     let filteredTickets: Ticket[] = $derived(statusFilter === 'all'

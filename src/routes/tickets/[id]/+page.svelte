@@ -115,6 +115,56 @@
         const resp = await res.json();
         return `${resp.user.name} (${userId})`
     }
+    async function closeTicketUser() {
+        if (confirm("Are you sure you want to close this ticket?")) {
+            const res = await fetch(window.location.href, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticketId: ticket?.id, action: 'close'})
+            })
+            if (res.ok) {
+                window.location.reload()
+            }
+        }
+    }
+    async function closeTicketAgent() {
+        if (confirm("Are you sure you want to close this ticket?")) {
+            const reason = prompt("Please provide a closing message.", )
+            if (!reason || reason==='') return
+            await fetch(window.location.href+"/comments", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticketId: ticket?.id, comment: reason})
+            })
+            const res = await fetch(window.location.href, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticketId: ticket?.id, action: 'close'})
+            })
+            if (res.ok) {
+                window.location.reload()
+            }
+        }
+    }
+    async function closeTicketAdmin() {
+        if (confirm("Are you sure you want to close this ticket?")) {
+            const reason = prompt("Please provide a closing message.", )
+            if (!reason || reason==='') return
+            await fetch(window.location.href+"/comments", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticketId: ticket?.id, comment: reason})
+            })
+            const res = await fetch(window.location.href, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticketId: ticket?.id, action: 'close'})
+            })
+            if (res.ok) {
+                window.location.reload()
+            }
+        }
+    }
 </script>
 <div class="card">
     {#if user.role === 'agent'||user.role === 'admin'}
@@ -132,24 +182,24 @@
         <p><strong>Priority:</strong> {ticket.priority}</p>
         <p><strong>Description:</strong> {ticket.description}</p>
         <p><strong>Status:</strong> {ticket.status}</p><br>
-        {#if user.role === 'agent'}
+        {#if user.role === 'agent' && !(ticket.status==='closed')}
         {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
         <button>Update Status</button>
         <button>Write Comment</button>
         <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
-        <button class="danger">Close ticket</button>
+        <button class="danger" onclick={closeTicketAgent}>Close ticket</button>
         {:else if ticket.assignedTo === '' || !ticket.assignedTo}
         <button onclick={claimTicket}>Claim ticket</button>
         {/if}
-        {:else if user.role === 'user'}
+        {:else if user.role === 'user' && !(ticket.status === 'closed')}
         <button>Write comment</button>
-        <button class="danger">Close ticket</button>
-        {:else if user.role === 'admin'}
+        <button class="danger" onclick={closeTicketUser}>Close ticket</button>
+        {:else if user.role === 'admin' && !(ticket.status==='closed')}
             {#if ticket.assignedTo}
                 <p><strong>Assigned to:</strong> {assignmentStringState}</p>
             {/if}
             <button onclick={openAssignModal}>Assign agent</button>
-            <button class="danger">Close ticket</button>
+            <button class="danger" onclick={closeTicketAdmin}>Close ticket</button>
             {#if showAssignModal}
                 <div class="modal">
                     <div class="modal-content">

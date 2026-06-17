@@ -14,9 +14,6 @@
 - Define user roles: user, agent, admin
 - Build REST API endpoints:
   - /tickets/:id/comments
-  - /tickets/:id/assign
-  - /tickets/:id/status
-- Implement authorization middleware for role-based access
 - Validate ticket status transitions
 - Add server-side pagination, search, and filtering
 
