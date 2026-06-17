@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({locals}) => {
         const dbHits = await db.select()
                                .from(ticketsTable)
                                .where(eq(ticketsTable.assignedTo, parseInt(userId)))
-        return json({ tickets: dbHits })
+        return json({ tickets: dbHits, userRole})
     } else if (userRole === 'admin') {
         const dbHits = await db.select()
                                .from(ticketsTable)

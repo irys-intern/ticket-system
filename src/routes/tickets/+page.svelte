@@ -23,6 +23,9 @@
         }
 
         tickets = result.tickets ?? [];
+        if (result.userRole === 'agent') {
+            statusFilter = 'in_progress'
+        }
     });
 
     ;
