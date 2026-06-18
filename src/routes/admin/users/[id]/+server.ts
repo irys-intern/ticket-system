@@ -5,13 +5,21 @@ import { type RequestHandler, error, json } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({locals, params }) => {
     const user = locals.user;
-    if (!user || !user.role || !user.userId || !(user.role === 'admin')) {
+    if (!user || !user.role || !user.userId || user.role==='guest') {
         throw error(403, "Forbidden")
     }
-    const userHit = await db.select()
-                            .from(usersTable)
-                            .where(eq(usersTable.id, parseInt(params.id)))
-                            .limit(1)
+    let userHit;
+    if (user.role!=='admin') {
+        userHit = await db.select({name: usersTable.name})
+                          .from(usersTable)
+                          .where(eq(usersTable.id, parseInt(params.id)))
+                          .limit(1)
+    } else {
+        userHit = await db.select()
+                          .from(usersTable)
+                          .where(eq(usersTable.id, parseInt(params.id)))
+                          .limit(1)
+    }
     if (userHit.length === 0) {
         throw error(404, "Not found")
     }

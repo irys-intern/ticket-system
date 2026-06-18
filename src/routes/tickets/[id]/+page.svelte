@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from '$app/state';
     import { resolve } from '$app/paths';
-    import type { Ticket } from '../../../types/index.ts';
+    import type { AuditEvent, Ticket } from '../../../types/index.ts';
     import { onMount } from 'svelte';
     const {data} = $props();
     let user = $derived(data.user);
@@ -12,6 +12,7 @@
     let agents: Array<{id:string; name:string; role:string}> = $state([]);
     let selectedAgentId = $state("");
     let showAssignModal = $state(false);
+    let auditTrail: AuditEvent[] = $state([])
 
     onMount(async () => {
         try {
@@ -21,6 +22,28 @@
                 throw new Error('Failed to fetch ticket');
             }
             ticket = await response.json();
+            const audits = await fetch('/admin/audit', {
+                method: "GET",
+                headers: {"X-Ticket-Id": id}
+            })
+            if (!audits.ok) {
+                throw new Error('Failed to fetch audits');
+            }
+            auditTrail = (await audits.json()).audits || []
+            // Resolve user display names for audit entries to avoid using await in template
+            for (const entry of auditTrail) {
+                if (entry && entry.userId) {
+                    try {
+                        const r = await fetch(`/admin/users/${entry.userId}`);
+                        if (r.ok) {
+                            const j = await r.json();
+                            entry.userDisplay = `${j.user?.name ?? j.user?.username ?? 'User'} (${entry.userId})`;
+                        }
+                    } catch (e) {
+                        console.log(e);
+                    }
+                }
+            }
             if (user.role === 'admin') {
                 assignmentStringState = await assignmentString(ticket?.assignedTo);
                 await loadAgents();
@@ -271,6 +294,31 @@
                     </div>
                 </div>
             {/if}
+        {/if}
+        {#if auditTrail.length > 0}
+        <details>
+            <summary>Audit trail</summary>
+            <ul class="audit-trail">
+                {#each auditTrail as audit, i (audit.id ?? i)}
+                    <li class="audit-entry">
+                        {#if typeof audit === 'object' && audit !== null}
+                            <p><strong>{audit.createdAt ?? 'Unknown time'}</strong></p>
+                            <p>{audit.action ?? 'Audit entry'}</p>
+                            {#if audit.userId}
+                                <p>User: {audit.userDisplay ?? audit.userId}</p>
+                            {/if}
+                            {#if !audit.action}
+                                <pre>{JSON.stringify(audit, null, 2)}</pre>
+                            {/if}
+                        {:else}
+                            <pre>{JSON.stringify(audit)}</pre>
+                        {/if}
+                    </li>
+                {/each}
+            </ul>
+        </details>
+        {:else}
+            <p>No audit history available.</p>
         {/if}
     {:else}
         <p>Ticket not found</p>

@@ -1,32 +1,7 @@
 # Ticket System Project TODO
 
-## Frontend
-- Configure TanStack Query for data fetching
-- Integrate Zod for form validation
-- Build pages:
-  - Dashboard by role
-  - Create ticket form
-  - Ticket detail page with comments and audit trail
-  - Search and filter UI
-- Add protected route handling and role-based UI
-
-## Backend
-- Define user roles: user, agent, admin
-- Validate ticket status transitions
-- Add server-side pagination, search, and filtering
-
-## Database
-- Enforce categories, priority, status enums
-- Add relationships and foreign keys
-
 ## Cache / Infrastructure
 - Create Dockerfile and docker-compose.yml
-- Configure environment variables
-
-## Testing & Quality
-- Add automated tests for backend API and validation
-- Add frontend component and route tests
-- Avoid use of `any`
 
 ## Documentation
 - Write README with setup, env vars, workflow, architecture, API docs
