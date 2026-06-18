@@ -20,7 +20,7 @@
 		try {
 			loading = true;
 			const response = await fetch(location.href);
-			if (!response.ok) throw new Error('Failed to fetch comments');
+			if (!response.ok) throw new Error('Failed to fetch comments. Please reload. If this error persists, log out and log back in.');
 			const data = await response.json();
 			comments = data.comments || [];
 			error = null;
@@ -43,7 +43,7 @@
 				body: JSON.stringify({ content: newComment })
 			});
 
-			if (!response.ok) throw new Error('Failed to post comment');
+			if (!response.ok) throw new Error('Failed to post comment. Please reload. If this error persists, ensure the ticket is not closed and you are logged in.');
 			
 			newComment = '';
 			await fetchComments();

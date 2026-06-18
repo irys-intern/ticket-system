@@ -5,8 +5,8 @@
     import type { Ticket } from "../../types/index.ts";
     import { resolve } from "$app/paths";
 
-    const statuses = ['all', 'open', 'in_progress', 'closed'];
-    let statusFilter = $state('open');
+    const statuses = ['all', 'open', 'in_progress', 'waiting_for_response', 'closed'];
+    let statusFilter = $state('all');
     let errors: string[] = $state([]);
     let tickets: Ticket[] = $state([]);
     let filteredTickets: Ticket[] = $derived(statusFilter === 'all'

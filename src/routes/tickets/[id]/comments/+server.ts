@@ -52,6 +52,7 @@ export const POST: RequestHandler = async ({ locals, params, request, fetch }) =
 
     const ticket = await getTicketForUser(ticketId, parseInt(user.userId), user.role);
     if (!ticket) throw error(404, "Ticket not found");
+    if (ticket.status==='closed') throw error(409, "Ticket closed, no comments allowed.")
     if (user.role !== 'admin' && user.userId !== ticket.assignedTo?.toString() && user.userId !== ticket.createdBy.toString()) {
         throw error(403, "Forbidden");
     }
