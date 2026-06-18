@@ -2,9 +2,3 @@
 
 ## Cache / Infrastructure
 - Create Dockerfile and docker-compose.yml
-
-## Documentation
-- Write README with setup, env vars, workflow, architecture, API docs
-- Add architecture diagram notes
-- Add database ERD notes
-- Document auth flow and deployment steps
