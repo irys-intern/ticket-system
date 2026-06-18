@@ -61,7 +61,6 @@
             <div class="card">
                 <h3>Agent Tools</h3>
                 <button onclick={() => window.location.href = '/tickets/open'}>View Open Tickets</button>
-                <button>View Knowledge Base</button>
             </div>
         </div>
 	{:else if userRole === 'user'}
