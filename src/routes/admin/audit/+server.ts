@@ -2,19 +2,20 @@ import { eq } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
 import { auditEventsTable, usersTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
+import type { Ticket } from "../../../types/index.ts";
 
 export const GET: RequestHandler = async ({ locals, request, fetch }) => {
     const user = locals.user
     const data = await request.headers;
     const ticket_id = data.get("X-Ticket-Id")
     if (ticket_id) {
-        const ticket = await (await fetch(`/tickets/${ticket_id}`)).json();
+        const ticket: Ticket = await (await fetch(`/tickets/${ticket_id}`)).json();
         if (user?.role === 'user') {
             if (ticket.createdBy.toString() !== user.userId) {
                 throw error(403, "Forbidden");
             }
         } else if (user?.role === 'agent') {
-            if (ticket.assignedTo.toString() !== user.userId) {
+            if (ticket.assignedTo?.toString() !== user.userId) {
                 throw error(403, "Forbidden")
             }
         }
