@@ -85,7 +85,7 @@
           </CardContent>
         {/if}
         <CardContent class="pt-0">
-          <Button size="sm" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
+          <Button size="sm" class="cursor-pointer" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
             Go to ticket
           </Button>
         </CardContent>

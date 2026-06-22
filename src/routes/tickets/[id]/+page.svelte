@@ -20,6 +20,7 @@
   let selectedAgentId = $state('');
   let showAssignModal = $state(false);
   let auditTrail: AuditEvent[] = $state([]);
+  let loadingAuditTrail = $state(true);
 
   onMount(async () => {
     try {
@@ -28,6 +29,22 @@
       if (!response.ok) throw new Error('Failed to fetch ticket');
       ticket = await response.json();
 
+      if (user.role === 'admin') {
+        assignmentStringState = await assignmentString(ticket?.assignedTo);
+        await loadAgents();
+      }
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'An error occurred';
+    } finally {
+      loading = false;
+    }
+
+    loadAuditTrail();
+  });
+
+  async function loadAuditTrail() {
+    const id = page.params.id;
+    try {
       const audits = await fetch('/admin/audit', { method: 'GET', headers: { 'X-Ticket-Id': id } });
       if (audits.ok) {
         auditTrail = (await audits.json()).audits || [];
@@ -45,17 +62,12 @@
           }
         }
       }
-
-      if (user.role === 'admin') {
-        assignmentStringState = await assignmentString(ticket?.assignedTo);
-        await loadAgents();
-      }
     } catch (err) {
-      error = err instanceof Error ? err.message : 'An error occurred';
+      console.error(err);
     } finally {
-      loading = false;
+      loadingAuditTrail = false;
     }
-  });
+  }
 
   async function loadAgents() {
     try {
@@ -222,7 +234,7 @@
         <Separator />
 
         <div class="flex flex-wrap gap-2">
-          <Button size="sm" onclick={() => (window.location.href = window.location.href + '/comments')}>
+          <Button class="cursor-pointer" size="sm" onclick={() => (window.location.href = window.location.href + '/comments')}>
             Comments
           </Button>
 
@@ -285,27 +297,42 @@
     </Dialog>
 
     <!-- Audit trail -->
-    {#if auditTrail.length > 0}
+    {#if loadingAuditTrail}
       <Card>
         <CardHeader>
           <CardTitle class="text-base">Audit Trail</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul class="space-y-3">
-            {#each auditTrail as audit, i (audit.id ?? i)}
-              <li class="text-sm border-l-2 border-border pl-3">
-                {#if typeof audit === 'object' && audit !== null}
-                  <p class="font-medium">{audit.createdAt ?? 'Unknown time'}</p>
-                  <p class="text-muted-foreground">{audit.action ?? 'Audit entry'}</p>
-                  {#if audit.userId}
-                    <p class="text-xs text-muted-foreground">User: {audit.userDisplay ?? audit.userId}</p>
+          <div class="space-y-3 animate-pulse">
+            <div class="h-12 rounded-md bg-muted/40"></div>
+            <div class="h-12 rounded-md bg-muted/40"></div>
+            <div class="h-12 rounded-md bg-muted/40"></div>
+          </div>
+        </CardContent>
+      </Card>
+    {:else if auditTrail.length > 0}
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-base">Audit Trail</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="max-h-64 overflow-auto pr-2">
+            <ul class="space-y-3">
+              {#each auditTrail as audit, i (audit.id ?? i)}
+                <li class="text-sm border-l-2 border-border pl-3">
+                  {#if typeof audit === 'object' && audit !== null}
+                    <p class="font-medium">{audit.createdAt ?? 'Unknown time'}</p>
+                    <p class="text-muted-foreground">{audit.action ?? 'Audit entry'}</p>
+                    {#if audit.userId}
+                      <p class="text-xs text-muted-foreground">User: {audit.userDisplay ?? audit.userId}</p>
+                    {/if}
+                  {:else}
+                    <pre class="text-xs">{JSON.stringify(audit)}</pre>
                   {/if}
-                {:else}
-                  <pre class="text-xs">{JSON.stringify(audit)}</pre>
-                {/if}
-              </li>
-            {/each}
-          </ul>
+                </li>
+              {/each}
+            </ul>
+          </div>
         </CardContent>
       </Card>
     {:else}

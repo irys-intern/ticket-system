@@ -72,7 +72,7 @@
   {:else if !comments || comments.length === 0}
     <p class="text-muted-foreground text-sm">No comments yet.</p>
   {:else}
-    <div class="space-y-3">
+    <div class="max-h-[60vh] overflow-y-auto space-y-3">
       {#each comments as comment (comment.id)}
         <Card>
           <CardHeader class="pb-1 pt-4 px-4">
@@ -98,7 +98,7 @@
       rows={4}
       disabled={loading}
     />
-    <Button onclick={postComment} disabled={!newComment.trim() || loading}>
+    <Button class="cursor-pointer" onclick={postComment} disabled={!newComment.trim() || loading}>
       Post Comment
     </Button>
   </div>
