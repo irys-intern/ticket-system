@@ -12,6 +12,7 @@
   let statusFilter = $state('all');
   let errors: string[] = $state([]);
   let tickets: Ticket[] = $state([]);
+  let isLoading = $state(true);
   let filteredTickets: Ticket[] = $derived(
     statusFilter === 'all' ? tickets : tickets.filter((t: Ticket) => t.status === statusFilter)
   );
@@ -21,12 +22,14 @@
     const result = await response.json();
     if (!response.ok) {
       errors = result.errors ?? [result.message ?? 'Unable to fetch tickets'];
+      isLoading = false;
       return;
     }
     tickets = result.tickets ?? [];
     if (result.userRole === 'agent') {
       statusFilter = 'in_progress';
     }
+    isLoading = false;
   });
 
   const statusVariant = (s: string) =>
@@ -63,12 +66,30 @@
     </Alert>
   {/if}
 
-  {#if filteredTickets.length === 0 && !errors.length}
+  {#if filteredTickets.length === 0 && !errors.length && !isLoading}
     <p class="text-muted-foreground text-sm">No tickets found.</p>
   {/if}
 
-  <div class="space-y-3">
-    {#each filteredTickets as ticket (ticket.id)}
+  {#if isLoading}
+    <div class="space-y-3">
+      {#each Array(3).keys() as index (index)}
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-base"><div class="h-12 rounded-md bg-muted/40"></div></CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-3 animate-pulse">
+              <div class="h-12 rounded-md bg-muted/40"></div>
+              <div class="h-12 rounded-md bg-muted/40"></div>
+              <div class="h-12 rounded-md bg-muted/40"></div>
+            </div>
+          </CardContent>
+        </Card>
+      {/each}
+    </div>
+  {:else}
+    <div class="space-y-3">
+      {#each filteredTickets as ticket (ticket.id)}
       <Card>
         <CardHeader class="pb-2">
           <div class="flex items-start justify-between gap-2">
@@ -91,5 +112,6 @@
         </CardContent>
       </Card>
     {/each}
-  </div>
+    </div>
+  {/if}
 </div>

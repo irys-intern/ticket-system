@@ -1,11 +1,14 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '../db/index.ts';
 import { ticketsTable, usersTable } from '../db/schema.ts';
-import { eq, and, not } from 'drizzle-orm';
+import { eq, and, not, or } from 'drizzle-orm';
 
 export async function GET({ locals }: RequestEvent) {
   const user = locals.user;
   let openUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: number; assignedTo: number | null; createdAt: Date; updatedAt: Date; }[] = []
+  let resolvedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: number; assignedTo: number | null; createdAt: Date; updatedAt: Date; }[] = []
+  let progressUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: number; assignedTo: number | null; createdAt: Date; updatedAt: Date; }[] = []
+  let closedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: number; assignedTo: number | null; createdAt: Date; updatedAt: Date; }[] = []
   if ((user?.role || 'guest') === 'user' && user?.userId) {
     openUserTickets = await db.select()
                   .from(ticketsTable)
@@ -15,15 +18,28 @@ export async function GET({ locals }: RequestEvent) {
                       (eq(ticketsTable.status, 'open'))
                     )
                   )
-  }
-  let resolvedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: number; assignedTo: number | null; createdAt: Date; updatedAt: Date; }[] = []
-  if ((user?.role || 'guest') === 'user' && user?.userId) {
+    progressUserTickets = await db.select()
+                  .from(ticketsTable)
+                  .where(
+                    and(
+                      eq(ticketsTable.createdBy, parseInt(user.userId)),
+                      (or(eq(ticketsTable.status, 'in_progress'), eq(ticketsTable.status, 'waiting_for_response')))
+                    )
+                  )
     resolvedUserTickets = await db.select()
                   .from(ticketsTable)
                   .where(
                     and(
                       eq(ticketsTable.createdBy, parseInt(user.userId)),
                       eq(ticketsTable.status, 'resolved')
+                    )
+                  )
+    closedUserTickets = await db.select()
+                  .from(ticketsTable)
+                  .where(
+                    and(
+                      eq(ticketsTable.createdBy, parseInt(user.userId)),
+                      eq(ticketsTable.status, 'closed')
                     )
                   )
   }
@@ -60,6 +76,8 @@ export async function GET({ locals }: RequestEvent) {
     userId: user?.userId || null,
     openTicketsUser: openUserTickets,
     resolvedTicketsUser: resolvedUserTickets,
+    closedTicketsUser: closedUserTickets,
+    progressTicketsUser: progressUserTickets,
     assignedAgentTickets,
     adminTotal: adminTotal.length,
     adminOpen: adminOpen.length,

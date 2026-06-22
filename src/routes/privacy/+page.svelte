@@ -15,7 +15,7 @@
 
   <div class="prose prose-sm prose-slate max-w-none space-y-6 text-foreground">
     <section>
-      <h2 class="text-lg font-semibold">Introduction</h2>
+      <h2 class="text-foreground font-semibold">Introduction</h2>
       <p class="text-muted-foreground">
         We are committed to protecting your privacy. This Privacy Policy explains how we collect,
         use, and safeguard your information.
@@ -23,7 +23,7 @@
     </section>
 
     <section>
-      <h2 class="text-lg font-semibold">Information We Collect</h2>
+      <h2 class="text-foreground font-semibold">Information We Collect</h2>
       <p class="text-muted-foreground">We may collect the following information:</p>
       <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
         <li>Your name and email address</li>
@@ -34,7 +34,7 @@
     </section>
 
     <section>
-      <h2 class="text-lg font-semibold">How We Use Your Information</h2>
+      <h2 class="text-foreground font-semibold">How We Use Your Information</h2>
       <p class="text-muted-foreground">We use the information we collect to:</p>
       <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
         <li>Provide and maintain our services</li>
@@ -45,7 +45,7 @@
     </section>
 
     <section>
-      <h2 class="text-lg font-semibold">Data Security</h2>
+      <h2 class="text-foreground font-semibold">Data Security</h2>
       <p class="text-muted-foreground">
         We implement appropriate technical and organizational measures to protect your personal
         information against unauthorized access, alteration, disclosure, or destruction.
@@ -53,10 +53,10 @@
     </section>
 
     <section>
-      <h2 class="text-lg font-semibold">Contact Us</h2>
+      <h2 class="text-foreground font-semibold">Contact Us</h2>
       <p class="text-muted-foreground">
         If you have questions about this Privacy Policy, please contact us at
-        <a href="mailto:info@irystechnologies.com" class="underline underline-offset-4 hover:text-foreground">info@irystechnologies.com</a>.
+        <a href="mailto:info@irystechnologies.com" class="text-muted-foreground underline underline-offset-4 hover:text-foreground">info@irystechnologies.com</a>.
       </p>
     </section>
   </div>

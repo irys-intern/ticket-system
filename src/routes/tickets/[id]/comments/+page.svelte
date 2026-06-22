@@ -68,7 +68,22 @@
   {/if}
 
   {#if loading}
-    <p class="text-muted-foreground text-sm">Loading comments…</p>
+    <div class="space-y-3">
+      {#each Array(3).keys() as index (index)}
+        <Card>
+          <CardHeader class="pb-1 pt-4 px-4">
+            <div class="flex items-center justify-between">
+              <div class="h-4 w-24 rounded-md bg-muted/40"></div>
+              <div class="h-3 w-20 rounded-md bg-muted/40"></div>
+            </div>
+          </CardHeader>
+          <CardContent class="px-4 pb-4 pt-1 space-y-2">
+            <div class="h-12 rounded-md bg-muted/40"></div>
+            <div class="h-12 rounded-md bg-muted/40"></div>
+          </CardContent>
+        </Card>
+      {/each}
+    </div>
   {:else if !comments || comments.length === 0}
     <p class="text-muted-foreground text-sm">No comments yet.</p>
   {:else}
