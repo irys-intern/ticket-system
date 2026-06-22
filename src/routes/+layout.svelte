@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import './layout.css';
   let { children } = $props();
 </script>
@@ -8,4 +9,9 @@
       {@render children()}
     </div>
   </div>
+  <footer class="w-full border-t border-slate-200 bg-slate-100 py-6 text-center text-sm text-slate-600">
+    &copy; 2026 Irys Technologies. All rights reserved.<br>
+    <a href={resolve("/privacy", {})}>Privacy Policy</a>
+  </footer>
 </main>
+
