@@ -27,7 +27,7 @@
                 headers: {"X-Ticket-Id": id}
             })
             if (!audits.ok) {
-                throw new Error('Failed to fetch audits');
+                console.error('Failed to fetch audits');
             }
             auditTrail = (await audits.json()).audits || []
             // Resolve user display names for audit entries to avoid using await in template

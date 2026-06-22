@@ -3,7 +3,7 @@ import { db } from '../../db/index.ts';
 import { ticketsTable } from '../../db/schema.ts';
 import { createTicketSchema } from '../../utils/validators.ts';
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals, fetch }) => {
     try {
         const data = await request.json();
         // Validate the input data
