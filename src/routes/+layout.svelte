@@ -3,28 +3,31 @@
   import './layout.css';
   let { children } = $props();
 </script>
-<main class="min-h-screen bg-slate-50 text-slate-900 antialiased">
-  <header class="w-full border-b border-slate-200 bg-white py-6">
+
+<div class="min-h-screen bg-background text-foreground antialiased flex flex-col">
+  <header class="w-full border-b bg-card py-4">
     <div class="mx-auto flex max-w-4xl items-center justify-between px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 text-white flex items-center justify-center text-lg font-bold">
-          <img src="/favicon.svg" alt="logo"/>
+      <a href={resolve('/', {})} class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <div class="h-10 w-10 flex items-center justify-center">
+          <img src="/favicon.svg" alt="logo" />
         </div>
         <div>
-          <p class="text-lg font-semibold text-slate-900">Ticket System</p>
-          <p class="text-sm text-slate-500">Irys Technologies</p>
+          <p class="text-base font-semibold leading-tight">Ticket System</p>
+          <p class="text-xs text-muted-foreground">Irys Technologies</p>
         </div>
-      </div>
+      </a>
     </div>
   </header>
-  <div class="min-h-screen flex items-start justify-center py-12 px-4 sm:px-6 lg:px-8">
+
+  <main class="flex-1 flex items-start justify-center py-10 px-4 sm:px-6 lg:px-8">
     <div class="w-full max-w-4xl">
       {@render children()}
     </div>
-  </div>
-  <footer class="w-full border-t border-slate-200 bg-slate-100 py-6 text-center text-sm text-slate-600">
-    &copy; 2026 Irys Technologies. All rights reserved.<br>
-    <a href={resolve("/privacy", {})}>Privacy Policy</a>
-  </footer>
-</main>
+  </main>
 
+  <footer class="w-full border-t bg-muted py-4 text-center text-xs text-muted-foreground">
+    &copy; 2026 Irys Technologies. All rights reserved.
+    &nbsp;|&nbsp;
+    <a href={resolve('/privacy', {})} class="underline underline-offset-4 hover:text-foreground transition-colors">Privacy Policy</a>
+  </footer>
+</div>

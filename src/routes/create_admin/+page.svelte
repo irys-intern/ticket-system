@@ -1,4 +1,9 @@
 <script lang="ts">
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
+
   let name = $state('');
   let email = $state('');
   let password = $state('');
@@ -15,25 +20,23 @@
     try {
       const response = await fetch('/create_admin', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        errors = result.errors ?? [result.message ?? 'Unable to register'];
+        errors = result.errors ?? [result.message ?? 'Unable to create admin'];
       } else {
-        successMessage = result.message ?? 'Registration completed successfully. Please <a href="/auth/login" class="underline">log in</a>.';
+        successMessage = result.message ?? 'Admin account created. Redirecting to login…';
         name = '';
         email = '';
         password = '';
-        location.href = '/auth/login'; // Redirect to login page after successful registration
+        location.href = '/auth/login';
       }
     } catch (error) {
-      errors = ['Unable to reach the registration service. Please try again later.'];
+      errors = ['Unable to reach the service. Please try again later.'];
       console.error(error);
     } finally {
       submitting = false;
@@ -41,70 +44,48 @@
   }
 </script>
 
-<section class="register-page px-4 py-8 max-w-lg mx-auto">
-  <h1 class="text-3xl font-bold mb-4">Create an admin account</h1>
-  <p class="mb-6 text-slate-600">Sign up to manage users and agents.</p>
+<div class="max-w-sm mx-auto space-y-6 py-8">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Create an admin account</h1>
+    <p class="text-muted-foreground text-sm mt-1">Sign up to manage users and agents.</p>
+  </div>
 
   {#if successMessage}
-    <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
-      {successMessage}
-    </div>
+    <Alert class="border-green-200 bg-green-50 text-green-800">
+      <AlertDescription>{successMessage}</AlertDescription>
+    </Alert>
   {/if}
 
   {#if errors.length}
-    <div class="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4 text-rose-700">
-      <ul>
-        {#each errors as error (error)}
-          <li>{error}</li>
-        {/each}
-      </ul>
-    </div>
+    <Alert variant="destructive">
+      <AlertDescription>
+        <ul class="list-disc list-inside space-y-1">
+          {#each errors as error (error)}
+            <li>{error}</li>
+          {/each}
+        </ul>
+      </AlertDescription>
+    </Alert>
   {/if}
 
   <form onsubmit={handleSubmit} class="space-y-4">
-    <div>
-      <label for="name" class="block text-sm font-medium mb-1">Name</label>
-      <input
-        id="name"
-        type="text"
-        bind:value={name}
-        required
-        class="w-full rounded border px-3 py-2"
-        placeholder="Your name"
-      />
+    <div class="space-y-1.5">
+      <Label for="name">Name</Label>
+      <Input id="name" type="text" bind:value={name} required placeholder="Your name" />
     </div>
 
-    <div>
-      <label for="email" class="block text-sm font-medium mb-1">Email</label>
-      <input
-        id="email"
-        type="email"
-        bind:value={email}
-        required
-        class="w-full rounded border px-3 py-2"
-        placeholder="you@example.com"
-      />
+    <div class="space-y-1.5">
+      <Label for="email">Email</Label>
+      <Input id="email" type="email" bind:value={email} required placeholder="you@example.com" />
     </div>
 
-    <div>
-      <label for="password" class="block text-sm font-medium mb-1">Password</label>
-      <input
-        id="password"
-        type="password"
-        bind:value={password}
-        required
-        minlength="8"
-        class="w-full rounded border px-3 py-2"
-        placeholder="At least 8 characters"
-      />
+    <div class="space-y-1.5">
+      <Label for="password">Password</Label>
+      <Input id="password" type="password" bind:value={password} required minlength={8} placeholder="At least 8 characters" />
     </div>
 
-    <button
-      type="submit"
-      class="w-full rounded bg-slate-900 text-white py-2 disabled:opacity-60"
-      disabled={submitting}
-    >
-      {submitting ? 'Registering...' : 'Register'}
-    </button>
+    <Button type="submit" class="w-full" disabled={submitting}>
+      {submitting ? 'Creating…' : 'Create Admin'}
+    </Button>
   </form>
-</section>
+</div>

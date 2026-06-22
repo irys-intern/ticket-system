@@ -1,90 +1,63 @@
 <script>
-    import { resolve } from '$app/paths'
+  import { resolve } from '$app/paths';
 </script>
+
 <svelte:head>
-	<title>Privacy Policy</title>
+  <title>Privacy Policy</title>
 </svelte:head>
 
-<div class="privacy-container">
-    <a href={resolve("/", {})}>Return home</a>
-	<h1>Privacy Policy</h1>
+<div class="space-y-4 max-w-2xl">
+  <div>
+    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+  </div>
 
-	<section>
-		<h2>Introduction</h2>
-		<p>
-			We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your
-			information.
-		</p>
-	</section>
+  <h1 class="text-2xl font-bold tracking-tight">Privacy Policy</h1>
 
-	<section>
-		<h2>Information We Collect</h2>
-		<p>We may collect the following information:</p>
-		<ul>
-			<li>Your name and email address</li>
-			<li>Account information and preferences</li>
-			<li>Usage data and analytics</li>
-			<li>Device and browser information</li>
-		</ul>
-	</section>
+  <div class="prose prose-sm prose-slate max-w-none space-y-6 text-foreground">
+    <section>
+      <h2 class="text-lg font-semibold">Introduction</h2>
+      <p class="text-muted-foreground">
+        We are committed to protecting your privacy. This Privacy Policy explains how we collect,
+        use, and safeguard your information.
+      </p>
+    </section>
 
-	<section>
-		<h2>How We Use Your Information</h2>
-		<p>We use the information we collect to:</p>
-		<ul>
-			<li>Provide and maintain our services</li>
-			<li>Improve user experience</li>
-			<li>Send administrative notifications</li>
-			<li>Comply with legal obligations</li>
-		</ul>
-	</section>
+    <section>
+      <h2 class="text-lg font-semibold">Information We Collect</h2>
+      <p class="text-muted-foreground">We may collect the following information:</p>
+      <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+        <li>Your name and email address</li>
+        <li>Account information and preferences</li>
+        <li>Usage data and analytics</li>
+        <li>Device and browser information</li>
+      </ul>
+    </section>
 
-	<section>
-		<h2>Data Security</h2>
-		<p>
-			We implement appropriate technical and organizational measures to protect your personal information against
-			unauthorized access, alteration, disclosure, or destruction.
-		</p>
-	</section>
+    <section>
+      <h2 class="text-lg font-semibold">How We Use Your Information</h2>
+      <p class="text-muted-foreground">We use the information we collect to:</p>
+      <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+        <li>Provide and maintain our services</li>
+        <li>Improve user experience</li>
+        <li>Send administrative notifications</li>
+        <li>Comply with legal obligations</li>
+      </ul>
+    </section>
 
-	<section>
-		<h2>Contact Us</h2>
-		<p>If you have questions about this Privacy Policy, please contact us at info@irystechnologies.com</p>
-	</section>
+    <section>
+      <h2 class="text-lg font-semibold">Data Security</h2>
+      <p class="text-muted-foreground">
+        We implement appropriate technical and organizational measures to protect your personal
+        information against unauthorized access, alteration, disclosure, or destruction.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-semibold">Contact Us</h2>
+      <p class="text-muted-foreground">
+        If you have questions about this Privacy Policy, please contact us at
+        <a href="mailto:info@irystechnologies.com" class="underline underline-offset-4 hover:text-foreground">info@irystechnologies.com</a>.
+      </p>
+    </section>
+  </div>
 </div>
-
-<style>
-	.privacy-container {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: 2rem;
-		line-height: 1.6;
-	}
-
-	h1 {
-		color: #333;
-		margin-bottom: 2rem;
-	}
-
-	h2 {
-		color: #555;
-		margin-top: 1.5rem;
-		margin-bottom: 1rem;
-	}
-
-	section {
-		margin-bottom: 2rem;
-	}
-
-	ul {
-		margin-left: 1.5rem;
-	}
-
-	li {
-		margin-bottom: 0.5rem;
-	}
-
-	p {
-		color: #666;
-	}
-</style>

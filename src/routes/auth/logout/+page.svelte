@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { Button } from '$lib/components/ui/button';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   let errors: string[] = $state([]);
   let successMessage = $state('');
@@ -10,9 +12,7 @@
     try {
       const response = await fetch('/auth/logout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       const result = await response.json();
@@ -20,8 +20,8 @@
       if (!response.ok) {
         errors = result.errors ?? [result.message ?? 'Unable to log out'];
       } else {
-        successMessage = result.message ?? 'You have been logged out successfully. Please <a href="/" class="underline">return home</a>.';
-        await goto(resolve("/", {}), { replaceState: true });
+        successMessage = result.message ?? 'You have been logged out successfully.';
+        await goto(resolve('/', {}), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the logout service. Please try again later.'];
@@ -30,32 +30,36 @@
   }
 
   function backToHome() {
-    goto(resolve("/", {}), { replaceState: true });
+    goto(resolve('/', {}), { replaceState: true });
   }
 </script>
-<section class="logout-page px-4 py-8 max-w-lg mx-auto">
-  <h1 class="text-3xl font-bold mb-4">Log out of your account</h1>
-  <p class="mb-6 text-slate-600">Are you sure you want to log out?</p>
+
+<div class="max-w-sm mx-auto space-y-6 py-8">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Log out</h1>
+    <p class="text-muted-foreground text-sm mt-1">Are you sure you want to log out?</p>
+  </div>
 
   {#if successMessage}
-    <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
-      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      {@html successMessage}
-    </div>
+    <Alert class="border-green-200 bg-green-50 text-green-800">
+      <AlertDescription>{successMessage}</AlertDescription>
+    </Alert>
   {/if}
 
   {#if errors.length}
-    <div class="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4 text-rose-700">
-      <ul>
-        {#each errors as error (error)}
-          <li>{error}</li>
-        {/each}
-      </ul>
-    </div>
+    <Alert variant="destructive">
+      <AlertDescription>
+        <ul class="list-disc list-inside space-y-1">
+          {#each errors as error (error)}
+            <li>{error}</li>
+          {/each}
+        </ul>
+      </AlertDescription>
+    </Alert>
   {/if}
 
-  <form onsubmit={handleSubmit} class="space-x-4">
-    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-900 transition" style="background-color: #dc2626; hover:bg-color: #ea580c; cursor: pointer;">Log Out</button>
-    <button type="button" onclick={backToHome} class="px-4 py-2 bg-white text-black rounded" style="background-color: #cccccc; hover:bg-color: #aaaaaa; cursor: pointer;">Cancel</button>
+  <form onsubmit={handleSubmit} class="flex gap-2">
+    <Button type="submit" variant="destructive">Log Out</Button>
+    <Button type="button" variant="outline" onclick={backToHome}>Cancel</Button>
   </form>
-</section>
+</div>

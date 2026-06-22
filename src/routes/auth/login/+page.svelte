@@ -1,6 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   let email = $state('');
   let password = $state('');
@@ -17,9 +21,7 @@
     try {
       const response = await fetch('/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
@@ -28,10 +30,10 @@
       if (!response.ok) {
         errors = result.errors ?? [result.message ?? 'Unable to log in'];
       } else {
-        successMessage = result.message ?? 'Login completed successfully. Please <a href="/" class="underline">return home</a>.';
+        successMessage = result.message ?? 'Login successful.';
         email = '';
         password = '';
-        await goto(resolve("/", { definitelyNotAnErrorSuppressor: "teehee"}), { replaceState: true });
+        await goto(resolve('/', { definitelyNotAnErrorSuppressor: 'teehee' }), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the login service. Please try again later.'];
@@ -42,62 +44,46 @@
   }
 </script>
 
-<section class="login-page px-4 py-8 max-w-lg mx-auto">
-  <h1 class="text-3xl font-bold mb-4">Log in to your account</h1>
-  <p class="mb-6 text-slate-600">Sign in to submit tickets and manage requests.</p>
-  <p class="mb-6 text-slate-600">Alternatively, <a href={resolve("/auth/register", {})}>register</a>.</p>
+<div class="max-w-sm mx-auto space-y-6 py-8">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Log in to your account</h1>
+    <p class="text-muted-foreground text-sm mt-1">
+      Sign in to submit tickets and manage requests.
+      Alternatively, <a href={resolve('/auth/register', {})} class="underline underline-offset-4 hover:text-foreground">register</a>.
+    </p>
+  </div>
 
   {#if successMessage}
-    <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
-      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      {@html successMessage}
-    </div>
+    <Alert class="border-green-200 bg-green-50 text-green-800">
+      <AlertDescription>{successMessage}</AlertDescription>
+    </Alert>
   {/if}
 
   {#if errors.length}
-    <div class="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4 text-rose-700">
-      <ul>
-        {#each errors as error (error)}
-          <li>{error}</li>
-        {/each}
-      </ul>
-    </div>
+    <Alert variant="destructive">
+      <AlertDescription>
+        <ul class="list-disc list-inside space-y-1">
+          {#each errors as error (error)}
+            <li>{error}</li>
+          {/each}
+        </ul>
+      </AlertDescription>
+    </Alert>
   {/if}
 
   <form onsubmit={handleSubmit} class="space-y-4">
-    <div>
-      <label for="email" class="block text-sm font-medium mb-1">Email</label>
-      <input
-        id="email"
-        name="email"
-        type="email"
-        bind:value={email}
-        required
-        class="w-full rounded border px-3 py-2"
-        placeholder="you@example.com"
-      />
+    <div class="space-y-1.5">
+      <Label for="email">Email</Label>
+      <Input id="email" name="email" type="email" bind:value={email} required placeholder="you@example.com" />
     </div>
 
-    <div>
-      <label for="password" class="block text-sm font-medium mb-1">Password</label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        bind:value={password}
-        required
-        minlength="8"
-        class="w-full rounded border px-3 py-2"
-        placeholder="At least 8 characters"
-      />
+    <div class="space-y-1.5">
+      <Label for="password">Password</Label>
+      <Input id="password" name="password" type="password" bind:value={password} required minlength={8} placeholder="At least 8 characters" />
     </div>
 
-    <button
-      type="submit"
-      class="w-full rounded bg-slate-900 text-white py-2 disabled:opacity-60"
-      disabled={submitting}
-    >
-      {submitting ? 'Logging in...' : 'Log in'}
-    </button>
+    <Button type="submit" class="w-full" disabled={submitting}>
+      {submitting ? 'Logging in…' : 'Log in'}
+    </Button>
   </form>
-</section>
+</div>

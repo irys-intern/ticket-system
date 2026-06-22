@@ -1,102 +1,120 @@
-<script>
-    import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
-	let userRole = $state('guest');
-	let userName = $state('Guest User');
-	let openTicketsUser = $state('loading...');
-	let resolvedTicketsUser = $state('loading...');
-	let assignedAgentTickets = $state('loading...');
-	let adminTotal = $state('loading...');
-	let adminOpen = $state('loading...');
-	let adminUsers = $state('loading...');
+<script lang="ts">
+  import { resolve } from '$app/paths';
+  import { onMount } from 'svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Separator } from '$lib/components/ui/separator';
 
-	onMount(async () => {
-		const response = await fetch('/');
-		const data = await response.json();
-		userRole = data.userRole || 'guest';
-		userName = data.userName || 'Guest User';
-		openTicketsUser = data.openTicketsUser || [];
-		resolvedTicketsUser = data.resolvedTicketsUser || [];
-		assignedAgentTickets = data.assignedAgentTickets || [];
-		adminTotal = data.adminTotal || 0;
-		adminOpen = data.adminOpen || 0;
-		adminUsers = data.adminUsers || 0;
-	});
+  let userRole = $state('guest');
+  let userName = $state('Guest User');
+  let openTicketsUser: unknown[] = $state([]);
+  let resolvedTicketsUser: unknown[] = $state([]);
+  let assignedAgentTickets: unknown[] = $state([]);
+  let adminTotal = $state('...');
+  let adminOpen = $state('...');
+  let adminUsers = $state('...');
 
+  onMount(async () => {
+    const response = await fetch('/');
+    const data = await response.json();
+    userRole = data.userRole || 'guest';
+    userName = data.userName || 'Guest User';
+    openTicketsUser = data.openTicketsUser || [];
+    resolvedTicketsUser = data.resolvedTicketsUser || [];
+    assignedAgentTickets = data.assignedAgentTickets || [];
+    adminTotal = data.adminTotal ?? 0;
+    adminOpen = data.adminOpen ?? 0;
+    adminUsers = data.adminUsers ?? 0;
+  });
 </script>
 
-<div class="dashboard">
-	<h1>Ticket System Dashboard</h1>
-    <h2>Welcome, {userName}!
-        {#if userRole !== "guest"}
-        <a href={resolve('/auth/logout', {})}>Logout</a>
-        {/if}
-    </h2>
-    <p>Your role: <b>{userRole}</b></p>
-    <p class="text-sm text-gray-600 mb-6">This dashboard content is dynamically rendered based on your user role.</p>
-	{#if userRole === 'admin'}
-		<div class="admin-dashboard">
-			<h2>Admin Dashboard</h2>
-			<div class="card">
-				<h3>System Statistics</h3>
-				<p>Total Tickets: {adminTotal}</p>
-				<p>Open Tickets (unassigned): {adminOpen}</p>
-				<p>Users: {adminUsers}</p>
-			</div>
-			<div class="card">
-				<h3>Admin Tools</h3>
-				<button onclick={() => location.href = "/admin/users"}>Manage Users</button>
-				<button onclick={() => window.location.href = '/tickets'}>Manage Assignments</button>
-				<button onclick={() => location.href="/admin/audit"}>View Audits</button>
-			</div>
-		</div>
-	{:else if userRole === 'agent'}
-        <div class="agent-dashboard">
-            <h2>Agent Dashboard</h2>
-            <div class="card">
-                <h3>Assigned Tickets</h3>
-                <p>You have {assignedAgentTickets.length} tickets assigned to you.</p>
-                <button onclick={() => window.location.href = '/tickets'}>View My Tickets</button>
-            </div>
-            <div class="card">
-                <h3>Agent Tools</h3>
-                <button onclick={() => window.location.href = '/tickets/open'}>View Open Tickets</button>
-            </div>
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <p class="text-muted-foreground text-sm">Welcome back, {userName}</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <Badge variant="secondary">{userRole}</Badge>
+      {#if userRole !== 'guest'}
+        <Button href={resolve('/auth/logout', {})} variant="outline" size="sm">Logout</Button>
+      {/if}
+    </div>
+  </div>
+
+  <Separator />
+
+  {#if userRole === 'admin'}
+    <div class="grid gap-4 sm:grid-cols-3">
+      <Card>
+        <CardHeader><CardTitle class="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle></CardHeader>
+        <CardContent><p class="text-3xl font-bold">{adminTotal}</p></CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle class="text-sm font-medium text-muted-foreground">Open (Unassigned)</CardTitle></CardHeader>
+        <CardContent><p class="text-3xl font-bold">{adminOpen}</p></CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle class="text-sm font-medium text-muted-foreground">Users</CardTitle></CardHeader>
+        <CardContent><p class="text-3xl font-bold">{adminUsers}</p></CardContent>
+      </Card>
+    </div>
+    <Card>
+      <CardHeader><CardTitle>Admin Tools</CardTitle></CardHeader>
+      <CardContent class="flex flex-wrap gap-2">
+        <Button href="/admin/users">Manage Users</Button>
+        <Button href="/tickets" variant="secondary">Manage Assignments</Button>
+        <Button href="/admin/audit" variant="outline">View Audit Log</Button>
+      </CardContent>
+    </Card>
+
+  {:else if userRole === 'agent'}
+    <div class="grid gap-4 sm:grid-cols-2">
+      <Card>
+        <CardHeader><CardTitle class="text-sm font-medium text-muted-foreground">Assigned Tickets</CardTitle></CardHeader>
+        <CardContent>
+          <p class="text-3xl font-bold">{assignedAgentTickets.length}</p>
+          <p class="text-xs text-muted-foreground mt-1">tickets assigned to you</p>
+        </CardContent>
+      </Card>
+    </div>
+    <Card>
+      <CardHeader><CardTitle>Agent Tools</CardTitle></CardHeader>
+      <CardContent class="flex flex-wrap gap-2">
+        <Button href="/tickets">View My Tickets</Button>
+        <Button href="/tickets/open" variant="secondary">View Open Tickets</Button>
+      </CardContent>
+    </Card>
+
+  {:else if userRole === 'user'}
+    <div class="grid gap-4 sm:grid-cols-2">
+      <Card>
+        <CardHeader><CardTitle class="text-sm font-medium text-muted-foreground">Open Tickets</CardTitle></CardHeader>
+        <CardContent><p class="text-3xl font-bold">{openTicketsUser.length}</p></CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle class="text-sm font-medium text-muted-foreground">Resolved Tickets</CardTitle></CardHeader>
+        <CardContent><p class="text-3xl font-bold">{resolvedTicketsUser.length}</p></CardContent>
+      </Card>
+    </div>
+    <Card>
+      <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
+      <CardContent class="flex flex-wrap gap-2">
+        <Button href="/create_ticket">Create New Ticket</Button>
+        <Button href="/tickets" variant="secondary">View My Tickets</Button>
+      </CardContent>
+    </Card>
+
+  {:else}
+    <Card>
+      <CardContent class="pt-6">
+        <p class="text-muted-foreground mb-4">You have limited access. Please log in or register to create and manage tickets.</p>
+        <div class="flex gap-2">
+          <Button href="/auth/login">Login</Button>
+          <Button href="/auth/register" variant="outline">Register</Button>
         </div>
-	{:else if userRole === 'user'}
-		<div class="user-dashboard">
-			<h2>My Tickets</h2>
-			<div class="card">
-				<h3>Your Statistics</h3>
-				<p>Open Tickets: {openTicketsUser.length}</p>
-				<p>Resolved Tickets: {resolvedTicketsUser.length}</p>
-			</div>
-			<div class="card">
-				<h3>Actions</h3>
-				<button onclick={() => window.location.href = '/create_ticket'}>Create New Ticket</button>
-				<button onclick={() => window.location.href = '/tickets'}>View My Tickets</button>
-			</div>
-		</div>
-	{:else}
-		<div class="guest-dashboard">
-			<div class="card">
-				<p>You have limited access. Please log in or register to create and manage tickets.</p>
-				<button onclick={() => window.location.href = '/auth/login'}>Login</button>
-				<button onclick={() => window.location.href = '/auth/register'}>Register</button>
-			</div>
-		</div>
-	{/if}
+      </CardContent>
+    </Card>
+  {/if}
 </div>
-
-<style>
-	.dashboard {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: 20px;
-		font-family: Arial, sans-serif;
-	}
-
-    a {
-        margin-left: 15px;
-    }
-</style>

@@ -1,85 +1,95 @@
-
-
 <script lang="ts">
-    import { onMount } from "svelte";
-    import type { Ticket } from "../../types/index.ts";
-    import { resolve } from "$app/paths";
+  import { onMount } from 'svelte';
+  import type { Ticket } from '../../types/index.ts';
+  import { resolve } from '$app/paths';
+  import { Button } from '$lib/components/ui/button';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { Label } from '$lib/components/ui/label';
 
-    const statuses = ['all', 'open', 'in_progress', 'waiting_for_response', 'closed'];
-    let statusFilter = $state('all');
-    let errors: string[] = $state([]);
-    let tickets: Ticket[] = $state([]);
-    let filteredTickets: Ticket[] = $derived(statusFilter === 'all'
-                ? tickets
-                : tickets.filter((ticket: Ticket) => ticket.status === statusFilter));
+  const statuses = ['all', 'open', 'in_progress', 'waiting_for_response', 'closed'];
+  let statusFilter = $state('all');
+  let errors: string[] = $state([]);
+  let tickets: Ticket[] = $state([]);
+  let filteredTickets: Ticket[] = $derived(
+    statusFilter === 'all' ? tickets : tickets.filter((t: Ticket) => t.status === statusFilter)
+  );
 
-    onMount(async () => {
-        const response = await fetch('/tickets');
-        const result = await response.json();
+  onMount(async () => {
+    const response = await fetch('/tickets');
+    const result = await response.json();
+    if (!response.ok) {
+      errors = result.errors ?? [result.message ?? 'Unable to fetch tickets'];
+      return;
+    }
+    tickets = result.tickets ?? [];
+    if (result.userRole === 'agent') {
+      statusFilter = 'in_progress';
+    }
+  });
 
-        if (!response.ok) {
-            errors = result.errors ?? [result.message ?? "Unable to fetch tickets"];
-            return;
-        }
-
-        tickets = result.tickets ?? [];
-        if (result.userRole === 'agent') {
-            statusFilter = 'in_progress'
-        }
-    });
-
-    ;
+  const statusVariant = (s: string) =>
+    s === 'open' ? 'secondary'
+    : s === 'closed' ? 'outline'
+    : 'default';
 </script>
-<style>
-    .ticket {
-        background: #f9fafb;
-        border: 1px solid #d6d8db;
-        border-radius: 8px;
-        padding: 14px;
-        margin-bottom: 12px;
-    }
 
-    .ticket p {
-        margin: 0;
-        color: #495057;
-        line-height: 1.4;
-    }
+<div class="space-y-4">
+  <div>
+    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+  </div>
 
-    .ticket .description {
-        margin-left: 10px;
-    }
-</style>
-<section>
-    <a href={resolve("/", {})}>Return home</a>
-    <div class="card">
-        <h1>My Tickets</h1>
-
-        <label>
-            Show by status
-            <select bind:value={statusFilter}>
-                {#each statuses as status (status)}
-                    <option value={status}>{status}</option>
-                {/each}
-            </select>
-        </label>
-
-        {#if errors.length}
-            {#each errors as error (error)}
-                <li>{error}</li>
-            {/each}
-        {/if}
-        {#if filteredTickets.length > 0}
-            <div class="ticket-list">
-                {#each filteredTickets as ticket (ticket)}
-                    <div class="ticket">
-                        <b>{ticket.title}</b> &ndash; {ticket.status} &ndash; {ticket.category.replace('_',' ')}
-                        {#if ticket.description}
-                            <p class="description">{ticket.description}</p>
-                        {/if}
-                        <button onclick={() => window.location.href = `/tickets/${ticket.id}`}>Go to ticket</button>
-                    </div>
-                {/each}
-            </div>
-        {/if}
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold tracking-tight">My Tickets</h1>
+    <div class="flex items-center gap-2">
+      <Label for="status-filter" class="text-sm">Status</Label>
+      <select id="status-filter" bind:value={statusFilter}
+        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+        {#each statuses as status (status)}
+          <option value={status}>{status.replace(/_/g, ' ')}</option>
+        {/each}
+      </select>
     </div>
-</section>
+  </div>
+
+  {#if errors.length}
+    <Alert variant="destructive">
+      <AlertDescription>
+        <ul class="list-disc list-inside space-y-1">
+          {#each errors as error (error)}<li>{error}</li>{/each}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  {/if}
+
+  {#if filteredTickets.length === 0 && !errors.length}
+    <p class="text-muted-foreground text-sm">No tickets found.</p>
+  {/if}
+
+  <div class="space-y-3">
+    {#each filteredTickets as ticket (ticket.id)}
+      <Card>
+        <CardHeader class="pb-2">
+          <div class="flex items-start justify-between gap-2">
+            <CardTitle class="text-base">{ticket.title}</CardTitle>
+            <div class="flex gap-1.5 shrink-0">
+              <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
+              <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
+            </div>
+          </div>
+        </CardHeader>
+        {#if ticket.description}
+          <CardContent class="pb-3 pt-0">
+            <p class="text-sm text-muted-foreground line-clamp-2">{ticket.description}</p>
+          </CardContent>
+        {/if}
+        <CardContent class="pt-0">
+          <Button size="sm" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
+            Go to ticket
+          </Button>
+        </CardContent>
+      </Card>
+    {/each}
+  </div>
+</div>

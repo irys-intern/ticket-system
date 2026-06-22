@@ -1,326 +1,317 @@
 <script lang="ts">
-    import { page } from '$app/state';
-    import { resolve } from '$app/paths';
-    import type { AuditEvent, Ticket } from '../../../types/index.ts';
-    import { onMount } from 'svelte';
-    const {data} = $props();
-    let user = $derived(data.user);
-    let ticket: Ticket | null = $state(null);
-    let loading = $state(true);
-    let error: string | null = $state(null);
-    let assignmentStringState = $state("")
-    let agents: Array<{id:string; name:string; role:string}> = $state([]);
-    let selectedAgentId = $state("");
-    let showAssignModal = $state(false);
-    let auditTrail: AuditEvent[] = $state([])
+  import { page } from '$app/state';
+  import { resolve } from '$app/paths';
+  import type { AuditEvent, Ticket } from '../../../types/index.ts';
+  import { onMount } from 'svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
+  import { Label } from '$lib/components/ui/label';
+  import { Separator } from '$lib/components/ui/separator';
 
-    onMount(async () => {
-        try {
-            const id = page.params.id;
-            const response = await fetch(`/tickets/${id}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch ticket');
+  const { data } = $props();
+  let user = $derived(data.user);
+  let ticket: Ticket | null = $state(null);
+  let loading = $state(true);
+  let error: string | null = $state(null);
+  let assignmentStringState = $state('');
+  let agents: Array<{ id: string; name: string; role: string }> = $state([]);
+  let selectedAgentId = $state('');
+  let showAssignModal = $state(false);
+  let auditTrail: AuditEvent[] = $state([]);
+
+  onMount(async () => {
+    try {
+      const id = page.params.id;
+      const response = await fetch(`/tickets/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch ticket');
+      ticket = await response.json();
+
+      const audits = await fetch('/admin/audit', { method: 'GET', headers: { 'X-Ticket-Id': id } });
+      if (audits.ok) {
+        auditTrail = (await audits.json()).audits || [];
+        for (const entry of auditTrail) {
+          if (entry?.userId) {
+            try {
+              const r = await fetch(`/admin/users/${entry.userId}`);
+              if (r.ok) {
+                const j = await r.json();
+                entry.userDisplay = `${j.user?.name ?? j.user?.username ?? 'User'} (${entry.userId})`;
+              }
+            } catch (e) {
+              console.log(e);
             }
-            ticket = await response.json();
-            const audits = await fetch('/admin/audit', {
-                method: "GET",
-                headers: {"X-Ticket-Id": id}
-            })
-            if (!audits.ok) {
-                console.error('Failed to fetch audits');
-            }
-            auditTrail = (await audits.json()).audits || []
-            // Resolve user display names for audit entries to avoid using await in template
-            for (const entry of auditTrail) {
-                if (entry && entry.userId) {
-                    try {
-                        const r = await fetch(`/admin/users/${entry.userId}`);
-                        if (r.ok) {
-                            const j = await r.json();
-                            entry.userDisplay = `${j.user?.name ?? j.user?.username ?? 'User'} (${entry.userId})`;
-                        }
-                    } catch (e) {
-                        console.log(e);
-                    }
-                }
-            }
-            if (user.role === 'admin') {
-                assignmentStringState = await assignmentString(ticket?.assignedTo);
-                await loadAgents();
-            }
-        } catch (err) {
-            error = err instanceof Error ? err.message : 'An error occurred';
-        } finally {
-            loading = false;
+          }
         }
-    })
+      }
 
-    async function loadAgents() {
-        try {
-            const response = await fetch('/admin/users');
-            if (!response.ok) {
-                throw new Error('Failed to load agents');
-            }
-            const allUsers = await response.json();
-            const users = allUsers.users ?? [];
-            agents = users.filter((u: {id: string, role: string, name: string}) => u.role === 'agent');
-            selectedAgentId = agents[0]?.id ?? "";
-        } catch (err) {
-            console.error(err);
-        }
+      if (user.role === 'admin') {
+        assignmentStringState = await assignmentString(ticket?.assignedTo);
+        await loadAgents();
+      }
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'An error occurred';
+    } finally {
+      loading = false;
     }
+  });
 
-    function openAssignModal() {
-        showAssignModal = true;
-        if (!selectedAgentId && agents.length > 0) {
-            selectedAgentId = agents[0].id;
-            console.log(selectedAgentId)
-        }
+  async function loadAgents() {
+    try {
+      const response = await fetch('/admin/users');
+      if (!response.ok) throw new Error('Failed to load agents');
+      const allUsers = await response.json();
+      const users = allUsers.users ?? [];
+      agents = users.filter((u: { id: string; role: string; name: string }) => u.role === 'agent');
+      selectedAgentId = agents[0]?.id ?? '';
+    } catch (err) {
+      console.error(err);
     }
+  }
 
-    function closeAssignModal() {
-        showAssignModal = false;
-    }
+  async function assignSelectedAgent() {
+    if (!ticket || !selectedAgentId) return;
+    if (ticket.assignedTo === selectedAgentId) return;
+    const action = parseInt(selectedAgentId) === -1 ? 'unassign' : 'assign';
+    const body = action === 'unassign'
+      ? { ticketId: ticket.id, action }
+      : { agent: selectedAgentId, ticketId: ticket.id, action };
+    await fetch(window.location.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    window.location.reload();
+  }
 
-    async function assignSelectedAgent() {
-        if (!ticket || !selectedAgentId) return;
-        if (ticket.assignedTo === selectedAgentId) return;
-        if (parseInt(selectedAgentId) === -1) {
-            console.log(
-                (await fetch(window.location.href, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ticketId: ticket.id, action: 'unassign'})
-        })).json());
-        } else {
-            console.log(
-                (await fetch(window.location.href, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({agent: selectedAgentId, ticketId: ticket.id, action: 'assign'})
-            })).json()
-        )
-        }
-        window.location.reload();
-    }
+  async function claimTicket() {
+    await fetch(window.location.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'claim' }),
+    });
+    window.location.reload();
+  }
 
-    async function claimTicket() {
-        await fetch(window.location.href, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'claim'})
-        });
-        window.location.reload()
-    }
+  async function updateStatus() {
+    if (!ticket) return;
+    const statuses = ['open', 'in_progress', 'waiting_for_response', 'resolved'];
+    const newStatus = statuses[statuses.indexOf(ticket.status) + 1];
+    if (!newStatus?.trim()) return;
+    if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
+    await fetch(window.location.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: user.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim() }),
+    });
+    window.location.reload();
+  }
 
-    async function updateStatus() {
-        if (!ticket) return;
-        const statuses = ["open", "in_progress", "waiting_for_response", "resolved"]
+  async function updateStatusBack() {
+    if (!ticket) return;
+    if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
+    await fetch(window.location.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: user.userId, ticketId: ticket.id, action: 'update_status', status: 'in_progress' }),
+    });
+    window.location.reload();
+  }
 
-        const newStatus = statuses[statuses.indexOf(ticket.status)+1]
-        if (!newStatus || newStatus.trim() === "") return;
-        if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
-        // const res = 
-        await fetch(window.location.href, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({agent: user.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim()})
-        });
-        // console.log(await (res.json()))
-        window.location.reload();
-    }
-    async function updateStatusBack() {
-        if (!ticket) return;
-        if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
-        await fetch(window.location.href, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({agent: user.userId, ticketId: ticket.id, action: 'update_status', status: "in_progress"})
-        });
-        window.location.reload();
-    }
+  async function forfeitTicket() {
+    await fetch(window.location.href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'forfeit' }),
+    });
+    window.location.reload();
+  }
 
-    async function forfeitTicket() {
-        await fetch(window.location.href, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'forfeit'})
-        });
-        window.location.reload()
-    }
+  async function assignmentString(userId: string | undefined) {
+    if (!userId) return '';
+    const res = await fetch(`/admin/users/${userId}`);
+    const resp = await res.json();
+    return `${resp.user.name} (${userId})`;
+  }
 
-    async function assignmentString(userId: string|undefined) {
-        if (!userId) {
-            console.log("No userId")
-            return ""
-        }
-        const res = await fetch(`/admin/users/${userId}`);
-        const resp = await res.json();
-        return `${resp.user.name} (${userId})`
+  async function closeTicketUser() {
+    if (confirm('Are you sure you want to close this ticket?')) {
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
+      });
+      if (res.ok) window.location.reload();
     }
-    async function closeTicketUser() {
-        if (confirm("Are you sure you want to close this ticket?")) {
-            const res = await fetch(window.location.href, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, action: 'close'})
-            })
-            if (res.ok) {
-                window.location.reload()
-            }
-        }
+  }
+
+  async function closeTicketAgent() {
+    if (confirm('Are you sure you want to close this ticket?')) {
+      const reason = prompt('Please provide a closing message.');
+      if (!reason || reason === '') return;
+      await fetch(window.location.href + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: ticket?.id, content: reason }),
+      });
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'close' }),
+      });
+      if (res.ok) window.location.reload();
     }
-    async function closeTicketAgent() {
-        if (confirm("Are you sure you want to close this ticket?")) {
-            const reason = prompt("Please provide a closing message.", )
-            if (!reason || reason==='') return
-            await fetch(window.location.href+"/comments", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, content: reason})
-            })
-            const res = await fetch(window.location.href, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({agent: user.userId, ticketId: ticket?.id, action: 'close'})
-            })
-            if (res.ok) {
-                window.location.reload()
-            }
-        }
+  }
+
+  async function closeTicketAdmin() {
+    if (confirm('Are you sure you want to close this ticket?')) {
+      const reason = prompt('Please provide a closing message.');
+      if (!reason || reason === '') return;
+      await fetch(window.location.href + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: ticket?.id, content: reason }),
+      });
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
+      });
+      if (res.ok) window.location.reload();
     }
-    async function closeTicketAdmin() {
-        if (confirm("Are you sure you want to close this ticket?")) {
-            const reason = prompt("Please provide a closing message.", )
-            if (!reason || reason==='') return
-            await fetch(window.location.href+"/comments", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, content: reason})
-            })
-            const res = await fetch(window.location.href, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ticketId: ticket?.id, action: 'close'})
-            })
-            if (res.ok) {
-                window.location.reload()
-            }
-        }
-    }
+  }
+
+  const priorityVariant = (p: string) =>
+    p === 'critical' ? 'destructive' : p === 'high' ? 'default' : 'secondary';
+  const statusVariant = (s: string) =>
+    s === 'closed' ? 'outline' : s === 'open' ? 'secondary' : 'default';
 </script>
-<div class="card">
-    {#if user.role === 'agent'||user.role === 'admin'}
-        <a href={resolve('/tickets/open',{})}>Open tickets</a><br>
+
+<div class="space-y-4">
+  <div class="flex gap-4 text-sm">
+    {#if user.role === 'agent' || user.role === 'admin'}
+      <a href={resolve('/tickets/open', {})} class="text-muted-foreground hover:text-foreground underline underline-offset-4">Open tickets</a>
     {/if}
-    <a href={resolve('/', {})}>Return home</a>
-    {#if loading}
-        <p>Loading...</p>
-    {:else if error}
-        <p style="color: red;">Error: {error}</p>
-    {:else if ticket}
-        <h1>Ticket #{ticket.id}</h1>
-        <p><strong>Category:</strong> {ticket.category.replace('_', ' ')}</p>
-        <p><strong>Title:</strong> {ticket.title}</p>
-        <p><strong>Priority:</strong> {ticket.priority}</p>
-        <p><strong>Description:</strong> {ticket.description}</p>
-        <p><strong>Status:</strong> {ticket.status}</p><br>
+    <a href={resolve('/', {})} class="text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+  </div>
 
-        <!--AGENT-->
-        {#if user.role === 'agent'}
-        {#if ticket.assignedTo && (parseInt(user.userId) === parseInt(ticket.assignedTo))}
-        <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
+  {#if loading}
+    <p class="text-muted-foreground">Loading…</p>
+  {:else if error}
+    <p class="text-destructive">Error: {error}</p>
+  {:else if ticket}
+    <Card>
+      <CardHeader>
+        <div class="flex items-start justify-between gap-2 flex-wrap">
+          <CardTitle>Ticket #{ticket.id}: {ticket.title}</CardTitle>
+          <div class="flex gap-1.5 flex-wrap">
+            <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+            <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
+            <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent class="space-y-3">
+        <p class="text-sm text-muted-foreground">{ticket.description}</p>
 
-        {#if ticket.status !== 'resolved'}
-            <button onclick={updateStatus}>Update Status</button>
-            {#if ticket.status.toString() === 'waiting_for_response'}
-            <button onclick={updateStatusBack}>Mark as "in progress"</button>
-            {/if}
-            <button class="danger" onclick={forfeitTicket}>Forfeit ticket</button>
-            {/if}
-        <button class="danger" onclick={closeTicketAgent}>Close ticket</button>
-        {:else if (ticket.assignedTo === '' || !ticket.assignedTo) && !(ticket.status === 'closed')}
-        <button onclick={claimTicket}>Claim ticket</button>
+        {#if user.role === 'admin' && ticket.assignedTo}
+          <p class="text-sm"><span class="font-medium">Assigned to:</span> {assignmentStringState}</p>
         {/if}
 
-        <!--USER-->
-        {:else if user.role === 'user'}
-        <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
-        {#if !(ticket.status === 'closed')}
-        <button class="danger" onclick={closeTicketUser}>Close ticket</button>
-        {/if}
+        <Separator />
 
-        <!--ADMIN-->
-        {:else if user.role === 'admin'}
-        {#if ticket.assignedTo}
-        <p><strong>Assigned to:</strong> {assignmentStringState}</p>
-        {/if}
-        <button onclick={() => window.location.href=window.location.href+"/comments"}>Open Comments</button>
-            {#if !(ticket.status === 'closed')}
-                <button onclick={openAssignModal}>Assign agent</button>
-                <button class="danger" onclick={closeTicketAdmin}>Close ticket</button>
+        <div class="flex flex-wrap gap-2">
+          <Button size="sm" onclick={() => (window.location.href = window.location.href + '/comments')}>
+            Comments
+          </Button>
+
+          {#if user.role === 'agent'}
+            {#if ticket.assignedTo && parseInt(user.userId) === parseInt(ticket.assignedTo)}
+              {#if ticket.status !== 'resolved'}
+                <Button size="sm" variant="secondary" onclick={updateStatus}>Update Status</Button>
+                {#if ticket.status === 'waiting_for_response'}
+                  <Button size="sm" variant="secondary" onclick={updateStatusBack}>Mark In Progress</Button>
+                {/if}
+                <Button size="sm" variant="outline" onclick={forfeitTicket}>Forfeit</Button>
+              {/if}
+              <Button size="sm" variant="destructive" onclick={closeTicketAgent}>Close Ticket</Button>
+            {:else if (!ticket.assignedTo || ticket.assignedTo === '') && ticket.status !== 'closed'}
+              <Button size="sm" onclick={claimTicket}>Claim Ticket</Button>
             {/if}
-            {#if showAssignModal}
-                <div class="modal">
-                    <div class="modal-content">
-                        <h2>Assign agent</h2>
-                        {#if agents.length > 0}
-                            <label>
-                                Select agent:
-                                <select bind:value={selectedAgentId}>
-                                    <option value=-1>Unassign</option>
-                                    {#each agents as agent (agent.id)}
-                                        <option value={agent.id}>{agent.name} ({agent.id})</option>
-                                    {/each}
-                                </select>
-                            </label>
-                            <button onclick={assignSelectedAgent}>Assign</button>
-                        {:else}
-                            <p>No agents available</p>
-                        {/if}
-                        <button onclick={closeAssignModal}>Cancel</button>
-                    </div>
-                </div>
+
+          {:else if user.role === 'user'}
+            {#if ticket.status !== 'closed'}
+              <Button size="sm" variant="destructive" onclick={closeTicketUser}>Close Ticket</Button>
             {/if}
-        {/if}
-        {#if auditTrail.length > 0}
-        <details>
-            <summary>Audit trail</summary>
-            <ul class="audit-trail">
-                {#each auditTrail as audit, i (audit.id ?? i)}
-                    <li class="audit-entry">
-                        {#if typeof audit === 'object' && audit !== null}
-                            <p><strong>{audit.createdAt ?? 'Unknown time'}</strong></p>
-                            <p>{audit.action ?? 'Audit entry'}</p>
-                            {#if audit.userId}
-                                <p>User: {audit.userDisplay ?? audit.userId}</p>
-                            {/if}
-                            {#if !audit.action}
-                                <pre>{JSON.stringify(audit, null, 2)}</pre>
-                            {/if}
-                        {:else}
-                            <pre>{JSON.stringify(audit)}</pre>
-                        {/if}
-                    </li>
-                {/each}
-            </ul>
-        </details>
+
+          {:else if user.role === 'admin'}
+            {#if ticket.status !== 'closed'}
+              <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}>Assign Agent</Button>
+              <Button size="sm" variant="destructive" onclick={closeTicketAdmin}>Close Ticket</Button>
+            {/if}
+          {/if}
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Assign agent dialog (admin only) -->
+    <Dialog bind:open={showAssignModal}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign Agent</DialogTitle>
+        </DialogHeader>
+        {#if agents.length > 0}
+          <div class="space-y-2 py-2">
+            <Label for="agent-select">Select agent</Label>
+            <select id="agent-select" bind:value={selectedAgentId}
+              class="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+              <option value="-1">Unassign</option>
+              {#each agents as agent (agent.id)}
+                <option value={agent.id}>{agent.name} ({agent.id})</option>
+              {/each}
+            </select>
+          </div>
         {:else}
-            <p>No audit history available.</p>
+          <p class="text-muted-foreground text-sm py-2">No agents available.</p>
         {/if}
+        <DialogFooter>
+          <Button variant="outline" onclick={() => (showAssignModal = false)}>Cancel</Button>
+          {#if agents.length > 0}
+            <Button onclick={assignSelectedAgent}>Assign</Button>
+          {/if}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Audit trail -->
+    {#if auditTrail.length > 0}
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-base">Audit Trail</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul class="space-y-3">
+            {#each auditTrail as audit, i (audit.id ?? i)}
+              <li class="text-sm border-l-2 border-border pl-3">
+                {#if typeof audit === 'object' && audit !== null}
+                  <p class="font-medium">{audit.createdAt ?? 'Unknown time'}</p>
+                  <p class="text-muted-foreground">{audit.action ?? 'Audit entry'}</p>
+                  {#if audit.userId}
+                    <p class="text-xs text-muted-foreground">User: {audit.userDisplay ?? audit.userId}</p>
+                  {/if}
+                {:else}
+                  <pre class="text-xs">{JSON.stringify(audit)}</pre>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        </CardContent>
+      </Card>
     {:else}
-        <p>Ticket not found</p>
+      <p class="text-muted-foreground text-sm">No audit history available.</p>
     {/if}
+  {:else}
+    <p class="text-muted-foreground">Ticket not found.</p>
+  {/if}
 </div>
