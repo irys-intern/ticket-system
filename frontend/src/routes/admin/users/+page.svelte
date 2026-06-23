@@ -34,7 +34,7 @@
   );
 
   onMount(async () => {
-    const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users');
+    const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', { credentials: 'include' });
     const result = await response.json();
     if (!response.ok) {
       errors = result.errors ?? [result.message ?? 'Unable to fetch users'];
@@ -50,8 +50,9 @@
 
   function handleSave() {
     if (!selectedUser) return;
-    fetch('/admin/users', {
+    fetch(PUBLIC_BACKEND_URL+'/admin/users', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ manageUser: selectedUser.id, modification: selectedUser.role }),
     });

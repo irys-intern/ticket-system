@@ -6,25 +6,18 @@ import { createTicketSchema } from '../../utils/validators.ts';
 export const POST: RequestHandler = async ({ request, locals, fetch }) => {
     try {
         const data = await request.json();
-        // Validate the input data
         const validatedData = createTicketSchema.parse(data);
-        const userIdValue = locals.user?.userId;
+        const createdBy = locals.user?.userId;
 
-        if (userIdValue == null) {
+        if (!createdBy) {
             return json({ success: false, errors: ['User not authenticated'] }, { status: 401 });
         }
 
-        const createdBy = Number(userIdValue);
-        if (!Number.isFinite(createdBy)) {
-            return json({ success: false, errors: ['Invalid user ID'] }, { status: 400 });
-        }
-
-        // Insert the new ticket into the database
         const [newTicket] = await db.insert(ticketsTable).values({
             title: validatedData.title,
             description: validatedData.description,
             createdBy,
-            status: 'open', // Default status for new tickets
+            status: 'open',
             priority: validatedData.priority,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -32,9 +25,7 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
         }).returning();
         await fetch('/admin/audit', {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({action: "ticket created", ticketId: newTicket.id})
         })
         return json({ success: true, ticketId: newTicket.id }, { status: 201 });

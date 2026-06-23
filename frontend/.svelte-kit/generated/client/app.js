@@ -32,7 +32,7 @@ export const dictionary = {
 		"/privacy": [10],
 		"/tickets": [11],
 		"/tickets/open": [12],
-		"/tickets/[id]": [~13],
+		"/tickets/[id]": [13],
 		"/tickets/[id]/comments": [14]
 	};
 

@@ -1,7 +1,8 @@
-import { initializeDatabase } from './db/index.ts';
-import { validateSession } from './middleware/sessionValidator.ts'
+import { initializeDatabase, db } from './db/index.ts';
+import { auth } from './auth/auth.ts';
+import { userTable } from './db/schema.ts';
+import { eq } from 'drizzle-orm';
 
-// Initialize database on server start
 await initializeDatabase();
 
 export async function handle({ event, resolve }) {
@@ -17,14 +18,25 @@ export async function handle({ event, resolve }) {
         return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    const session = await validateSession(event);
-    event.locals.session = session;
-    event.locals.user = session ? {
-        userId: session.userId,
-        email: session.email,
-        name: session.name,
-        role: session.role
-    } : null;
+    const session = await auth.api.getSession({
+        headers: event.request.headers,
+    });
+
+    if (session) {
+        const [dbUser] = await db
+            .select({ role: userTable.role })
+            .from(userTable)
+            .where(eq(userTable.id, session.user.id));
+        event.locals.session = {
+            userId: session.user.id,
+            email: session.user.email,
+            name: session.user.name,
+            role: dbUser?.role ?? 'user',
+        };
+    } else {
+        event.locals.session = null;
+    }
+    event.locals.user = event.locals.session;
 
     const response = await resolve(event);
     for (const [key, value] of Object.entries(corsHeaders)) {

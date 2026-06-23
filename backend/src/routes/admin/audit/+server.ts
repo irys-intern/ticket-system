@@ -1,21 +1,20 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
-import { auditEventsTable, usersTable } from "../../../db/schema.ts";
+import { auditEventsTable, userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import type { Ticket } from "../../../types/index.ts";
 
 export const GET: RequestHandler = async ({ locals, request, fetch }) => {
     const user = locals.user
-    const data = await request.headers;
-    const ticket_id = data.get("X-Ticket-Id")
+    const ticket_id = request.headers.get("X-Ticket-Id")
     if (ticket_id) {
         const ticket: Ticket = await (await fetch(`/tickets/${ticket_id}`)).json();
         if (user?.role === 'user') {
-            if (ticket.createdBy.toString() !== user.userId) {
+            if (ticket.createdBy !== user.userId) {
                 throw error(403, "Forbidden");
             }
         } else if (user?.role === 'agent') {
-            if (ticket.assignedTo?.toString() !== user.userId) {
+            if (ticket.assignedTo !== user.userId) {
                 throw error(403, "Forbidden")
             }
         }
@@ -25,13 +24,11 @@ export const GET: RequestHandler = async ({ locals, request, fetch }) => {
         throw error(403, "Forbidden")
     }
     try {
-    const audit_events = await db.select()
-                                 .from(auditEventsTable);
-    const users = await db.select()
-                          .from(usersTable);
-    return json({events: audit_events, users: users})
-    } catch (error) {
-        return json({error})
+        const audit_events = await db.select().from(auditEventsTable);
+        const users = await db.select().from(userTable);
+        return json({events: audit_events, users: users})
+    } catch (err) {
+        return json({error: err})
     }
 }
 
@@ -50,15 +47,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     if (!Number.isFinite(ticketId)) {
         throw error(400, "Bad ticketId")
     }
-    const userId = Number(user.userId)
-    if (!Number.isFinite(userId)) {
+    const userId = user.userId
+    if (!userId) {
         throw error(400, "Bad userId")
     }
     try {
-        await db.insert(auditEventsTable)
-            .values({ticketId, userId, action})
+        await db.insert(auditEventsTable).values({ticketId, userId, action})
         return json({ok: true})
-    } catch (error) {
-        return json({error})
+    } catch (err) {
+        return json({error: err})
     }
 }

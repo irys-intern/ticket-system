@@ -4,6 +4,4 @@
 - Create Dockerfile and docker-compose.yml
 
 ## Backend Server
-- Create new project for backend logic
 - Setup betterauth on new Node
-- Refactor HTTP logic in frontend to point to specified port in .env

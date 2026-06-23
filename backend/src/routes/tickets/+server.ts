@@ -12,12 +12,12 @@ export const GET: RequestHandler = async ({locals}) => {
     if (userRole === 'user') {
         const dbHits = await db.select()
                          .from(ticketsTable)
-                         .where(eq(ticketsTable.createdBy, parseInt(userId)))
+                         .where(eq(ticketsTable.createdBy, userId))
         return json({ tickets: dbHits })
     } else if (userRole === 'agent') {
         const dbHits = await db.select()
                                .from(ticketsTable)
-                               .where(eq(ticketsTable.assignedTo, parseInt(userId)))
+                               .where(eq(ticketsTable.assignedTo, userId))
         return json({ tickets: dbHits, userRole})
     } else if (userRole === 'admin') {
         const dbHits = await db.select()

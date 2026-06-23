@@ -1,14 +1,13 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
-import { usersTable } from "../../../db/schema.ts";
+import { userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ locals }) => {
     if (locals.user?.role !== 'admin') {
         throw error(401, "Unauthenticated")
     }
-    const dbHits = await db.select()
-                     .from(usersTable)
+    const dbHits = await db.select().from(userTable)
     return json({users: dbHits});
 }
 
@@ -24,8 +23,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     if ((!manageUserId) || (!modification)) {
         throw error(400, "Malformed request")
     }
-    if ((modification === 'user'|| modification === 'agent' || modification === 'admin') && manageUserId) {
-        updatedUser = await db.update(usersTable).set({role: modification}).where(eq(usersTable.id, manageUserId)).returning()
+    if ((modification === 'user' || modification === 'agent' || modification === 'admin') && manageUserId) {
+        updatedUser = await db.update(userTable).set({role: modification}).where(eq(userTable.id, manageUserId)).returning()
     }
     return json({success: !!updatedUser})
 }

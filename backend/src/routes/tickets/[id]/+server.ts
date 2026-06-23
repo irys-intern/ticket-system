@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
         throw error(401, 'Unauthorized')
     }
 
-    if (user.role !== 'agent' && user.role !== 'admin' && ticket.createdBy.toString() !== user.userId) {
+    if (user.role !== 'agent' && user.role !== 'admin' && ticket.createdBy !== user.userId) {
         throw error(403, 'Forbidden')
     }
 
@@ -39,7 +39,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
         throw error(403, `Mangled request: ${data.ticketId} vs ${params.id}`)
     }
     if (user.role === 'agent') {
-        if (parseInt(data.agent) !== parseInt(user.userId)) {
+        if (data.agent !== user.userId) {
             throw error(401, "Bad auth")
         }
         if (data.action === 'claim') {
@@ -48,71 +48,57 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 return json({success:false, body: current_assignment})
             }
             const ret = await db.update(ticketsTable)
-                                .set({assignedTo: parseInt(user.userId), status: 'in_progress'})
+                                .set({assignedTo: user.userId, status: 'in_progress'})
                                 .where(eq(ticketsTable.id, parseInt(params.id)))
                                 .returning()
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket assigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket assigned", ticketId: params.id})
             })
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             return json({success: true, ticket: ret})
         } else if (data.action === 'forfeit') {
-            const current_assignment = await db.select().from(ticketsTable).where(and(eq(ticketsTable.id, parseInt(params.id)), eq(ticketsTable.assignedTo, parseInt(user.userId))))
+            const current_assignment = await db.select().from(ticketsTable).where(and(eq(ticketsTable.id, parseInt(params.id)), eq(ticketsTable.assignedTo, user.userId)))
             if (current_assignment.length === 0) {
                 return json({success:false})
             }
             await db.update(ticketsTable).set({assignedTo: null, status: 'open'}).where(eq(ticketsTable.id, parseInt(params.id)))
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             return json({success: true})
         } else if (data.action === 'close') {
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})
         } else if (data.action === 'update_status') {
             const statussy = ["open", "in_progress", "waiting_for_response", "resolved"]
-            if (statussy.indexOf(data.status)===-1) return json({ok:false, success:false})
-                await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+            if (statussy.indexOf(data.status) === -1) return json({ok:false, success:false})
+            await fetch('/admin/audit', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             });
             await db.update(ticketsTable).set({status: data.status}).where(eq(ticketsTable.id, parseInt(params.id)));
             return json({ok: true, success: true})
@@ -122,22 +108,18 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
     } else if (user.role === 'admin') {
         if (data.action === 'assign') {
             const ret = await db.update(ticketsTable)
-                                .set({assignedTo: parseInt(data.agent), status: 'in_progress'})
+                                .set({assignedTo: data.agent, status: 'in_progress'})
                                 .where(eq(ticketsTable.id, parseInt(params.id)))
                                 .returning()
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket assigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket assigned", ticketId: params.id})
             })
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             return json({success: true, ticket: ret})
         } else if (data.action === 'unassign') {
@@ -147,27 +129,21 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             }
             await db.update(ticketsTable).set({assignedTo: null, status: 'open'}).where(eq(ticketsTable.id, parseInt(params.id)))
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             return json({success: true})
         } else if (data.action === 'close') {
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})
@@ -177,18 +153,14 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
     } else if (user.role === 'user') {
         if (data.action === 'close') {
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "status changed", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
             await fetch('/admin/audit', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})

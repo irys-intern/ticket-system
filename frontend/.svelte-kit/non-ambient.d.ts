@@ -29,19 +29,17 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/admin/users/[id]" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/tickets/[id]/status";
+		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/tickets/[id]/status";
 		RouteParams(): {
-			"/admin/users/[id]": { id: string };
 			"/tickets/[id]": { id: string };
 			"/tickets/[id]/comments": { id: string };
 			"/tickets/[id]/status": { id: string }
 		};
 		LayoutParams(): {
 			"/": { id?: string | undefined };
-			"/admin": { id?: string | undefined };
+			"/admin": Record<string, never>;
 			"/admin/audit": Record<string, never>;
-			"/admin/users": { id?: string | undefined };
-			"/admin/users/[id]": { id: string };
+			"/admin/users": Record<string, never>;
 			"/auth": Record<string, never>;
 			"/auth/login": Record<string, never>;
 			"/auth/logout": Record<string, never>;
@@ -55,7 +53,7 @@ declare module "$app/types" {
 			"/tickets/[id]/comments": { id: string };
 			"/tickets/[id]/status": { id: string }
 		};
-		Pathname(): "/" | "/admin/audit" | "/admin/users" | `/admin/users/${string}` & {} | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {} | `/tickets/${string}/status` & {};
+		Pathname(): "/" | "/admin/audit" | "/admin/users" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {};
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/favicon.svg" | string & {};
 	}

@@ -11,8 +11,7 @@
   import { Separator } from '$lib/components/ui/separator';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
-  const { data } = $props();
-  let user = $derived(data.user);
+  let user: { userId: string; email: string; name: string; role: string } | null = $state(null);
   let ticket: Ticket | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
@@ -24,13 +23,19 @@
   let loadingAuditTrail = $state(true);
 
   onMount(async () => {
+    const meRes = await fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' });
+    if (!meRes.ok) { window.location.href = '/auth/login'; return; }
+    const meData = await meRes.json();
+    if (!meData.valid || !meData.session?.userId) { window.location.href = '/auth/login'; return; }
+    user = meData.session;
+
     try {
       const id = page.params.id;
       const response = await fetch(PUBLIC_BACKEND_URL+`/tickets/${id}`, {credentials: 'include'});
       if (!response.ok) throw new Error('Failed to fetch ticket');
       ticket = await response.json();
 
-      if (user.role === 'admin') {
+      if (user?.role === 'admin') {
         assignmentStringState = await assignmentString(ticket?.assignedTo);
         await loadAgents();
       }
@@ -105,7 +110,7 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'claim' }),
+      body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'claim' }),
     });
     window.location.reload();
   }
@@ -120,7 +125,7 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim() }),
+      body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim() }),
     });
     window.location.reload();
   }
@@ -132,7 +137,7 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user.userId, ticketId: ticket.id, action: 'update_status', status: 'in_progress' }),
+      body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_status', status: 'in_progress' }),
     });
     window.location.reload();
   }
@@ -142,14 +147,14 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'forfeit' }),
+      body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'forfeit' }),
     });
     window.location.reload();
   }
 
   async function assignmentString(userId: string | undefined) {
     if (!userId) return '';
-    const res = await fetch(`/admin/users/${userId}`);
+    const res = await fetch(PUBLIC_BACKEND_URL+`/admin/users/${userId}`, {credentials: 'include'});
     const resp = await res.json();
     return `${resp.user.name} (${userId})`;
   }
@@ -180,7 +185,7 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'close' }),
+        body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'close' }),
       });
       if (res.ok) window.location.reload();
     }
@@ -212,6 +217,7 @@
     s === 'closed' ? 'outline' : s === 'open' ? 'secondary' : 'default';
 </script>
 
+{#if user}
 <div class="space-y-4">
   <div class="flex gap-4 text-sm">
     {#if user.role === 'agent' || user.role === 'admin'}
@@ -251,7 +257,7 @@
           </Button>
 
           {#if user.role === 'agent'}
-            {#if ticket.assignedTo && parseInt(user.userId) === parseInt(ticket.assignedTo)}
+            {#if ticket.assignedTo && user.userId === ticket.assignedTo}
               {#if ticket.status !== 'resolved'}
                 <Button size="sm" variant="secondary" onclick={updateStatus}>Update Status</Button>
                 {#if ticket.status === 'waiting_for_response'}
@@ -354,3 +360,4 @@
     <p class="text-muted-foreground">Ticket not found.</p>
   {/if}
 </div>
+{/if}

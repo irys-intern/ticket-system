@@ -1,15 +1,20 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { sessionStore } from '../../../auth/redis-session.ts';
+import { auth } from '../../../auth/auth.ts';
 
-export const POST: RequestHandler = async ({ cookies }) => {
-  try {
-    const sessionId = cookies.get('sessionId');
-    if (sessionId) {
-      await sessionStore.deleteSession(sessionId);
-    }
-    return json({ success: true, message: 'Logout successful' }, { status: 200 });
+export const POST: RequestHandler = async ({ request }) => {
+    try {
+        const authResponse = await auth.api.signOut({
+            headers: request.headers,
+            asResponse: true,
+        });
+
+        const response = json({ success: true, message: 'Logout successful' }, { status: 200 });
+        const setCookie = authResponse.headers.get('set-cookie');
+        if (setCookie) {
+            response.headers.set('set-cookie', setCookie);
+        }
+        return response;
     } catch (error) {
-        console.error('Logout error:', error);
         const message = error instanceof Error ? error.message : String(error);
         return json({ success: false, errors: [message] }, { status: 500 });
     }

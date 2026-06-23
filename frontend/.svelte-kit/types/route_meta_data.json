@@ -1,29 +1,15 @@
 {
 	"/": [],
-	"/admin/audit": [
-		"src/routes/admin/audit/+server.ts"
-	],
-	"/admin/users": [
-		"src/routes/admin/users/+server.ts"
-	],
-	"/admin/users/[id]": [
-		"src/routes/admin/users/[id]/+server.ts"
-	],
+	"/admin/audit": [],
+	"/admin/users": [],
 	"/auth/login": [],
-	"/auth/logout": [
-		"src/routes/auth/logout/+server.ts"
-	],
+	"/auth/logout": [],
 	"/auth/register": [],
 	"/create_admin": [],
 	"/create_ticket": [],
 	"/privacy": [],
 	"/tickets": [],
 	"/tickets/open": [],
-	"/tickets/[id]": [
-		"src/routes/tickets/[id]/+page.server.ts"
-	],
-	"/tickets/[id]/comments": [],
-	"/tickets/[id]/status": [
-		"src/routes/tickets/[id]/status/+server.ts"
-	]
+	"/tickets/[id]": [],
+	"/tickets/[id]/comments": []
 }

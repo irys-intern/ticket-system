@@ -1,10 +1,10 @@
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import { db } from "../../../../db/index.ts";
-import { commentsTable, ticketsTable, usersTable } from "../../../../db/schema.ts";
+import { commentsTable, ticketsTable, userTable } from "../../../../db/schema.ts";
 import { and, asc, eq } from "drizzle-orm";
 import { createCommentSchema } from "../../../../utils/validators.ts";
 
-async function getTicketForUser(ticketId: number, userId: number, role: string) {
+async function getTicketForUser(ticketId: number, userId: string, role: string) {
     if (role === 'user') {
         const rows = await db.select().from(ticketsTable)
             .where(and(eq(ticketsTable.id, ticketId), eq(ticketsTable.createdBy, userId)))
@@ -21,9 +21,9 @@ export const GET: RequestHandler = async ({ locals, params }) => {
     const ticketId = parseInt(params.id);
     if (Number.isNaN(ticketId)) throw error(400, "Invalid ticket id");
 
-    const ticket = await getTicketForUser(ticketId, parseInt(user.userId), user.role);
+    const ticket = await getTicketForUser(ticketId, user.userId, user.role);
     if (!ticket) throw error(404, "Ticket not found");
-    if (user.role !== 'admin' && user.userId !== ticket.assignedTo?.toString() && user.userId !== ticket.createdBy.toString()) {
+    if (user.role !== 'admin' && user.userId !== ticket.assignedTo && user.userId !== ticket.createdBy) {
         throw error(403, "Forbidden");
     }
     const comments = await db
@@ -33,10 +33,10 @@ export const GET: RequestHandler = async ({ locals, params }) => {
             createdAt: commentsTable.createdAt,
             updatedAt: commentsTable.updatedAt,
             userId: commentsTable.userId,
-            userName: usersTable.name,
+            userName: userTable.name,
         })
         .from(commentsTable)
-        .innerJoin(usersTable, eq(commentsTable.userId, usersTable.id))
+        .innerJoin(userTable, eq(commentsTable.userId, userTable.id))
         .where(eq(commentsTable.ticketId, ticketId))
         .orderBy(asc(commentsTable.createdAt));
 
@@ -50,10 +50,10 @@ export const POST: RequestHandler = async ({ locals, params, request, fetch }) =
     const ticketId = parseInt(params.id);
     if (Number.isNaN(ticketId)) throw error(400, "Invalid ticket id");
 
-    const ticket = await getTicketForUser(ticketId, parseInt(user.userId), user.role);
+    const ticket = await getTicketForUser(ticketId, user.userId, user.role);
     if (!ticket) throw error(404, "Ticket not found");
-    if (ticket.status==='closed') throw error(409, "Ticket closed, no comments allowed.")
-    if (user.role !== 'admin' && user.userId !== ticket.assignedTo?.toString() && user.userId !== ticket.createdBy.toString()) {
+    if (ticket.status === 'closed') throw error(409, "Ticket closed, no comments allowed.")
+    if (user.role !== 'admin' && user.userId !== ticket.assignedTo && user.userId !== ticket.createdBy) {
         throw error(403, "Forbidden");
     }
     const body = await request.json();
@@ -62,7 +62,7 @@ export const POST: RequestHandler = async ({ locals, params, request, fetch }) =
 
     const [comment] = await db.insert(commentsTable).values({
         ticketId,
-        userId: parseInt(user.userId),
+        userId: user.userId,
         content: parsed.data.content,
     }).returning();
 
