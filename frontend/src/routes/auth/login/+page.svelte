@@ -5,6 +5,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let email = $state('');
   let password = $state('');
@@ -19,10 +20,11 @@
     errors = [];
 
     try {
-      const response = await fetch('/auth/login', {
+      const response = await fetch(`${PUBLIC_BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include',
       });
 
       const result = await response.json();
@@ -33,7 +35,7 @@
         successMessage = result.message ?? 'Login successful.';
         email = '';
         password = '';
-        await goto(resolve('/', { definitelyNotAnErrorSuppressor: 'teehee' }), { replaceState: true });
+        await goto(resolve('/'), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the login service. Please try again later.'];
@@ -49,7 +51,7 @@
     <h1 class="text-2xl font-bold tracking-tight">Log in to your account</h1>
     <p class="text-muted-foreground text-sm mt-1">
       Sign in to submit tickets and manage requests.
-      Alternatively, <a href={resolve('/auth/register', {})} class="underline underline-offset-4 hover:text-foreground">register</a>.
+      Alternatively, <a href={resolve('/auth/register')} class="underline underline-offset-4 hover:text-foreground">register</a>.
     </p>
   </div>
 

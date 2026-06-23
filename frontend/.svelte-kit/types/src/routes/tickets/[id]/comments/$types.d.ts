@@ -16,5 +16,3 @@ export type EntryGenerator = () => Promise<Array<RouteParams>> | Array<RoutePara
 export type PageServerData = null;
 export type PageData = Expand<PageParentData>;
 export type PageProps = { params: RouteParams; data: PageData }
-export type RequestHandler = Kit.RequestHandler<RouteParams, RouteId>;
-export type RequestEvent = Kit.RequestEvent<RouteParams, RouteId>;

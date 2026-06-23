@@ -38,6 +38,7 @@
  * The above values will be the same _even if_ different values for `ENVIRONMENT` or `PUBLIC_BASE_URL` are set at runtime, as they are statically replaced in your code with their build time values.
  */
 declare module '$env/static/private' {
+	export const BACKEND_URL: string;
 	export const BETTER_AUTH_SECRET: string;
 	export const DATABASE_URL: string;
 	export const FRONTEND_URL: string;
@@ -149,7 +150,7 @@ declare module '$env/static/private' {
  * The above values will be the same _even if_ different values for `ENVIRONMENT` or `PUBLIC_BASE_URL` are set at runtime, as they are statically replaced in your code with their build time values.
  */
 declare module '$env/static/public' {
-	
+	export const PUBLIC_BACKEND_URL: string;
 }
 
 /**
@@ -199,6 +200,7 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
+		BACKEND_URL: string;
 		BETTER_AUTH_SECRET: string;
 		DATABASE_URL: string;
 		FRONTEND_URL: string;
@@ -329,6 +331,7 @@ declare module '$env/dynamic/private' {
  */
 declare module '$env/dynamic/public' {
 	export const env: {
+		PUBLIC_BACKEND_URL: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }

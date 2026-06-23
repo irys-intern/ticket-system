@@ -13,5 +13,14 @@
 		"module": "esnext",
 		"moduleResolution": "bundler"
 	},
-	"include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "drizzle.config.ts"]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.js",
+		"src/**/*.svelte",
+		"drizzle.config.ts",
+		"vite.config.ts",
+		".svelte-kit/ambient.d.ts",
+		".svelte-kit/non-ambient.d.ts",
+		".svelte-kit/types/**/$types.d.ts"
+	]
 }

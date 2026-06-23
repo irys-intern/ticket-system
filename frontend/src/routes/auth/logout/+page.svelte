@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import { Button } from '$lib/components/ui/button';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let errors: string[] = $state([]);
   let successMessage = $state('');
@@ -10,8 +11,9 @@
   async function handleSubmit(event: Event) {
     event.preventDefault();
     try {
-      const response = await fetch('/auth/logout', {
+      const response = await fetch(`${PUBLIC_BACKEND_URL}/auth/logout`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -21,7 +23,7 @@
         errors = result.errors ?? [result.message ?? 'Unable to log out'];
       } else {
         successMessage = result.message ?? 'You have been logged out successfully.';
-        await goto(resolve('/', {}), { replaceState: true });
+        await goto(resolve('/'), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the logout service. Please try again later.'];
@@ -30,7 +32,7 @@
   }
 
   function backToHome() {
-    goto(resolve('/', {}), { replaceState: true });
+    goto(resolve('/'), { replaceState: true });
   }
 </script>
 

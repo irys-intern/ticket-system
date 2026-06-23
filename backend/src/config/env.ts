@@ -21,7 +21,10 @@ export const env = {
   },
   
   frontend: {
-    url: process.env.FRONTEND_URL || 'http://localhost:5172',
+    url: process.env.FRONTEND_URL || 'http://localhost:5173',
+  },
+  backend: {
+    url: process.env.BACKEND_URL || 'http://localhost:5172',
   },
 
   superPassword: process.env.SUPERUSER_PASSWORD,

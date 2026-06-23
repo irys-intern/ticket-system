@@ -2,6 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '../../db/index.ts';
 import { ticketsTable } from '../../db/schema.ts';
 import { createTicketSchema } from '../../utils/validators.ts';
+import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
 export const POST: RequestHandler = async ({ request, locals, fetch }) => {
     try {
@@ -30,7 +31,7 @@ export const POST: RequestHandler = async ({ request, locals, fetch }) => {
             updatedAt: new Date(),
             category: validatedData.category
         }).returning();
-        await fetch('/admin/audit', {
+        await fetch(`${PUBLIC_BACKEND_URL}/admin/audit`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

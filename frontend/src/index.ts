@@ -7,7 +7,7 @@ import { errorHandler } from './middleware/errorHandler.ts';
 const app = express();
 
 // Middleware
-app.use(cors({ origin: env.frontend.url }));
+// app.use(cors({ origin: env.frontend.url }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

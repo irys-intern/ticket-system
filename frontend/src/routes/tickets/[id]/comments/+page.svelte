@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { resolve } from '$app/paths';
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import { Textarea } from '$lib/components/ui/textarea';
   import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Separator } from '$lib/components/ui/separator';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public'
 
   let comments: { id: string; userName: string; createdAt: string; content: string }[] = $state([]);
   let newComment = $state('');
@@ -23,7 +23,7 @@
   async function fetchComments() {
     try {
       loading = true;
-      const response = await fetch(location.href);
+      const response = await fetch(PUBLIC_BACKEND_URL+window.location.pathname);
       if (!response.ok) throw new Error('Failed to fetch comments. Please reload.');
       const data = await response.json();
       comments = data.comments || [];
@@ -54,7 +54,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/' + ticketUrl, {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
+    <a href={'/' + ticketUrl} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
       &larr; Back to ticket
     </a>
   </div>

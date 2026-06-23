@@ -47,8 +47,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     const sessionToken = await sessionStore.createSession(user[0].id.toString(), user[0].email, user[0].name, user[0].role, 60 * 60 * 24);
     cookies.set('sessionId', sessionToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: true,
+        sameSite: 'none',
         maxAge: 60 * 60 * 24,
         path: '/',
     });

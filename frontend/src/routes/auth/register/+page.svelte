@@ -4,6 +4,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let name = $state('');
   let email = $state('');
@@ -19,7 +20,7 @@
     errors = [];
 
     try {
-      const response = await fetch('/auth/register', {
+      const response = await fetch(`${PUBLIC_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -50,7 +51,7 @@
     <h1 class="text-2xl font-bold tracking-tight">Create an account</h1>
     <p class="text-muted-foreground text-sm mt-1">
       Sign up to submit tickets and manage requests.
-      Alternatively, <a href={resolve('/auth/login', {})} class="underline underline-offset-4 hover:text-foreground">log in</a>.
+      Alternatively, <a href={resolve('/auth/login')} class="underline underline-offset-4 hover:text-foreground">log in</a>.
     </p>
   </div>
 

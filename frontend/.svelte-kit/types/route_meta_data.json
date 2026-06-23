@@ -11,15 +11,11 @@
 	"/admin/users/[id]": [
 		"src/routes/admin/users/[id]/+server.ts"
 	],
-	"/auth/login": [
-		"src/routes/auth/login/+server.ts"
-	],
+	"/auth/login": [],
 	"/auth/logout": [
 		"src/routes/auth/logout/+server.ts"
 	],
-	"/auth/register": [
-		"src/routes/auth/register/+server.ts"
-	],
+	"/auth/register": [],
 	"/create_admin": [
 		"src/routes/create_admin/+server.ts"
 	],
@@ -37,9 +33,7 @@
 		"src/routes/tickets/[id]/+page.server.ts",
 		"src/routes/tickets/[id]/+server.ts"
 	],
-	"/tickets/[id]/comments": [
-		"src/routes/tickets/[id]/comments/+server.ts"
-	],
+	"/tickets/[id]/comments": [],
 	"/tickets/[id]/status": [
 		"src/routes/tickets/[id]/status/+server.ts"
 	]

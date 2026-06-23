@@ -1,14 +1,12 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { sessionStore } from '../../../auth/redis-session.ts';
 
 export const POST: RequestHandler = async ({ cookies }) => {
   try {
-    cookies.delete('sessionId', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 0,
-        path: '/'
-    })
+    const sessionId = cookies.get('sessionId');
+    if (sessionId) {
+      await sessionStore.deleteSession(sessionId);
+    }
     return json({ success: true, message: 'Logout successful' }, { status: 200 });
     } catch (error) {
         console.error('Logout error:', error);
