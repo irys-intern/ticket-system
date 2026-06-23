@@ -1,0 +1,92 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import type { Ticket } from '../../../types/index.ts';
+  import { resolve } from '$app/paths';
+  import { Button } from '$lib/components/ui/button';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { Label } from '$lib/components/ui/label';
+
+  const severities = ['all', 'low', 'medium', 'high', 'critical'];
+  let severityFilter = $state('all');
+  let errors: string[] = $state([]);
+  let tickets: Ticket[] = $state([]);
+  let filteredTickets: Ticket[] = $derived(
+    severityFilter === 'all' ? tickets : tickets.filter((t: Ticket) => t.priority === severityFilter)
+  );
+
+  onMount(async () => {
+    const response = await fetch('/tickets/open');
+    const result = await response.json();
+    if (!response.ok) {
+      errors = result.errors ?? [result.message ?? 'Unable to fetch tickets'];
+      return;
+    }
+    tickets = result.tickets ?? [];
+  });
+
+  const priorityVariant = (p: string) =>
+    p === 'critical' ? 'destructive'
+    : p === 'high' ? 'default'
+    : 'secondary';
+</script>
+
+<div class="space-y-4">
+  <div>
+    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold tracking-tight">Open Tickets</h1>
+    <div class="flex items-center gap-2">
+      <Label for="severity-filter" class="text-sm">Priority</Label>
+      <select id="severity-filter" bind:value={severityFilter}
+        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+        {#each severities as severity (severity)}
+          <option value={severity}>{severity}</option>
+        {/each}
+      </select>
+    </div>
+  </div>
+
+  {#if errors.length}
+    <Alert variant="destructive">
+      <AlertDescription>
+        <ul class="list-disc list-inside space-y-1">
+          {#each errors as error (error)}<li>{error}</li>{/each}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  {/if}
+
+  {#if filteredTickets.length === 0 && !errors.length}
+    <p class="text-muted-foreground text-sm">No open tickets found.</p>
+  {/if}
+
+  <div class="space-y-3">
+    {#each filteredTickets as ticket (ticket.id)}
+      <Card>
+        <CardHeader class="pb-2">
+          <div class="flex items-start justify-between gap-2">
+            <CardTitle class="text-base">{ticket.title}</CardTitle>
+            <div class="flex gap-1.5 shrink-0">
+              <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+              <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
+            </div>
+          </div>
+        </CardHeader>
+        {#if ticket.description}
+          <CardContent class="pb-3 pt-0">
+            <p class="text-sm text-muted-foreground line-clamp-2">{ticket.description}</p>
+          </CardContent>
+        {/if}
+        <CardContent class="pt-0">
+          <Button size="sm" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
+            Go to ticket
+          </Button>
+        </CardContent>
+      </Card>
+    {/each}
+  </div>
+</div>

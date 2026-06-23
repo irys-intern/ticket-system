@@ -1,0 +1,1 @@
+import{H as e,I as t,L as n,O as r,P as i,c as a,d as o,f as s,g as c,h as l}from"../chunks/Dl62to-m.js";import"../chunks/xihTtKlq.js";u[e]=`src/routes/+layout.svelte`;function u(e,d){o(new.target),n(d,!0,u);var f={...s()},p=c(),m=r(p);return i(()=>a(m,()=>d.children),`render`,u,7,0),l(e,p),t(f)}export{u as component};

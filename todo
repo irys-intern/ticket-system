@@ -1,6 +1,6 @@
 # Ticket System Project TODO
 
-## Cache / Infrastructure
+## Infrastructure
 - Create Dockerfile and docker-compose.yml
 
 ## Backend Server

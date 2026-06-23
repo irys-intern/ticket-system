@@ -1,0 +1,1 @@
+import{H as e,I as t,L as n,_ as r,d as i,f as a,h as o,y as s}from"../chunks/Dl62to-m.js";import"../chunks/xihTtKlq.js";l[e]=`src/routes/demo/playwright/+page.svelte`;var c=s(r(`<h1>Playwright e2e test demo</h1>`),l[e],[[1,0]]);function l(e,r){i(new.target),n(r,!0,l);var s={...a()};return o(e,c()),t(s)}export{l as component};
