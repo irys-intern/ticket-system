@@ -2,6 +2,11 @@
 
 A full-stack support ticket management system built with SvelteKit, Express, PostgreSQL, and Redis. Supports role-based access for users, agents, and admins with a full audit trail.
 
+The project is split into two independent SvelteKit apps:
+
+- **`frontend/`** — Svelte UI (pages, components, client-side logic)
+- **`backend/`** — API-only SvelteKit server (JSON endpoints, DB, auth)
+
 ---
 
 ## Table of Contents
@@ -26,32 +31,38 @@ A full-stack support ticket management system built with SvelteKit, Express, Pos
 
 ### Steps
 
+Run both apps in separate terminals:
+
 ```bash
-# Install dependencies
+# Terminal 1 — backend
+cd backend
 npm install
-
-# Copy and fill in environment variables
-cp .env.example .env
-
-# Run database migrations
+cp .env.example .env   # fill in env vars
 npx drizzle-kit migrate
-
-# Start the development server
 npm run dev
+# Runs at http://localhost:5172
 ```
 
-The dev server runs at `http://localhost:5173`.
+```bash
+# Terminal 2 — frontend
+cd frontend
+npm install
+cp .env.example .env   # set BACKEND_URL
+npm run dev
+# Runs at http://localhost:5173
+```
 
 ### Docker (coming soon)
 
-Docker and docker-compose configuration is in progress. When complete, the full stack (app, PostgreSQL, Redis) will be startable with:
+Docker and docker-compose configuration is in progress. When complete, the full stack (frontend, backend, PostgreSQL, Redis) will be startable with:
 
 ```bash
 docker-compose up
 ```
 
 The compose file will expose:
-- App: port `3000`
+- Frontend: port `5173`
+- Backend: port `5172`
 - PostgreSQL: port `5432`
 - Redis: port `6379`
 
@@ -59,16 +70,25 @@ The compose file will expose:
 
 ## Environment Variables
 
+### Backend (`backend/.env`)
+
 | Variable | Required | Description |
 |---|---|---|
-| `PORT` | Yes | Port for the Express server (default: `3000`) |
+| `PORT` | Yes | Port for the backend server (default: `5172`) |
 | `NODE_ENV` | Yes | `development` or `production` |
 | `DATABASE_URL` | Yes | PostgreSQL connection string, e.g. `postgres://user:pass@host:5432/ticket_system` |
 | `REDIS_URL` | Yes | Redis connection string, e.g. `redis://host:6379` |
 | `BETTER_AUTH_SECRET` | Yes | Secret key for signing auth tokens |
 | `FRONTEND_URL` | Yes | URL of the frontend, used for CORS (e.g. `http://localhost:5173`) |
-| `PORT` | Yes | Port of the server (e.g. 5173)
 | `SUPERUSER_PASSWORD` | Yes | Password required to create the first admin account via `POST /create_admin` |
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | Yes | Port for the frontend dev server (default: `5173`) |
+| `NODE_ENV` | Yes | `development` or `production` |
+| `BACKEND_URL` | Yes | URL of the backend API (e.g. `http://localhost:5172`) |
 
 ---
 
@@ -105,24 +125,35 @@ The compose file will expose:
 
 ```
 ticket-system/
-├── src/
-│   ├── auth/
-│   │   ├── auth.ts              # Better Auth configuration (cookie-based sessions)
-│   │   └── redis-session.ts     # Redis session store
-│   ├── db/
-│   │   └── schema.ts            # Drizzle ORM schema (tickets, comments, users, audit)
-│   ├── middleware/
-│   │   └── sessionValidator.ts  # Session validation from cookies
-│   ├── routes/                  # SvelteKit file-based routes (pages + API endpoints)
-│   │   ├── auth/                # register, login, logout
-│   │   ├── tickets/             # ticket CRUD and actions
-│   │   └── admin/               # user management and audit log
-│   ├── hooks.server.ts          # SvelteKit server hook — validates session, populates locals.user
-│   └── app.html                 # Root HTML shell
-├── auth-schema.ts               # Better Auth DB tables (user, session, account, verification)
-├── drizzle.config.ts            # Drizzle migration config
-├── svelte.config.js             # SvelteKit config
-└── vite.config.ts               # Vite / Vitest / Playwright config
+├── frontend/                        # SvelteKit UI app
+│   └── src/
+│       ├── auth/                    # Better Auth client config
+│       ├── config/                  # env.ts — typed env vars
+│       ├── db/                      # Drizzle client (read-only queries for SSR)
+│       ├── lib/                     # Shared Svelte components and utilities
+│       ├── middleware/              # SvelteKit hooks (session validation)
+│       ├── routes/                  # File-based pages
+│       │   ├── +layout.svelte       # Root layout
+│       │   ├── auth/                # login, logout, register pages
+│       │   ├── tickets/             # ticket list and detail pages
+│       │   ├── create_ticket/       # ticket creation page
+│       │   └── admin/               # admin dashboard pages
+│       └── types/                   # Shared TypeScript types
+│
+└── backend/                         # SvelteKit API-only app
+    └── src/
+        ├── auth/                    # Better Auth server config + Redis session store
+        ├── config/                  # env.ts — typed env vars
+        ├── db/                      # Drizzle ORM schema + client
+        │   └── schema.ts            # tickets, comments, users, audit tables
+        ├── middleware/              # sessionValidator — reads cookie, populates locals.user
+        ├── routes/                  # API endpoints (+server.ts files)
+        │   ├── auth/                # register, login, logout, me
+        │   ├── tickets/             # ticket CRUD and actions
+        │   ├── create_ticket/       # ticket creation endpoint
+        │   ├── create_admin/        # bootstrap first admin account
+        │   └── admin/               # user management and audit log
+        └── types/                   # Shared TypeScript types
 ```
 
 ### Stack
@@ -130,7 +161,7 @@ ticket-system/
 | Layer | Technology |
 |---|---|
 | Frontend | SvelteKit 5, Svelte 5, Tailwind CSS 4 |
-| Backend | SvelteKit API routes + Express 5 |
+| Backend | SvelteKit 5 (API routes only) |
 | Auth | Better Auth 1.6 (HTTP-only cookie sessions) |
 | ORM | Drizzle ORM 0.45 |
 | Database | PostgreSQL 16 |
@@ -139,7 +170,7 @@ ticket-system/
 
 ### Database Schema
 
-**Business tables**
+**Business tables** (defined in `backend/src/db/schema.ts`)
 
 - `usersTable` — email, password hash, role (`user` / `agent` / `admin`)
 - `ticketsTable` — title, description, status, priority, category, creator, assignee
@@ -155,7 +186,7 @@ ticket-system/
 
 ## API Reference
 
-All endpoints are SvelteKit server routes under `src/routes/`. Responses are JSON.
+All endpoints live in `backend/src/routes/` as `+server.ts` files. Responses are JSON. The frontend calls these via `BACKEND_URL`.
 
 ### Auth
 
@@ -164,6 +195,7 @@ All endpoints are SvelteKit server routes under `src/routes/`. Responses are JSO
 | `POST` | `/auth/register` | Register a new user (email, password >8 chars) | No |
 | `POST` | `/auth/login` | Login; sets `sessionId` cookie | No |
 | `POST` | `/auth/logout` | Clear session cookie | Yes |
+| `GET` | `/auth/me` | Return the current user's session info | Yes |
 | `POST` | `/create_admin` | Create an admin account (requires `SUPERUSER_PASSWORD` in body) | No |
 
 ### Tickets
@@ -185,8 +217,9 @@ All endpoints are SvelteKit server routes under `src/routes/`. Responses are JSO
 |---|---|---|---|
 | `GET` | `/admin/users` | List all users | Admin |
 | `POST` | `/admin/users` | Change a user's role | Admin |
+| `GET` | `/admin/users/[id]` | Get a single user | Admin |
 | `GET` | `/admin/audit` | Get audit events (filterable by ticket) | Admin |
-| `POST` | `/admin/audit` | Log an audit event (internal) | Admin |
+| `POST` | `/admin/audit` | Log an audit event | Admin |
 
 ---
 
@@ -196,7 +229,7 @@ All endpoints are SvelteKit server routes under `src/routes/`. Responses are JSO
 
 2. **Login** — `POST /auth/login` verifies the scrypt hash. On success, a session record is written to PostgreSQL (via Better Auth) and cached in Redis. The `sessionId` cookie is set.
 
-3. **Request validation** — `src/hooks.server.ts` runs on every request. It reads the `sessionId` cookie, looks up the session in Redis (fallback: PostgreSQL), and populates `event.locals.user`. Endpoints then read `locals.user` and check the `role` field to enforce access control.
+3. **Request validation** — The backend's session middleware runs on every request. It reads the `sessionId` cookie, looks up the session in Redis (fallback: PostgreSQL), and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
 
 4. **Logout** — `POST /auth/logout` deletes the session from Redis and PostgreSQL and clears the cookie.
 
@@ -211,37 +244,41 @@ All endpoints are SvelteKit server routes under `src/routes/`. Responses are JSO
 ### Build
 
 ```bash
-npm run build
+# Backend
+cd backend && npm run build
+
+# Frontend
+cd frontend && npm run build
 ```
-
-Output goes to `.svelte-kit/output` (via the SvelteKit adapter).
-
-### Environment
-
-Set all [environment variables](#environment-variables) in your hosting environment. Ensure `NODE_ENV=production` and `BETTER_AUTH_SECRET` is a long random string.
 
 ### Database
 
-Run migrations against your production database before starting the app:
+Run migrations against your production database before starting the backend:
 
 ```bash
+cd backend
 npx drizzle-kit migrate
 ```
 
 ### Start
 
 ```bash
-node build
+# Backend
+cd backend && node build
+
+# Frontend
+cd frontend && node build
 ```
 
-Or configure a process manager (e.g. PM2) to run `node build` and restart on crash.
+Use a process manager (e.g. PM2) to keep both processes running and restart on crash.
 
 ### Checklist
 
-- [ ] `DATABASE_URL` points to production PostgreSQL
-- [ ] `REDIS_URL` points to production Redis
-- [ ] `BETTER_AUTH_SECRET` is set to a secure random value
-- [ ] `FRONTEND_URL` matches your production domain (for CORS)
-- [ ] `NODE_ENV=production`
-- [ ] Migrations have been run
+- [ ] `DATABASE_URL` points to production PostgreSQL (backend)
+- [ ] `REDIS_URL` points to production Redis (backend)
+- [ ] `BETTER_AUTH_SECRET` is set to a secure random value (backend)
+- [ ] `FRONTEND_URL` matches your production frontend domain (backend, for CORS)
+- [ ] `BACKEND_URL` matches your production backend domain (frontend)
+- [ ] `NODE_ENV=production` in both apps
+- [ ] Migrations have been run against the production database
 - [ ] HTTPS is terminated upstream (reverse proxy like nginx or a platform like Railway/Render)
