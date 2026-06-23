@@ -5,6 +5,7 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Separator } from '$lib/components/ui/separator';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let userRole = $state('guest');
   let userName = $state('Guest User');
@@ -18,7 +19,7 @@
   let adminUsers = $state('...');
 
   onMount(async () => {
-    const response = await fetch('/');
+    const response = await fetch(PUBLIC_BACKEND_URL, {credentials: 'include'});
     const data = await response.json();
     userRole = data.userRole || 'guest';
     userName = data.userName || 'Guest User';
@@ -42,7 +43,7 @@
     <div class="flex items-center gap-3">
       <Badge variant="secondary">{userRole}</Badge>
       {#if userRole !== 'guest'}
-        <Button href={resolve('/auth/logout', {})} variant="outline" size="sm">Logout</Button>
+        <Button href={resolve('/auth/logout')} variant="outline" size="sm">Logout</Button>
       {/if}
     </div>
   </div>

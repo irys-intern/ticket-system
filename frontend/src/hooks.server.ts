@@ -1,8 +1,5 @@
-import { initializeDatabase } from './db/index.ts';
-import { validateSession } from './middleware/sessionValidator.ts'
+import { validateSession } from './middleware/sessionValidator.ts';
 
-// Initialize database on server start
-await initializeDatabase();
 export async function handle({ event, resolve }) {
     const session = await validateSession(event);
     event.locals.session = session;

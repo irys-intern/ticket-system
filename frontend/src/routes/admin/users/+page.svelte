@@ -8,6 +8,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
   import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let users: { id: string; name: string; email: string; role: string; status: string }[] = $state([]);
   let searchQuery = $state('');
@@ -33,7 +34,7 @@
   );
 
   onMount(async () => {
-    const response = await fetch('/admin/users');
+    const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users');
     const result = await response.json();
     if (!response.ok) {
       errors = result.errors ?? [result.message ?? 'Unable to fetch users'];
@@ -65,7 +66,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">User Management</h1>

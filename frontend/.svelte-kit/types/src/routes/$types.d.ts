@@ -21,5 +21,3 @@ export type PageProps = { params: RouteParams; data: PageData }
 export type LayoutServerData = null;
 export type LayoutData = Expand<LayoutParentData>;
 export type LayoutProps = { params: LayoutParams; data: LayoutData; children: import("svelte").Snippet }
-export type RequestHandler = Kit.RequestHandler<RouteParams, RouteId>;
-export type RequestEvent = Kit.RequestEvent<RouteParams, RouteId>;

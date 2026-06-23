@@ -17,6 +17,9 @@
 	"/auth/logout": [
 		"src/routes/auth/logout/+server.ts"
 	],
+	"/auth/me": [
+		"src/routes/auth/me/+server.ts"
+	],
 	"/auth/register": [
 		"src/routes/auth/register/+server.ts"
 	],

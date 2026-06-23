@@ -23,7 +23,7 @@
   async function fetchComments() {
     try {
       loading = true;
-      const response = await fetch(PUBLIC_BACKEND_URL+window.location.pathname);
+      const response = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch comments. Please reload.');
       const data = await response.json();
       comments = data.comments || [];
@@ -38,9 +38,10 @@
   async function postComment() {
     if (!newComment.trim()) return;
     try {
-      const response = await fetch(location.href, {
+      const response = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ content: newComment }),
       });
       if (!response.ok) throw new Error('Failed to post comment. Ensure the ticket is open and you are logged in.');
@@ -54,7 +55,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={'/' + ticketUrl} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
+    <a href={ticketUrl} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
       &larr; Back to ticket
     </a>
   </div>

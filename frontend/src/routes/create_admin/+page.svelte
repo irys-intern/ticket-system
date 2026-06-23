@@ -3,6 +3,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let name = $state('');
   let email = $state('');
@@ -18,7 +19,7 @@
     errors = [];
 
     try {
-      const response = await fetch('/create_admin', {
+      const response = await fetch(PUBLIC_BACKEND_URL+'/create_admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

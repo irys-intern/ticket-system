@@ -58,6 +58,7 @@ export interface Comment {
 }
 
 export interface AuditEvent {
+  target: any;
   userDisplay: string|null;
   id: string;
   ticketId: string;

@@ -9,7 +9,7 @@ export async function handle({ event, resolve }) {
     const corsHeaders = {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Ticket-Id',
         'Access-Control-Allow-Credentials': 'true',
     };
 

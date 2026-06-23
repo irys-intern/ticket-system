@@ -7,6 +7,7 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   const severities = ['all', 'low', 'medium', 'high', 'critical'];
   let severityFilter = $state('all');
@@ -17,7 +18,7 @@
   );
 
   onMount(async () => {
-    const response = await fetch('/tickets/open');
+    const response = await fetch(PUBLIC_BACKEND_URL+'/tickets/open', {credentials: 'include'});
     const result = await response.json();
     if (!response.ok) {
       errors = result.errors ?? [result.message ?? 'Unable to fetch tickets'];
@@ -34,7 +35,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   <div class="flex items-center justify-between">

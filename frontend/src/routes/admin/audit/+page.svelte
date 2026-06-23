@@ -4,6 +4,7 @@
   import type { AuditEvent, User } from '../../../types/index.ts';
   import { Input } from '$lib/components/ui/input';
   import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let query = $state('');
   let events: AuditEvent[] = $state([]);
@@ -21,16 +22,16 @@
   }
 
   onMount(async () => {
-    const res = await fetch(window.location.href);
+    const res = await fetch(PUBLIC_BACKEND_URL+'/'+window.location.pathname, {credentials: 'include'});
     const resp = await res.json();
-    events = resp.events.sort((a, b) => Number(b.id) - Number(a.id));
+    events = resp.events.sort((a: { id: any; }, b: { id: any; }) => Number(b.id) - Number(a.id));
     users = resp.users;
   });
 </script>
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   <div class="flex items-center justify-between gap-4 flex-wrap">
@@ -67,7 +68,7 @@
                 <TableCell class="text-sm">{getUserString(e.userId)}</TableCell>
                 <TableCell class="text-sm">{e.action}</TableCell>
                 <TableCell class="text-sm">
-                  <a href={resolve(`/tickets/${e.ticketId}`, {})} class="underline underline-offset-4 hover:text-foreground text-muted-foreground">
+                  <a href={resolve(`/tickets/${e.ticketId}`)} class="underline underline-offset-4 hover:text-foreground text-muted-foreground">
                     #{e.ticketId}
                   </a>
                 </TableCell>

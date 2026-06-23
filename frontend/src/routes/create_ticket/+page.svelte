@@ -7,6 +7,7 @@
   import { Textarea } from '$lib/components/ui/textarea';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   let title = $state('');
   let description = $state('');
@@ -22,9 +23,10 @@
   async function handleSubmit(event: Event) {
     event.preventDefault();
     errors = [];
-    const response = await fetch('/create_ticket', {
+    const response = await fetch(PUBLIC_BACKEND_URL+'/create_ticket', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ title, description, category, priority }),
     });
     const result = await response.json();
@@ -43,7 +45,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   <Card class="max-w-lg">

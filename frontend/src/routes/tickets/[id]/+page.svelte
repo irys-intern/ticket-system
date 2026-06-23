@@ -9,6 +9,7 @@
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   const { data } = $props();
   let user = $derived(data.user);
@@ -25,7 +26,7 @@
   onMount(async () => {
     try {
       const id = page.params.id;
-      const response = await fetch(`/tickets/${id}`);
+      const response = await fetch(PUBLIC_BACKEND_URL+`/tickets/${id}`, {credentials: 'include'});
       if (!response.ok) throw new Error('Failed to fetch ticket');
       ticket = await response.json();
 
@@ -45,13 +46,14 @@
   async function loadAuditTrail() {
     const id = page.params.id;
     try {
-      const audits = await fetch('/admin/audit', { method: 'GET', headers: { 'X-Ticket-Id': id } });
+      const headers = id ? { 'X-Ticket-Id': String(id) } : undefined;
+      const audits = await fetch(PUBLIC_BACKEND_URL + '/admin/audit', { method: 'GET', headers, credentials: 'include' });
       if (audits.ok) {
         auditTrail = (await audits.json()).audits || [];
         for (const entry of auditTrail) {
           if (entry?.userId) {
             try {
-              const r = await fetch(`/admin/users/${entry.userId}`);
+              const r = await fetch(PUBLIC_BACKEND_URL+`/admin/users/${entry.userId}`, {credentials: 'include'});
               if (r.ok) {
                 const j = await r.json();
                 entry.userDisplay = `${j.user?.name ?? j.user?.username ?? 'User'} (${entry.userId})`;
@@ -71,7 +73,7 @@
 
   async function loadAgents() {
     try {
-      const response = await fetch('/admin/users');
+      const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', {credentials: 'include'});
       if (!response.ok) throw new Error('Failed to load agents');
       const allUsers = await response.json();
       const users = allUsers.users ?? [];
@@ -89,17 +91,19 @@
     const body = action === 'unassign'
       ? { ticketId: ticket.id, action }
       : { agent: selectedAgentId, ticketId: ticket.id, action };
-    await fetch(window.location.href, {
+    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      credentials: 'include'
     });
     window.location.reload();
   }
 
   async function claimTicket() {
-    await fetch(window.location.href, {
+    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'claim' }),
     });
@@ -112,8 +116,9 @@
     const newStatus = statuses[statuses.indexOf(ticket.status) + 1];
     if (!newStatus?.trim()) return;
     if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
-    await fetch(window.location.href, {
+    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim() }),
     });
@@ -123,8 +128,9 @@
   async function updateStatusBack() {
     if (!ticket) return;
     if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
-    await fetch(window.location.href, {
+    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user.userId, ticketId: ticket.id, action: 'update_status', status: 'in_progress' }),
     });
@@ -132,8 +138,9 @@
   }
 
   async function forfeitTicket() {
-    await fetch(window.location.href, {
+    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'forfeit' }),
     });
@@ -149,8 +156,9 @@
 
   async function closeTicketUser() {
     if (confirm('Are you sure you want to close this ticket?')) {
-      const res = await fetch(window.location.href, {
+      const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
       });
@@ -162,13 +170,15 @@
     if (confirm('Are you sure you want to close this ticket?')) {
       const reason = prompt('Please provide a closing message.');
       if (!reason || reason === '') return;
-      await fetch(window.location.href + '/comments', {
+      await fetch(PUBLIC_BACKEND_URL+window.location.pathname + '/comments', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, content: reason }),
       });
-      const res = await fetch(window.location.href, {
+      const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agent: user.userId, ticketId: ticket?.id, action: 'close' }),
       });
@@ -180,13 +190,15 @@
     if (confirm('Are you sure you want to close this ticket?')) {
       const reason = prompt('Please provide a closing message.');
       if (!reason || reason === '') return;
-      await fetch(window.location.href + '/comments', {
+      await fetch(PUBLIC_BACKEND_URL+window.location.pathname + '/comments', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, content: reason }),
       });
-      const res = await fetch(window.location.href, {
+      const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
       });
@@ -203,9 +215,9 @@
 <div class="space-y-4">
   <div class="flex gap-4 text-sm">
     {#if user.role === 'agent' || user.role === 'admin'}
-      <a href={resolve('/tickets/open', {})} class="text-muted-foreground hover:text-foreground underline underline-offset-4">Open tickets</a>
+      <a href={resolve('/tickets/open')} class="text-muted-foreground hover:text-foreground underline underline-offset-4">Open tickets</a>
     {/if}
-    <a href={resolve('/', {})} class="text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <a href={resolve('/')} class="text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   {#if loading}
