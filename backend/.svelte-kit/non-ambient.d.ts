@@ -29,7 +29,7 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/admin/users/[id]" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/tickets/[id]/status";
+		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/admin/users/[id]" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/tickets/[id]/status";
 		RouteParams(): {
 			"/admin/users/[id]": { id: string };
 			"/tickets/[id]": { id: string };
@@ -48,15 +48,14 @@ declare module "$app/types" {
 			"/auth/register": Record<string, never>;
 			"/create_admin": Record<string, never>;
 			"/create_ticket": Record<string, never>;
-			"/privacy": Record<string, never>;
 			"/tickets": { id?: string | undefined };
 			"/tickets/open": Record<string, never>;
 			"/tickets/[id]": { id: string };
 			"/tickets/[id]/comments": { id: string };
 			"/tickets/[id]/status": { id: string }
 		};
-		Pathname(): "/" | "/admin/audit" | "/admin/users" | `/admin/users/${string}` & {} | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {} | `/tickets/${string}/status` & {};
+		Pathname(): "/" | "/admin/audit" | "/admin/users" | `/admin/users/${string}` & {} | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {} | `/tickets/${string}/status` & {};
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
-		Asset(): "/favicon.svg" | string & {};
+		Asset(): string & {};
 	}
 }

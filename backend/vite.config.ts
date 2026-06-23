@@ -2,8 +2,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
-
+import { env } from './src/config/env.ts';
 export default defineConfig({
+  server: {
+    port: env.port
+  },
   plugins: [tailwindcss(), sveltekit()],
   test: {
     expect: { requireAssertions: true },

@@ -26,7 +26,6 @@
 	"/create_ticket": [
 		"src/routes/create_ticket/+server.ts"
 	],
-	"/privacy": [],
 	"/tickets": [
 		"src/routes/tickets/+server.ts"
 	],

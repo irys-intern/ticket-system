@@ -67,6 +67,7 @@ The compose file will expose:
 | `REDIS_URL` | Yes | Redis connection string, e.g. `redis://host:6379` |
 | `BETTER_AUTH_SECRET` | Yes | Secret key for signing auth tokens |
 | `FRONTEND_URL` | Yes | URL of the frontend, used for CORS (e.g. `http://localhost:5173`) |
+| `PORT` | Yes | Port of the server (e.g. 5173)
 | `SUPERUSER_PASSWORD` | Yes | Password required to create the first admin account via `POST /create_admin` |
 
 ---
