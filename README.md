@@ -16,6 +16,10 @@ The project is split into two independent SvelteKit apps:
 - [Workflow](#workflow)
 - [Architecture](#architecture)
 - [API Reference](#api-reference)
+  - [Auth](#auth)
+  - [Tickets](#tickets)
+  - [Admin](#admin)
+  - [Training Materials](#training-materials)
 - [Auth Flow](#auth-flow)
 - [Deployment](#deployment)
 
@@ -99,8 +103,8 @@ The compose file will expose:
 | Role | Capabilities |
 |---|---|
 | **User** | Create tickets, view and comment on own tickets, close own tickets |
-| **Agent** | View open/assigned tickets, claim and forfeit tickets, update ticket status, comment |
-| **Admin** | Full access: all tickets, user management, assignments, audit log |
+| **Agent** | View open/assigned tickets, claim and forfeit tickets, update ticket status and metadata (priority/category), comment, access training materials |
+| **Admin** | Full access: all tickets, user management, assignments, audit log, stats dashboard, manage training materials |
 
 ### Ticket Lifecycle
 
@@ -137,10 +141,12 @@ ticket-system/
 │       │   ├── auth/                # login, logout, register pages
 │       │   ├── tickets/             # ticket list and detail pages
 │       │   ├── create_ticket/       # ticket creation page
-│       │   └── admin/               # admin dashboard pages
+│       │   ├── training/            # training material list and detail pages
+│       │   └── admin/               # admin dashboard, stats, users, audit, training mgmt
 │       └── types/                   # Shared TypeScript types
 │
 └── backend/                         # SvelteKit API-only app
+    ├── training-materials/          # Markdown files served as training content
     └── src/
         ├── auth/                    # Better Auth server config + Redis session store
         ├── config/                  # env.ts — typed env vars
@@ -152,7 +158,8 @@ ticket-system/
         │   ├── tickets/             # ticket CRUD and actions
         │   ├── create_ticket/       # ticket creation endpoint
         │   ├── create_admin/        # bootstrap first admin account
-        │   └── admin/               # user management and audit log
+        │   ├── training/            # training material listing and content
+        │   └── admin/               # user management, audit log, and stats
         └── types/                   # Shared TypeScript types
 ```
 
@@ -162,10 +169,9 @@ ticket-system/
 |---|---|
 | Frontend | SvelteKit 5, Svelte 5, Tailwind CSS 4 |
 | Backend | SvelteKit 5 (API routes only) |
-| Auth | Better Auth 1.6 (HTTP-only cookie sessions) |
+| Auth | Better Auth 1.6 (HTTP-only cookie sessions, PostgreSQL session store) |
 | ORM | Drizzle ORM 0.45 |
 | Database | PostgreSQL 16 |
-| Session store | Redis 7 |
 | Testing | Vitest (unit), Playwright (E2E) |
 
 ### Database Schema
@@ -177,6 +183,8 @@ ticket-system/
 - `commentsTable` — content, ticket FK, user FK
 - `assignmentsTable` — ticket-to-user assignment records
 - `auditEventsTable` — action type, ticket FK, user FK, timestamp, optional display name
+
+**Training materials** — stored as Markdown files in `backend/training-materials/`, not in the database. Served via the `/training` API. Slugs are derived from filenames.
 
 **Auth tables** (managed by Better Auth)
 
@@ -205,11 +213,25 @@ All endpoints live in `backend/src/routes/` as `+server.ts` files. Responses are
 | `GET` | `/tickets` | List tickets (scoped by role) | Yes |
 | `POST` | `/create_ticket` | Create a new ticket | Yes (user+) |
 | `GET` | `/tickets/[id]` | Get a single ticket | Yes |
-| `POST` | `/tickets/[id]` | Update ticket status or assignment | Yes (agent+) |
+| `POST` | `/tickets/[id]` | Update ticket status, assignment, or metadata | Yes (agent+) |
 | `GET` | `/tickets/[id]/status` | Get ticket status | Yes |
 | `GET` | `/tickets/[id]/comments` | List comments on a ticket | Yes |
 | `POST` | `/tickets/[id]/comments` | Add a comment (blocked if closed) | Yes |
 | `GET` | `/tickets/open` | List all open tickets | Yes (agent+) |
+
+#### `POST /tickets/[id]` actions
+
+The body must include an `action` field:
+
+| `action` | Who | Description |
+|---|---|---|
+| `claim` | Agent | Assign ticket to self; sets status → `in_progress` |
+| `forfeit` | Agent | Remove self-assignment; sets status → `open` |
+| `close` | Agent, Admin | Close the ticket |
+| `update_status` | Agent | Change status (`open` / `in_progress` / `waiting_for_response` / `resolved`); agent must be assigned |
+| `update_metadata` | Agent, Admin | Change `priority` and/or `category`; ticket must not be `closed` or `resolved`; agent must be assigned |
+| `assign` | Admin | Assign ticket to any agent; sets status → `in_progress` |
+| `unassign` | Admin | Remove assignment; sets status → `open` |
 
 ### Admin
 
@@ -220,20 +242,39 @@ All endpoints live in `backend/src/routes/` as `+server.ts` files. Responses are
 | `GET` | `/admin/users/[id]` | Get a single user | Admin |
 | `GET` | `/admin/audit` | Get audit events (filterable by ticket) | Admin |
 | `POST` | `/admin/audit` | Log an audit event | Admin |
+| `GET` | `/admin/stats` | Aggregate ticket and user statistics | Admin |
+
+### Training Materials
+
+Training materials are Markdown files stored in `backend/training-materials/`. Agents can read them; only admins can write.
+
+| Method | Path | Description | Auth required |
+|---|---|---|---|
+| `GET` | `/training` | List all training materials (slug + title) | Agent, Admin |
+| `POST` | `/training` | Create a new training material | Admin |
+| `GET` | `/training/[slug]` | Get content of a training material | Agent, Admin |
+| `PUT` | `/training/[slug]` | Update content of a training material | Admin |
+| `DELETE` | `/training/[slug]` | Delete a training material | Admin |
+
+`POST /training` body: `{ title: string, content: string }`. The slug is derived from the title (lowercase alphanumeric + hyphens). Returns `{ slug }` on success.
+
+`PUT /training/[slug]` body: `{ content: string }` (title is not updated; rename by delete + create).
 
 ---
 
 ## Auth Flow
 
-1. **Registration** — `POST /auth/register` hashes the password with `scryptSync` + random salt and stores it in `usersTable`. A session is created and the `sessionId` is returned as an HTTP-only cookie.
+Better Auth handles password hashing, session creation, and session validation. The custom routes (`/auth/register`, `/auth/login`, etc.) are thin wrappers that add input validation and shape the JSON response.
 
-2. **Login** — `POST /auth/login` verifies the scrypt hash. On success, a session record is written to PostgreSQL (via Better Auth) and cached in Redis. The `sessionId` cookie is set.
+1. **Registration** — `POST /auth/register` validates the input, then delegates to Better Auth's `signUpEmail()`. Better Auth hashes the password and writes a record to the `user` table and a credential record to the `account` table. A session is created and a `sessionId` HTTP-only cookie is returned.
 
-3. **Request validation** — The backend's session middleware runs on every request. It reads the `sessionId` cookie, looks up the session in Redis (fallback: PostgreSQL), and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
+2. **Login** — `POST /auth/login` validates the input, then delegates to Better Auth's `signInEmail()`. Better Auth verifies the password hash and writes a new session record to the `session` table in PostgreSQL. The `sessionId` cookie is set on the response.
 
-4. **Logout** — `POST /auth/logout` deletes the session from Redis and PostgreSQL and clears the cookie.
+3. **Request validation** — A global SvelteKit hook runs on every backend request. It calls Better Auth's `getSession()`, which reads the `sessionId` cookie and validates it against the PostgreSQL `session` table. If valid, the hook fetches the user's role from `usersTable` and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
 
-5. **Session storage** — Sessions are stored in Redis for fast lookup with PostgreSQL as the source of truth. Sessions carry expiration timestamps and record the client IP and user agent.
+4. **Logout** — `POST /auth/logout` delegates to Better Auth's `signOut()`, which deletes the session record from PostgreSQL and clears the cookie.
+
+5. **Session storage** — Sessions are stored exclusively in PostgreSQL (the `session` table). Each session record includes `expiresAt` (3-day TTL), `ipAddress`, and `userAgent`.
 
 ---
 
