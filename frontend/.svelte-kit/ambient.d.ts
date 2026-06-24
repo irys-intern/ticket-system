@@ -40,11 +40,9 @@
 declare module '$env/static/private' {
 	export const BACKEND_URL: string;
 	export const BETTER_AUTH_SECRET: string;
-	export const DATABASE_URL: string;
 	export const FRONTEND_URL: string;
 	export const NODE_ENV: string;
 	export const PORT: string;
-	export const REDIS_URL: string;
 	export const SUPERUSER_PASSWORD: string;
 	export const ALLUSERSPROFILE: string;
 	export const APPDATA: string;
@@ -53,6 +51,7 @@ declare module '$env/static/private' {
 	export const CommonProgramW6432: string;
 	export const COMPUTERNAME: string;
 	export const ComSpec: string;
+	export const DATABASE_URL: string;
 	export const DriverData: string;
 	export const EDITOR: string;
 	export const HOME: string;
@@ -98,6 +97,7 @@ declare module '$env/static/private' {
 	export const PSModulePath: string;
 	export const PUBLIC: string;
 	export const PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: string;
+	export const REDIS_URL: string;
 	export const SESSIONNAME: string;
 	export const SystemDrive: string;
 	export const SystemRoot: string;
@@ -202,11 +202,9 @@ declare module '$env/dynamic/private' {
 	export const env: {
 		BACKEND_URL: string;
 		BETTER_AUTH_SECRET: string;
-		DATABASE_URL: string;
 		FRONTEND_URL: string;
 		NODE_ENV: string;
 		PORT: string;
-		REDIS_URL: string;
 		SUPERUSER_PASSWORD: string;
 		ALLUSERSPROFILE: string;
 		APPDATA: string;
@@ -215,6 +213,7 @@ declare module '$env/dynamic/private' {
 		CommonProgramW6432: string;
 		COMPUTERNAME: string;
 		ComSpec: string;
+		DATABASE_URL: string;
 		DriverData: string;
 		EDITOR: string;
 		HOME: string;
@@ -260,6 +259,7 @@ declare module '$env/dynamic/private' {
 		PSModulePath: string;
 		PUBLIC: string;
 		PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: string;
+		REDIS_URL: string;
 		SESSIONNAME: string;
 		SystemDrive: string;
 		SystemRoot: string;
