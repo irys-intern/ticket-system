@@ -24,7 +24,7 @@
 
     if (meRes.ok) {
       const me = await meRes.json();
-      userRole = me.role ?? '';
+      userRole = me.session.role ?? '';
     }
 
     if (!matRes.ok) {

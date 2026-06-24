@@ -71,7 +71,7 @@
       <CardContent class="flex flex-wrap gap-2">
         <Button href="/admin/users">Manage Users</Button>
         <Button href="/tickets" variant="secondary">Manage Assignments</Button>
-        <Button href="/admin/training" variant="secondary">Manage Training Materials</Button>
+        <Button href="/training" variant="secondary">Manage Training Materials</Button>
         <Button href="/admin/audit" variant="outline">View Audit Log</Button>
         <Button href="/admin/stats" variant="outline">View Statistics</Button>
       </CardContent>

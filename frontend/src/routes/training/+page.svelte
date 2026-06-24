@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { Card, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   type Material = { slug: string; title: string };
@@ -22,7 +22,7 @@
 
     if (meRes.ok) {
       const me = await meRes.json();
-      userRole = me.role ?? '';
+      userRole = me.session.role ?? '';
     }
 
     if (!listRes.ok) {
