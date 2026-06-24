@@ -29,7 +29,7 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments";
+		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/stats" | "/admin/users" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments";
 		RouteParams(): {
 			"/tickets/[id]": { id: string };
 			"/tickets/[id]/comments": { id: string }
@@ -38,6 +38,7 @@ declare module "$app/types" {
 			"/": { id?: string | undefined };
 			"/admin": Record<string, never>;
 			"/admin/audit": Record<string, never>;
+			"/admin/stats": Record<string, never>;
 			"/admin/users": Record<string, never>;
 			"/auth": Record<string, never>;
 			"/auth/login": Record<string, never>;
@@ -51,7 +52,7 @@ declare module "$app/types" {
 			"/tickets/[id]": { id: string };
 			"/tickets/[id]/comments": { id: string }
 		};
-		Pathname(): "/" | "/admin/audit" | "/admin/users" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {};
+		Pathname(): "/" | "/admin/audit" | "/admin/stats" | "/admin/users" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {};
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/favicon.svg" | string & {};
 	}

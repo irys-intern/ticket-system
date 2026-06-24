@@ -72,6 +72,7 @@
         <Button href="/admin/users">Manage Users</Button>
         <Button href="/tickets" variant="secondary">Manage Assignments</Button>
         <Button href="/admin/audit" variant="outline">View Audit Log</Button>
+        <Button href="/admin/stats" variant="outline">View Statistics</Button>
       </CardContent>
     </Card>
 

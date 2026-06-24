@@ -1,6 +1,7 @@
 {
 	"/": [],
 	"/admin/audit": [],
+	"/admin/stats": [],
 	"/admin/users": [],
 	"/auth/login": [],
 	"/auth/logout": [],

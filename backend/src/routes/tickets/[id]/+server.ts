@@ -1,7 +1,7 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit'
 import { db } from '../../../db/index.ts'
 import { ticketsTable } from '../../../db/schema.ts'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 export const GET: RequestHandler = async ({ params, locals }) => {
     const id = Number(params.id)
     if (Number.isNaN(id)) {
@@ -34,6 +34,9 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
     const data = await request.json();
     if (!user || !user.userId) {
         throw error(401, "Unauthenticated")
+    }
+    if (!params.id) {
+        return json({success:false})
     }
     if (data.ticketId !== parseInt(params.id)) {
         throw error(403, `Mangled request: ${data.ticketId} vs ${params.id}`)
@@ -101,6 +104,9 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             });
             await db.update(ticketsTable).set({status: data.status}).where(eq(ticketsTable.id, parseInt(params.id)));
+            if (data.status==='resolved') {
+                await db.update(ticketsTable).set({updatedAt: sql`now()`}).where(eq(ticketsTable.id, parseInt(params.id)));
+            }
             return json({ok: true, success: true})
         }
 
