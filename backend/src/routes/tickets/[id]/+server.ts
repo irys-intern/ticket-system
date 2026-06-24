@@ -108,6 +108,28 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 await db.update(ticketsTable).set({updatedAt: sql`now()`}).where(eq(ticketsTable.id, parseInt(params.id)));
             }
             return json({ok: true, success: true})
+        } else if (data.action === 'update_metadata') {
+            const ticket = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1);
+            if (ticket.length === 0) throw error(404, 'Ticket not found');
+            if (ticket[0].assignedTo !== user.userId) throw error(403, 'Forbidden');
+            if (ticket[0].status === 'closed' || ticket[0].status === 'resolved') throw error(409, 'Ticket is closed or resolved');
+
+            const validPriorities = ['low', 'medium', 'high', 'critical'];
+            const validCategories = ['bug', 'feature_request', 'support', 'other'];
+            if (data.priority !== undefined && !validPriorities.includes(data.priority)) return json({ok: false, success: false});
+            if (data.category !== undefined && !validCategories.includes(data.category)) return json({ok: false, success: false});
+            if (data.priority === undefined && data.category === undefined) return json({ok: false, success: false});
+
+            await db.update(ticketsTable).set({
+                ...(data.priority !== undefined ? { priority: data.priority } : {}),
+                ...(data.category !== undefined ? { category: data.category } : {}),
+            }).where(eq(ticketsTable.id, parseInt(params.id)));
+            await fetch('/admin/audit', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({action: "metadata updated", ticketId: params.id})
+            });
+            return json({ok: true, success: true})
         }
 
         return json({success: false, body: 'Invalid action'})

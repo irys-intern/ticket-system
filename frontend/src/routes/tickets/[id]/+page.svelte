@@ -216,6 +216,17 @@
     p === 'critical' ? 'destructive' : p === 'high' ? 'default' : 'secondary';
   const statusVariant = (s: string) =>
     s === 'closed' ? 'outline' : s === 'open' ? 'secondary' : 'default';
+
+  async function updateMetadata(field: 'priority' | 'category', value: string) {
+    if (!ticket) return;
+    await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_metadata', [field]: value }),
+    });
+    window.location.reload();
+  }
 </script>
 
 {#if user}
@@ -269,6 +280,31 @@
               <Button size="sm" variant="destructive" onclick={closeTicketAgent}>Close Ticket</Button>
             {:else if (!ticket.assignedTo || ticket.assignedTo === '') && ticket.status !== 'closed'}
               <Button size="sm" onclick={claimTicket}>Claim Ticket</Button>
+            {/if}
+
+            {#if ticket.assignedTo && user.userId === ticket.assignedTo && ticket.status !== 'closed' && ticket.status !== 'resolved'}
+              <div class="ml-auto flex gap-2">
+                <select
+                  value={ticket.priority}
+                  onchange={(e) => updateMetadata('priority', (e.target as HTMLSelectElement).value)}
+                  class="h-8 w-32 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+                <select
+                  value={ticket.category}
+                  onchange={(e) => updateMetadata('category', (e.target as HTMLSelectElement).value)}
+                  class="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+                >
+                  <option value="bug">Bug</option>
+                  <option value="feature_request">Feature Request</option>
+                  <option value="support">Support</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             {/if}
 
           {:else if user.role === 'user'}
