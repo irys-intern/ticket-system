@@ -29,15 +29,16 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/admin/users/[id]" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/me" | "/auth/register" | "/create_admin" | "/create_ticket" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/tickets/[id]/status";
+		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/users" | "/admin/users/[id]" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/me" | "/auth/register" | "/create_admin" | "/create_ticket" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/tickets/[id]/status" | "/training" | "/training/[slug]";
 		RouteParams(): {
 			"/admin/users/[id]": { id: string };
 			"/tickets/[id]": { id: string };
 			"/tickets/[id]/comments": { id: string };
-			"/tickets/[id]/status": { id: string }
+			"/tickets/[id]/status": { id: string };
+			"/training/[slug]": { slug: string }
 		};
 		LayoutParams(): {
-			"/": { id?: string | undefined };
+			"/": { id?: string | undefined; slug?: string | undefined };
 			"/admin": { id?: string | undefined };
 			"/admin/audit": Record<string, never>;
 			"/admin/users": { id?: string | undefined };
@@ -53,9 +54,11 @@ declare module "$app/types" {
 			"/tickets/open": Record<string, never>;
 			"/tickets/[id]": { id: string };
 			"/tickets/[id]/comments": { id: string };
-			"/tickets/[id]/status": { id: string }
+			"/tickets/[id]/status": { id: string };
+			"/training": { slug?: string | undefined };
+			"/training/[slug]": { slug: string }
 		};
-		Pathname(): "/" | "/admin/audit" | "/admin/users" | `/admin/users/${string}` & {} | "/auth/login" | "/auth/logout" | "/auth/me" | "/auth/register" | "/create_admin" | "/create_ticket" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {} | `/tickets/${string}/status` & {};
+		Pathname(): "/" | "/admin/audit" | "/admin/users" | `/admin/users/${string}` & {} | "/auth/login" | "/auth/logout" | "/auth/me" | "/auth/register" | "/create_admin" | "/create_ticket" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {} | `/tickets/${string}/status` & {} | "/training" | `/training/${string}` & {};
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): string & {};
 	}

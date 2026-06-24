@@ -29,16 +29,22 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/stats" | "/admin/users" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments";
+		RouteId(): "/" | "/admin" | "/admin/audit" | "/admin/stats" | "/admin/training" | "/admin/training/[slug]" | "/admin/training/[slug]/edit" | "/admin/users" | "/auth" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | "/tickets/[id]" | "/tickets/[id]/comments" | "/training" | "/training/[slug]";
 		RouteParams(): {
+			"/admin/training/[slug]": { slug: string };
+			"/admin/training/[slug]/edit": { slug: string };
 			"/tickets/[id]": { id: string };
-			"/tickets/[id]/comments": { id: string }
+			"/tickets/[id]/comments": { id: string };
+			"/training/[slug]": { slug: string }
 		};
 		LayoutParams(): {
-			"/": { id?: string | undefined };
-			"/admin": Record<string, never>;
+			"/": { slug?: string | undefined; id?: string | undefined };
+			"/admin": { slug?: string | undefined };
 			"/admin/audit": Record<string, never>;
 			"/admin/stats": Record<string, never>;
+			"/admin/training": { slug?: string | undefined };
+			"/admin/training/[slug]": { slug: string };
+			"/admin/training/[slug]/edit": { slug: string };
 			"/admin/users": Record<string, never>;
 			"/auth": Record<string, never>;
 			"/auth/login": Record<string, never>;
@@ -50,9 +56,11 @@ declare module "$app/types" {
 			"/tickets": { id?: string | undefined };
 			"/tickets/open": Record<string, never>;
 			"/tickets/[id]": { id: string };
-			"/tickets/[id]/comments": { id: string }
+			"/tickets/[id]/comments": { id: string };
+			"/training": { slug?: string | undefined };
+			"/training/[slug]": { slug: string }
 		};
-		Pathname(): "/" | "/admin/audit" | "/admin/stats" | "/admin/users" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {};
+		Pathname(): "/" | "/admin/audit" | "/admin/stats" | "/admin/training" | `/admin/training/${string}/edit` & {} | "/admin/users" | "/auth/login" | "/auth/logout" | "/auth/register" | "/create_admin" | "/create_ticket" | "/privacy" | "/tickets" | "/tickets/open" | `/tickets/${string}` & {} | `/tickets/${string}/comments` & {} | "/training" | `/training/${string}` & {};
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/favicon.svg" | string & {};
 	}

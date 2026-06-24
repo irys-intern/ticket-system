@@ -2,6 +2,8 @@
 	"/": [],
 	"/admin/audit": [],
 	"/admin/stats": [],
+	"/admin/training": [],
+	"/admin/training/[slug]/edit": [],
 	"/admin/users": [],
 	"/auth/login": [],
 	"/auth/logout": [],
@@ -12,5 +14,7 @@
 	"/tickets": [],
 	"/tickets/open": [],
 	"/tickets/[id]": [],
-	"/tickets/[id]/comments": []
+	"/tickets/[id]/comments": [],
+	"/training": [],
+	"/training/[slug]": []
 }

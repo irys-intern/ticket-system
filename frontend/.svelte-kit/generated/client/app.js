@@ -16,7 +16,11 @@ export const nodes = [
 	() => import('./nodes/12'),
 	() => import('./nodes/13'),
 	() => import('./nodes/14'),
-	() => import('./nodes/15')
+	() => import('./nodes/15'),
+	() => import('./nodes/16'),
+	() => import('./nodes/17'),
+	() => import('./nodes/18'),
+	() => import('./nodes/19')
 ];
 
 export const server_loads = [];
@@ -25,17 +29,21 @@ export const dictionary = {
 		"/": [2],
 		"/admin/audit": [3],
 		"/admin/stats": [4],
-		"/admin/users": [5],
-		"/auth/login": [6],
-		"/auth/logout": [7],
-		"/auth/register": [8],
-		"/create_admin": [9],
-		"/create_ticket": [10],
-		"/privacy": [11],
-		"/tickets": [12],
-		"/tickets/open": [13],
-		"/tickets/[id]": [14],
-		"/tickets/[id]/comments": [15]
+		"/admin/training": [5],
+		"/admin/training/[slug]/edit": [6],
+		"/admin/users": [7],
+		"/auth/login": [8],
+		"/auth/logout": [9],
+		"/auth/register": [10],
+		"/create_admin": [11],
+		"/create_ticket": [12],
+		"/privacy": [13],
+		"/tickets": [14],
+		"/tickets/open": [15],
+		"/tickets/[id]": [16],
+		"/tickets/[id]/comments": [17],
+		"/training": [18],
+		"/training/[slug]": [19]
 	};
 
 export const hooks = {
