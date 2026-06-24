@@ -1,3 +1,4 @@
+<title>Privacy Policy</title>
 <script>
   import { resolve } from '$app/paths';
 </script>
@@ -8,7 +9,7 @@
 
 <div class="space-y-4 max-w-2xl">
   <div>
-    <a href={resolve('/', {})} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">Privacy Policy</h1>

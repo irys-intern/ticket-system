@@ -1,3 +1,4 @@
+<title>Comments for Ticket</title>
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';

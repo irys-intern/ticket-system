@@ -1,3 +1,4 @@
+<title>Audit Log</title>
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { onMount } from 'svelte';

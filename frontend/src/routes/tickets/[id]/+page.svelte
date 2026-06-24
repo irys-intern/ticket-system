@@ -1,3 +1,4 @@
+<title>Ticket</title>
 <script lang="ts">
   import { page } from '$app/state';
   import { resolve } from '$app/paths';

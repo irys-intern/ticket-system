@@ -1,3 +1,4 @@
+<title>User Management</title>
 <script lang="ts">
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';

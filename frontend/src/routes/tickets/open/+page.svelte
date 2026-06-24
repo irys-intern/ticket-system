@@ -1,3 +1,4 @@
+<title>Open Tickets</title>
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Ticket } from '../../../types/index.ts';
