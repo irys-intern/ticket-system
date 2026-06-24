@@ -314,8 +314,30 @@
 
           {:else if user.role === 'admin'}
             {#if ticket.status !== 'closed'}
-              <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}>Assign Agent</Button>
-              <Button size="sm" variant="destructive" onclick={closeTicketAdmin}>Close Ticket</Button>
+            <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}>Assign Agent</Button>
+            <Button size="sm" variant="destructive" onclick={closeTicketAdmin}>Close Ticket</Button>
+            <div class="ml-auto flex gap-2">
+              <select
+                value={ticket.priority}
+                onchange={(e) => updateMetadata('priority', (e.target as HTMLSelectElement).value)}
+                class="h-8 w-32 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+              <select
+                value={ticket.category}
+                onchange={(e) => updateMetadata('category', (e.target as HTMLSelectElement).value)}
+                class="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+              >
+                <option value="bug">Bug</option>
+                <option value="feature_request">Feature Request</option>
+                <option value="support">Support</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
             {/if}
           {/if}
         </div>
