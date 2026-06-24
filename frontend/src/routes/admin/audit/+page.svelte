@@ -22,7 +22,7 @@
   }
 
   onMount(async () => {
-    const res = await fetch(PUBLIC_BACKEND_URL+'/'+window.location.pathname, {credentials: 'include'});
+    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {credentials: 'include'});
     const resp = await res.json();
     events = resp.events.sort((a: { id: any; }, b: { id: any; }) => Number(b.id) - Number(a.id));
     users = resp.users;

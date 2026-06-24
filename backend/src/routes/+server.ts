@@ -5,10 +5,10 @@ import { eq, and, not, or } from 'drizzle-orm';
 
 export async function GET({ locals }: RequestEvent) {
   const user = locals.user;
-  let openUserTickets = []
-  let resolvedUserTickets = []
-  let progressUserTickets = []
-  let closedUserTickets = []
+  let openUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
+  let resolvedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
+  let progressUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
+  let closedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   if ((user?.role || 'guest') === 'user' && user?.userId) {
     openUserTickets = await db.select()
                   .from(ticketsTable)
@@ -43,7 +43,7 @@ export async function GET({ locals }: RequestEvent) {
                     )
                   )
   }
-  let assignedAgentTickets = []
+  let assignedAgentTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   if ((user?.role || 'guest') === 'agent' && user?.userId) {
     assignedAgentTickets = await db.select()
     .from(ticketsTable)
