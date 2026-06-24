@@ -2,6 +2,3 @@
 
 ## Infrastructure
 - Create Dockerfile and docker-compose.yml
-
-## Backend Server
-- Setup betterauth on new Node
