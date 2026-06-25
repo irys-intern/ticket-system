@@ -9,6 +9,9 @@ export default defineConfig({
     port: env.port
   },
   plugins: [tailwindcss(), sveltekit()],
+  ssr: {
+    external: ['better-auth', '@better-auth/core', '@better-auth/drizzle-adapter', '@better-auth/kysely-adapter']
+  },
   test: {
     expect: { requireAssertions: true },
     projects: [
