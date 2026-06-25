@@ -38,3 +38,9 @@ test-results
 # Notes
 todo
 instructions.md
+
+# Other
+backend/.svelte-kit/ambient.d.ts
+backend/.svelte-kit/generated/server/internal.js
+frontend/.svelte-kit/ambient.d.ts
+frontend/.svelte-kit/generated/server/internal.js
