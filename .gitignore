@@ -6,6 +6,7 @@ backend/.vercel
 backend/.netlify
 backend/.wrangler
 backend/.svelte-kit
+backend/.svelte-kit/**
 backend/build
 backend/dist
 
