@@ -169,9 +169,10 @@ ticket-system/
 |---|---|
 | Frontend | SvelteKit 5, Svelte 5, Tailwind CSS 4 |
 | Backend | SvelteKit 5 (API routes only) |
-| Auth | Better Auth 1.6 (HTTP-only cookie sessions, PostgreSQL session store) |
+| Auth | Better Auth 1.6 (HTTP-only cookie sessions, PostgreSQL session store, Redis session cache) |
 | ORM | Drizzle ORM 0.45 |
 | Database | PostgreSQL 16 |
+| Cache | Redis 7 (Better Auth secondary storage — session token cache) |
 | Testing | Vitest (unit), Playwright (E2E) |
 
 ### Database Schema
@@ -270,11 +271,11 @@ Better Auth handles password hashing, session creation, and session validation. 
 
 2. **Login** — `POST /auth/login` validates the input, then delegates to Better Auth's `signInEmail()`. Better Auth verifies the password hash and writes a new session record to the `session` table in PostgreSQL. The `sessionId` cookie is set on the response.
 
-3. **Request validation** — A global SvelteKit hook runs on every backend request. It calls Better Auth's `getSession()`, which reads the `sessionId` cookie and validates it against the PostgreSQL `session` table. If valid, the hook fetches the user's role from `usersTable` and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
+3. **Request validation** — A global SvelteKit hook runs on every backend request. It calls Better Auth's `getSession()`, which reads the `sessionId` cookie and validates it first against the Redis session cache, falling back to the PostgreSQL `session` table on a cache miss. If valid, the hook fetches the user's role from `usersTable` and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
 
 4. **Logout** — `POST /auth/logout` delegates to Better Auth's `signOut()`, which deletes the session record from PostgreSQL and clears the cookie.
 
-5. **Session storage** — Sessions are stored exclusively in PostgreSQL (the `session` table). Each session record includes `expiresAt` (3-day TTL), `ipAddress`, and `userAgent`.
+5. **Session storage** — Sessions are stored in PostgreSQL (the `session` table) as the source of truth. Active session tokens are also cached in Redis via Better Auth's `secondaryStorage` interface, so most `getSession()` calls are served from Redis without a database round-trip. Each session record includes `expiresAt` (3-day TTL), `ipAddress`, and `userAgent`.
 
 ---
 
