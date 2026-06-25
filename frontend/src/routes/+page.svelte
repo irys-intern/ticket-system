@@ -92,6 +92,7 @@
       <CardContent class="flex flex-wrap gap-2">
         <Button href="/tickets">View My Tickets</Button>
         <Button href="/tickets/open" variant="secondary">View Open Tickets</Button>
+        <Button href="/training" variant="secondary">View Training Materials</Button>
       </CardContent>
     </Card>
 
