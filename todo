@@ -2,3 +2,4 @@
 
 ## Infrastructure
 - Create Dockerfile and docker-compose.yml
+- Ensure Redis is actually implemented
