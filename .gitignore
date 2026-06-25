@@ -27,8 +27,10 @@ Thumbs.db
 !.env.example
 
 # Vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+backend/vite.config.js.timestamp-*
+frontend/vite.config.js.timestamp-*
+backend/vite.config.ts.timestamp-*
+frontend/vite.config.ts.timestamp-*
 # Playwright
 test-results
 
