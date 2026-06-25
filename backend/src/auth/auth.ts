@@ -3,8 +3,15 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db/index.ts";
 import { userTable, sessionTable, accountTable, verificationTable } from "../db/schema.ts";
 import { env } from "../config/env.ts";
+import { redis } from "../lib/redis.ts";
 
 export const auth = betterAuth({
+    secondaryStorage: {
+        get: (key) => redis.get(key),
+        set: (key, value, ttl) =>
+            ttl ? redis.set(key, value, { EX: ttl }) : redis.set(key, value),
+        delete: (key) => redis.del(key).then(() => undefined),
+    },
     secret: env.auth.secret,
     baseURL: env.backend.url,
     database: drizzleAdapter(db, {
