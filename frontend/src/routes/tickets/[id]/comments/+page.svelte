@@ -13,12 +13,26 @@
   let loading = $state(true);
   let error: string | null = $state(null);
   let ticketUrl = $state('');
+  let awaitingResponse = $state(false);
 
   onMount(async () => {
-    await fetchComments();
     const locationURL = new URL(window.location.href).pathname;
     const parts = locationURL.split('/');
     ticketUrl = parts.slice(0, parts.length - 1).join('/');
+
+    const [, meRes, ticketRes] = await Promise.all([
+      fetchComments(),
+      fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' }),
+      fetch(PUBLIC_BACKEND_URL + ticketUrl, { credentials: 'include' }),
+    ]);
+
+    if (meRes.ok && ticketRes.ok) {
+      const meData = await meRes.json();
+      const ticketData = await ticketRes.json();
+      const role = meData.session?.role;
+      const status = ticketData.status;
+      awaitingResponse = role === 'user' && status === 'waiting_for_response';
+    }
   });
 
   async function fetchComments() {
@@ -46,6 +60,8 @@
         body: JSON.stringify({ content: newComment }),
       });
       if (!response.ok) throw new Error('Failed to post comment. Ensure the ticket is open and you are logged in.');
+      const data = await response.json();
+      if (data.resumedTicket) awaitingResponse = false;
       newComment = '';
       await fetchComments();
     } catch (err) {
@@ -107,6 +123,13 @@
   {/if}
 
   <Separator />
+
+  {#if awaitingResponse}
+    <div class="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
+      <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
+      <p class="text-muted-foreground mt-0.5">Posting a comment will move this ticket back to in progress.</p>
+    </div>
+  {/if}
 
   <div class="space-y-2">
     <Textarea

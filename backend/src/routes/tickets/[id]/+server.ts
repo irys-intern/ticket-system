@@ -98,13 +98,8 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
-            await fetch('/admin/audit', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
-            })
-            // Comment is sent from frontend
-            await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            // Comment is sent from frontend. assignedTo is intentionally preserved so resolution time is trackable.
+            await db.update(ticketsTable).set({status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})
         } else if (data.action === 'update_status') {
             const statussy = ["open", "in_progress", "waiting_for_response", "resolved"]

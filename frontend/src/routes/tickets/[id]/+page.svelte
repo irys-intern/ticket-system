@@ -36,8 +36,10 @@
       if (!response.ok) throw new Error('Failed to fetch ticket');
       ticket = await response.json();
 
+      if (ticket?.assignedTo) {
+        assignmentStringState = await assignmentString(ticket.assignedTo);
+      }
       if (user?.role === 'admin') {
-        assignmentStringState = await assignmentString(ticket?.assignedTo);
         await loadAgents();
       }
     } catch (err) {
@@ -257,11 +259,18 @@
       <CardContent class="space-y-3">
         <p class="text-sm text-muted-foreground">{ticket.description}</p>
 
-        {#if user.role === 'admin' && ticket.assignedTo}
+        {#if ticket.assignedTo && assignmentStringState}
           <p class="text-sm"><span class="font-medium">Assigned to:</span> {assignmentStringState}</p>
         {/if}
 
         <Separator />
+
+        {#if user.role === 'user' && ticket.status === 'waiting_for_response'}
+          <div class="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
+            <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
+            <p class="text-muted-foreground mt-0.5">Reply in the comments to resume work on this ticket.</p>
+          </div>
+        {/if}
 
         <div class="flex flex-wrap gap-2">
           <Button class="cursor-pointer" size="sm" onclick={() => (window.location.href = window.location.href + '/comments')}>

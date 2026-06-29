@@ -11,13 +11,24 @@
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   const statuses = ['all', 'open', 'in_progress', 'waiting_for_response', 'closed'];
+  const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
   let statusFilter = $state('all');
+  let searchQuery = $state('');
+  let sortBy = $state('newest');
   let errors: string[] = $state([]);
   let tickets: Ticket[] = $state([]);
   let isLoading = $state(true);
-  let filteredTickets: Ticket[] = $derived(
-    statusFilter === 'all' ? tickets : tickets.filter((t: Ticket) => t.status === statusFilter)
-  );
+  let filteredTickets: Ticket[] = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const result = tickets.filter((t: Ticket) => {
+      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+      if (!q) return true;
+      return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+    });
+    if (sortBy === 'oldest') return [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    if (sortBy === 'priority') return [...result].sort((a, b) => (PRIORITY_RANK[b.priority] ?? 0) - (PRIORITY_RANK[a.priority] ?? 0));
+    return [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  });
 
   onMount(async () => {
     const response = await fetch(PUBLIC_BACKEND_URL+'/tickets', {credentials: 'include'});
@@ -45,15 +56,28 @@
     <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
-  <div class="flex items-center justify-between">
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-2xl font-bold tracking-tight">My Tickets</h1>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <input
+        type="search"
+        bind:value={searchQuery}
+        placeholder="Search tickets…"
+        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring w-48"
+      />
       <Label for="status-filter" class="text-sm">Status</Label>
       <select id="status-filter" bind:value={statusFilter}
         class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
         {#each statuses as status (status)}
           <option value={status}>{status.replace(/_/g, ' ')}</option>
         {/each}
+      </select>
+      <Label for="sort-by" class="text-sm">Sort</Label>
+      <select id="sort-by" bind:value={sortBy}
+        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="priority">Priority</option>
       </select>
     </div>
   </div>

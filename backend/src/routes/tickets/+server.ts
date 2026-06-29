@@ -1,7 +1,7 @@
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import { db } from "../../db/index.ts";
 import { ticketsTable } from "../../db/schema.ts";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 export const GET: RequestHandler = async ({locals}) => {
     const userRole = locals.user?.role;
@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({locals}) => {
     } else if (userRole === 'agent') {
         const dbHits = await db.select()
                                .from(ticketsTable)
-                               .where(eq(ticketsTable.assignedTo, userId))
+                               .where(and(eq(ticketsTable.assignedTo, userId), ne(ticketsTable.status, 'closed')))
         return json({ tickets: dbHits, userRole})
     } else if (userRole === 'admin') {
         const dbHits = await db.select()

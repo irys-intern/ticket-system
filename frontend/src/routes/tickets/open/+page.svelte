@@ -11,12 +11,23 @@
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   const severities = ['all', 'low', 'medium', 'high', 'critical'];
+  const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
   let severityFilter = $state('all');
+  let searchQuery = $state('');
+  let sortBy = $state('priority');
   let errors: string[] = $state([]);
   let tickets: Ticket[] = $state([]);
-  let filteredTickets: Ticket[] = $derived(
-    severityFilter === 'all' ? tickets : tickets.filter((t: Ticket) => t.priority === severityFilter)
-  );
+  let filteredTickets: Ticket[] = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const result = tickets.filter((t: Ticket) => {
+      if (severityFilter !== 'all' && t.priority !== severityFilter) return false;
+      if (!q) return true;
+      return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+    });
+    if (sortBy === 'oldest') return [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    if (sortBy === 'newest') return [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...result].sort((a, b) => (PRIORITY_RANK[b.priority] ?? 0) - (PRIORITY_RANK[a.priority] ?? 0));
+  });
 
   onMount(async () => {
     const response = await fetch(PUBLIC_BACKEND_URL+'/tickets/open', {credentials: 'include'});
@@ -39,15 +50,28 @@
     <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
-  <div class="flex items-center justify-between">
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-2xl font-bold tracking-tight">Open Tickets</h1>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <input
+        type="search"
+        bind:value={searchQuery}
+        placeholder="Search tickets…"
+        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring w-48"
+      />
       <Label for="severity-filter" class="text-sm">Priority</Label>
       <select id="severity-filter" bind:value={severityFilter}
         class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
         {#each severities as severity (severity)}
           <option value={severity}>{severity}</option>
         {/each}
+      </select>
+      <Label for="sort-by" class="text-sm">Sort</Label>
+      <select id="sort-by" bind:value={sortBy}
+        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+        <option value="priority">Priority</option>
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
       </select>
     </div>
   </div>

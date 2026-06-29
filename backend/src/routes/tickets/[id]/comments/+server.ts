@@ -73,5 +73,18 @@ export const POST: RequestHandler = async ({ locals, params, request, fetch }) =
         body: JSON.stringify({ action: "comment added", ticketId: params.id }),
     });
 
-    return json({ ok: true, comment }, { status: 201 });
+    let resumedTicket = false;
+    if (ticket.status === 'waiting_for_response' && user.userId === ticket.createdBy) {
+        await db.update(ticketsTable)
+            .set({ status: 'in_progress', updatedAt: new Date() })
+            .where(eq(ticketsTable.id, ticketId));
+        await fetch('/admin/audit', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "status changed to in_progress (user responded)", ticketId: params.id }),
+        });
+        resumedTicket = true;
+    }
+
+    return json({ ok: true, comment, resumedTicket }, { status: 201 });
 };
