@@ -167,7 +167,7 @@
         ) / done.length
       : null;
     return [
-      { title: 'Total Assigned', value: agentTickets.length },
+      { title: 'Lifetime Assigned', value: agentTickets.length },
       { title: 'In Progress', value: by('in_progress'), color: STATUS_COLORS['in_progress'] },
       { title: 'Waiting', value: by('waiting_for_response'), color: STATUS_COLORS['waiting_for_response'] },
       { title: 'Resolved', value: by('resolved'), color: STATUS_COLORS['resolved'] },
