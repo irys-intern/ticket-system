@@ -148,7 +148,7 @@
             <p class="text-xs text-muted-foreground">Analyzing severity…</p>
           {:else if suggestedPriority}
             <p class="text-xs text-muted-foreground">
-              Suggested: <span class="font-medium text-foreground">{PRIORITY_LABELS[suggestedPriority]}</span>
+              Suggested (BETA): <span class="font-medium text-foreground">{PRIORITY_LABELS[suggestedPriority]}</span>
               <span class="text-muted-foreground">({Math.round(suggestionScore * 100)}% confidence)</span>. You can change this.
             </p>
           {/if}
