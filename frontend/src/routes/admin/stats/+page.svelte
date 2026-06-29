@@ -7,7 +7,7 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Label } from '$lib/components/ui/label';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
-  import type { Ticket, User } from '../../../types';
+  import type { Ticket, User, AuditEvent } from '../../../types';
 
   type GroupBy = 'priority' | 'category';
 
@@ -59,6 +59,7 @@
 
   let tickets = $state<Ticket[]>([]);
   let users = $state<User[]>([]);
+  let auditEvents = $state<AuditEvent[]>([]);
   let groupBy = $state<GroupBy>('priority');
   let distGroupBy = $state<'priority' | 'category'>('priority');
   let selectedAgentId = $state('');
@@ -190,6 +191,28 @@
     return null;
   });
 
+  const avgTimeToAssignment = $derived.by((): string => {
+    const assignments = auditEvents.filter((e) => e.action === 'ticket assigned');
+    const earliest = new Map<string, number>();
+    for (const e of assignments) {
+      const key = String(e.ticketId);
+      const t = new Date(e.createdAt).getTime();
+      if (!earliest.has(key) || t < earliest.get(key)!) earliest.set(key, t);
+    }
+    const deltas: number[] = [];
+    for (const [ticketId, assignedAt] of earliest) {
+      const ticket = tickets.find((t) => String(t.id) === ticketId);
+      if (!ticket) continue;
+      const delta = assignedAt - new Date(ticket.createdAt).getTime();
+      if (delta >= 0) deltas.push(delta);
+    }
+    if (deltas.length === 0) return '—';
+    const avgMs = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+    if (avgMs < 3_600_000) return `${Math.round(avgMs / 60_000)}m`;
+    if (avgMs < 86_400_000) return `${(avgMs / 3_600_000).toFixed(1)}h`;
+    return `${(avgMs / 86_400_000).toFixed(1)}d`;
+  });
+
   const distData = $derived.by(() => {
     const items = distGroupBy === 'priority' ? PRIORITY_ITEMS : CATEGORY_ITEMS;
     const colors = distGroupBy === 'priority' ? PRIORITY_COLORS : CATEGORY_COLORS;
@@ -203,9 +226,10 @@
   });
 
   onMount(async () => {
-    const [ticketsRes, usersRes] = await Promise.all([
+    const [ticketsRes, usersRes, auditRes] = await Promise.all([
       fetch(PUBLIC_BACKEND_URL + '/tickets', { credentials: 'include' }),
       fetch(PUBLIC_BACKEND_URL + '/admin/users', { credentials: 'include' }),
+      fetch(PUBLIC_BACKEND_URL + '/admin/audit', { credentials: 'include' }),
     ]);
 
     const ticketsData = await ticketsRes.json();
@@ -224,6 +248,10 @@
 
     tickets = ticketsData.tickets;
     users = usersData.users;
+    if (auditRes.ok) {
+      const auditData = await auditRes.json();
+      auditEvents = auditData.events ?? [];
+    }
     if (agents.length > 0) selectedAgentId = agents[0].id;
     loading = false;
   });
@@ -268,6 +296,15 @@
   {#if loading}
     <!-- Skeleton loader -->
     <div class="space-y-6 animate-pulse">
+      <!-- Overall stats skeleton -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {#each Array(3) as _}
+          <div class="rounded-xl bg-muted/30 p-4 space-y-2">
+            <div class="h-3 w-24 rounded bg-muted"></div>
+            <div class="h-8 w-16 rounded bg-muted"></div>
+          </div>
+        {/each}
+      </div>
       <!-- Ticket Timeline skeleton -->
       <div class="rounded-xl bg-muted/30 p-6 space-y-4">
         <div class="flex items-center justify-between">
@@ -331,6 +368,34 @@
       </div>
     </div>
   {:else}
+    <!-- ── Overall stats ────────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <Card>
+        <CardHeader class="pb-1 pt-4">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Tickets</p>
+        </CardHeader>
+        <CardContent class="pb-4">
+          <p class="text-3xl font-bold">{tickets.length}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader class="pb-1 pt-4">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Open & Unassigned</p>
+        </CardHeader>
+        <CardContent class="pb-4">
+          <p class="text-3xl font-bold">{tickets.filter(t => t.status === 'open' && !t.assignedTo).length}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader class="pb-1 pt-4">
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Avg Time to Assignment</p>
+        </CardHeader>
+        <CardContent class="pb-4">
+          <p class="text-3xl font-bold">{avgTimeToAssignment}</p>
+        </CardContent>
+      </Card>
+    </div>
+
     <!-- ── Ticket Timeline ───────────────────────────────────────────── -->
     <Card>
       <CardHeader>
