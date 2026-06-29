@@ -1,12 +1,12 @@
 # Ticket System
 
-A full-stack support ticket management system built with SvelteKit, Express, PostgreSQL, and Redis. Supports role-based access for users, agents, and admins with a full audit trail.
+A full-stack support ticket management system built with SvelteKit, PostgreSQL, and Redis. Supports role-based access for users, agents, and admins with a full audit trail. Includes an NLP service that suggests ticket priority in real time as users describe their issue.
 
-The project is split into two independent SvelteKit apps and a FastAPI server:
+The project is split into three independent services:
 
-- **`frontend/`** — Svelte UI (pages, components, client-side logic)
+- **`frontend/`** — SvelteKit UI (pages, components, client-side logic)
 - **`backend/`** — API-only SvelteKit server (JSON endpoints, DB, auth)
-- **`nlp_service/`** — Basic NLP to predict ticket priority
+- **`nlp_service/`** — FastAPI server wrapping a zero-shot classifier that suggests ticket priority
 
 ---
 
@@ -16,6 +16,7 @@ The project is split into two independent SvelteKit apps and a FastAPI server:
 - [Environment Variables](#environment-variables)
 - [Workflow](#workflow)
 - [Architecture](#architecture)
+- [NLP Service](#nlp-service)
 - [API Reference](#api-reference)
   - [Auth](#auth)
   - [Tickets](#tickets)
@@ -33,6 +34,7 @@ The project is split into two independent SvelteKit apps and a FastAPI server:
 - Node.js 20+
 - PostgreSQL 16
 - Redis 7
+- Python 3.10+
 
 ### Steps
 
@@ -58,11 +60,12 @@ npm run dev
 ```
 
 ```bash
-# Terminal 3 — NLP
+# Terminal 3 — NLP service
 cd nlp_service
 pip install -r requirements.txt
+# Place your local_model/ folder here (see NLP Service section below)
 uvicorn main:app --port 8000
-# Runs at http://localhost:8000 unless specified otherwise
+# Runs at http://localhost:8000
 ```
 
 ### Docker (coming soon)
@@ -103,7 +106,10 @@ The compose file will expose:
 | `PORT` | Yes | Port for the frontend dev server (default: `5173`) |
 | `NODE_ENV` | Yes | `development` or `production` |
 | `BACKEND_URL` | Yes | URL of the backend API (e.g. `http://localhost:5172`) |
-| `NLP_SERVICE_URL` | Yes | URL of the NLP API (e.g. `http://localhost:8000`) |
+
+### NLP service
+
+No `.env` file needed. The model path and port are configured directly in `nlp_service/main.py`. By default the service expects the model at `nlp_service/local_model/` and listens on port `8000`. The frontend calls it directly from the browser at `http://localhost:8000`.
 
 ---
 
@@ -151,27 +157,32 @@ ticket-system/
 │       │   ├── +layout.svelte       # Root layout
 │       │   ├── auth/                # login, logout, register pages
 │       │   ├── tickets/             # ticket list and detail pages
-│       │   ├── create_ticket/       # ticket creation page
+│       │   ├── create_ticket/       # ticket creation page (calls NLP service for suggestion)
 │       │   ├── training/            # training material list and detail pages
 │       │   └── admin/               # admin dashboard, stats, users, audit, training mgmt
 │       └── types/                   # Shared TypeScript types
 │
-└── backend/                         # SvelteKit API-only app
-    ├── training-materials/          # Markdown files served as training content
-    └── src/
-        ├── auth/                    # Better Auth server config + Redis session store
-        ├── config/                  # env.ts — typed env vars
-        ├── db/                      # Drizzle ORM schema + client
-        │   └── schema.ts            # tickets, comments, users, audit tables
-        ├── middleware/              # sessionValidator — reads cookie, populates locals.user
-        ├── routes/                  # API endpoints (+server.ts files)
-        │   ├── auth/                # register, login, logout, me
-        │   ├── tickets/             # ticket CRUD and actions
-        │   ├── create_ticket/       # ticket creation endpoint
-        │   ├── create_admin/        # bootstrap first admin account
-        │   ├── training/            # training material listing and content
-        │   └── admin/               # user management, audit log, and stats
-        └── types/                   # Shared TypeScript types
+├── backend/                         # SvelteKit API-only app
+│   ├── training-materials/          # Markdown files served as training content
+│   └── src/
+│       ├── auth/                    # Better Auth server config + Redis session store
+│       ├── config/                  # env.ts — typed env vars
+│       ├── db/                      # Drizzle ORM schema + client
+│       │   └── schema.ts            # tickets, comments, users, audit tables
+│       ├── middleware/              # sessionValidator — reads cookie, populates locals.user
+│       ├── routes/                  # API endpoints (+server.ts files)
+│       │   ├── auth/                # register, login, logout, me
+│       │   ├── tickets/             # ticket CRUD and actions
+│       │   ├── create_ticket/       # ticket creation endpoint
+│       │   ├── create_admin/        # bootstrap first admin account
+│       │   ├── training/            # training material listing and content
+│       │   └── admin/               # user management, audit log, and stats
+│       └── types/                   # Shared TypeScript types
+│
+└── nlp_service/                     # FastAPI NLP microservice
+    ├── main.py                      # /suggest endpoint — zero-shot priority classification
+    ├── requirements.txt             # Python dependencies
+    └── local_model/                 # facebook/bart-large-mnli weights (not in git)
 ```
 
 ### Stack
@@ -180,6 +191,7 @@ ticket-system/
 |---|---|
 | Frontend | SvelteKit 5, Svelte 5, Tailwind CSS 4 |
 | Backend | SvelteKit 5 (API routes only) |
+| NLP service | FastAPI, Hugging Face Transformers (`facebook/bart-large-mnli`, zero-shot classification) |
 | Auth | Better Auth 1.6 (HTTP-only cookie sessions, PostgreSQL session store, Redis session cache) |
 | ORM | Drizzle ORM 0.45 |
 | Database | PostgreSQL 16 |
@@ -201,6 +213,54 @@ ticket-system/
 **Auth tables** (managed by Better Auth)
 
 - `user`, `session`, `account`, `verification`
+
+---
+
+## NLP Service
+
+The NLP service exposes a single endpoint used by the ticket creation form to suggest a priority level before the user submits.
+
+### How it works
+
+1. As the user types in the description field (after 20+ characters), the frontend waits 600 ms then sends the title and description to `POST http://localhost:8000/suggest`.
+2. The service runs zero-shot classification against four natural-language label descriptions (one per priority level) using `facebook/bart-large-mnli`.
+3. The top-scoring label is returned as a priority string (`low` / `medium` / `high` / `critical`) along with a confidence score.
+4. The priority dropdown is pre-filled with the suggestion and a confidence note is shown. The user can override it freely before submitting.
+5. If the service is unreachable, the form falls back silently — the user just picks priority manually.
+
+### Model setup
+
+The model is **not included in the repository** (weights are large and gitignored). You have two options:
+
+**Option A — let the service download it automatically**
+
+Start the service without a `local_model/` folder present. `main.py` will detect the missing directory, download `facebook/bart-large-mnli` from Hugging Face, and save it to `nlp_service/local_model/`. Requires an internet connection on first run only.
+
+**Option B — download manually**
+
+```python
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+AutoTokenizer.from_pretrained("facebook/bart-large-mnli").save_pretrained("nlp_service/local_model")
+AutoModelForSequenceClassification.from_pretrained("facebook/bart-large-mnli").save_pretrained("nlp_service/local_model")
+```
+
+Either way, the final path should be `nlp_service/local_model/` containing the model config and weights.
+
+### Endpoint
+
+`POST /suggest`
+
+Request body:
+```json
+{ "text": "string" }
+```
+
+Response:
+```json
+{ "priority": "medium", "score": 0.842 }
+```
+
+Returns `{ "priority": null, "score": 0.0 }` if the input is empty.
 
 ---
 
@@ -325,6 +385,19 @@ cd frontend && node build
 
 Use a process manager (e.g. PM2) to keep both processes running and restart on crash.
 
+### NLP service (production)
+
+Start the service with a process manager alongside the other two apps:
+
+```bash
+cd nlp_service
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Update the `allow_origins` list in `nlp_service/main.py` to include your production frontend domain before deploying.
+
+The `local_model/` directory must be present on the server. Either commit the weights out-of-band (e.g. via Git LFS or a cloud volume) or run the auto-download on first start with an internet connection.
+
 ### Checklist
 
 - [ ] `DATABASE_URL` points to production PostgreSQL (backend)
@@ -335,3 +408,6 @@ Use a process manager (e.g. PM2) to keep both processes running and restart on c
 - [ ] `NODE_ENV=production` in both apps
 - [ ] Migrations have been run against the production database
 - [ ] HTTPS is terminated upstream (reverse proxy like nginx or a platform like Railway/Render)
+- [ ] `allow_origins` in `nlp_service/main.py` includes the production frontend URL
+- [ ] `local_model/` weights are present on the production server
+- [ ] NLP service is running and reachable from the frontend origin

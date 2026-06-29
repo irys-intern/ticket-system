@@ -25,14 +25,17 @@ LABELS = [
     "Minor inconvenience with no immediate impact on core work. The issue may be cosmetic, a documentation gap, a small UI inconsistency, a low-risk request, or something that can be ignored or worked around easily. Examples: typos, layout quirks, nonblocking help requests, questions about a feature without a deadline. This should be treated as low priority.",
     "A real problem that interferes with the user's productivity but does not stop them completely. The issue is frustrating or slows down normal workflows, causes confusion, or makes a feature unreliable, but a workaround exists that is reasonably usable. Examples: unexpected behavior in a feature, slow performance, partial functionality loss, poor error handling, unclear guidance. This should be treated as medium priority.",
     "The user is significantly blocked in a core workflow or essential task. The problem is causing meaningful disruption and a workaround is available only with difficulty, extra steps, or loss of important functionality. Examples: a major feature is broken, data cannot be accessed in an important workflow, reports fail to generate, integrations stop working, essential approvals are blocked. This should be treated as high priority.",
-    "A complete blocker with no acceptable workaround, or a severe issue that risks data loss, security exposure, or major operational failure. The situation is urgent and may affect multiple users, critical systems, or compliance. Examples: system outage, data corruption, inability to log in, security breach, exposed credentials, service downtime affecting business operations. This should be treated as critical priority.",
+    "A complete blocker with no acceptable workaround, or a severe issue that risks data loss, security exposure, or major operational failure. The situation is urgent and may affect multiple users, critical systems, or compliance. Examples: system outage, data corruption, inability to log in, security breach, exposed credentials, service downtime affecting business operations. This should be treated as critical priority. BE SURE IF YOU ARE GOING TO LABEL ANYTHING CRITICAL THAT IT IS ACTUALLY CRITICAL.",
 ]
+
+CRITICAL_LABEL = "A complete blocker with no acceptable workaround, or a severe issue that risks data loss, security exposure, or major operational failure. The situation is urgent and may affect multiple users, critical systems, or compliance. Examples: system outage, data corruption, inability to log in, security breach, exposed credentials, service downtime affecting business operations. This should be treated as critical priority. BE SURE IF YOU ARE GOING TO LABEL ANYTHING CRITICAL THAT IT IS ACTUALLY CRITICAL."
+CRITICAL_MIN_SCORE = 0.8
 
 LABEL_TO_PRIORITY = {
     "Minor inconvenience with no immediate impact on core work. The issue may be cosmetic, a documentation gap, a small UI inconsistency, a low-risk request, or something that can be ignored or worked around easily. Examples: typos, layout quirks, nonblocking help requests, questions about a feature without a deadline. This should be treated as low priority.": "low",
     "A real problem that interferes with the user's productivity but does not stop them completely. The issue is frustrating or slows down normal workflows, causes confusion, or makes a feature unreliable, but a workaround exists that is reasonably usable. Examples: unexpected behavior in a feature, slow performance, partial functionality loss, poor error handling, unclear guidance. This should be treated as medium priority.": "medium",
     "The user is significantly blocked in a core workflow or essential task. The problem is causing meaningful disruption and a workaround is available only with difficulty, extra steps, or loss of important functionality. Examples: a major feature is broken, data cannot be accessed in an important workflow, reports fail to generate, integrations stop working, essential approvals are blocked. This should be treated as high priority.": "high",
-    "A complete blocker with no acceptable workaround, or a severe issue that risks data loss, security exposure, or major operational failure. The situation is urgent and may affect multiple users, critical systems, or compliance. Examples: system outage, data corruption, inability to log in, security breach, exposed credentials, service downtime affecting business operations. This should be treated as critical priority.": "critical",
+    "A complete blocker with no acceptable workaround, or a severe issue that risks data loss, security exposure, or major operational failure. The situation is urgent and may affect multiple users, critical systems, or compliance. Examples: system outage, data corruption, inability to log in, security breach, exposed credentials, service downtime affecting business operations. This should be treated as critical priority. BE SURE IF YOU ARE GOING TO LABEL ANYTHING CRITICAL THAT IT IS ACTUALLY CRITICAL.": "critical",
 }
 
 app = FastAPI()
@@ -56,4 +59,9 @@ def suggest(req: SuggestRequest):
     result = classifier(req.text, candidate_labels=LABELS)
     top_label = result["labels"][0]
     top_score = result["scores"][0]
+
+    if top_label == CRITICAL_LABEL and top_score < CRITICAL_MIN_SCORE:
+        top_label = result["labels"][1]
+        top_score = result["scores"][1]
+
     return {"priority": LABEL_TO_PRIORITY[top_label], "score": round(top_score, 3)}
