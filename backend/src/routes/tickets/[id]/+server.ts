@@ -64,6 +64,11 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket claimed`})
+            })
             return json({success: true, ticket: ret})
         } else if (data.action === 'forfeit') {
             const current_assignment = await db.select().from(ticketsTable).where(and(eq(ticketsTable.id, parseInt(params.id)), eq(ticketsTable.assignedTo, user.userId)))
@@ -81,6 +86,11 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket forfeited`})
+            })
             return json({success: true})
         } else if (data.action === 'close') {
             await fetch('/admin/audit', {
@@ -93,6 +103,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
+            // Comment is sent from frontend
             await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})
         } else if (data.action === 'update_status') {
@@ -107,6 +118,11 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             if (data.status==='resolved') {
                 await db.update(ticketsTable).set({updatedAt: sql`now()`}).where(eq(ticketsTable.id, parseInt(params.id)));
             }
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket status updated to ${data.status}`})
+            })
             return json({ok: true, success: true})
         } else if (data.action === 'update_metadata') {
             const ticket = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1);
@@ -129,16 +145,22 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "ticket updated", ticketId: params.id})
             });
+            const message = data.priority !== undefined ? "priority updated" : "category updated"
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket ${message}`})
+            })
             return json({ok: true, success: true})
         }
-
+        
         return json({success: false, body: 'Invalid action'})
     } else if (user.role === 'admin') {
         if (data.action === 'assign') {
             const ret = await db.update(ticketsTable)
-                                .set({assignedTo: data.agent, status: 'in_progress'})
-                                .where(eq(ticketsTable.id, parseInt(params.id)))
-                                .returning()
+            .set({assignedTo: data.agent, status: 'in_progress'})
+            .where(eq(ticketsTable.id, parseInt(params.id)))
+            .returning()
             await fetch('/admin/audit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -148,6 +170,11 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
+            })
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) An agent has been assigned to this ticket.`})
             })
             return json({success: true, ticket: ret})
         } else if (data.action === 'unassign') {
@@ -160,6 +187,11 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
+            })
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) This ticket's agent has been unassigned`})
             })
             return json({success: true})
         } else if (data.action === 'close') {
@@ -174,18 +206,23 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
             })
             await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket closed`})
+            })
             return json({ok: true, success: true})
         } else if (data.action === 'update_metadata') {
             const ticket = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1);
             if (ticket.length === 0) throw error(404, 'Ticket not found');
             if (ticket[0].status === 'closed' || ticket[0].status === 'resolved') throw error(409, 'Ticket is closed or resolved');
-
+            
             const validPriorities = ['low', 'medium', 'high', 'critical'];
             const validCategories = ['bug', 'feature_request', 'support', 'other'];
             if (data.priority !== undefined && !validPriorities.includes(data.priority)) return json({ok: false, success: false});
             if (data.category !== undefined && !validCategories.includes(data.category)) return json({ok: false, success: false});
             if (data.priority === undefined && data.category === undefined) return json({ok: false, success: false});
-
+            
             await db.update(ticketsTable).set({
                 ...(data.priority !== undefined ? { priority: data.priority } : {}),
                 ...(data.category !== undefined ? { category: data.category } : {}),
@@ -195,6 +232,12 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "ticket updated", ticketId: params.id})
             });
+            const message = data.priority !== undefined ? "priority updated" : "category updated"
+            await fetch(`/tickets/${params.id}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket ${message}`})
+            })
             return json({ok: true, success: true})
         }
 

@@ -18,6 +18,7 @@ async function getTicketForUser(ticketId: number, userId: string, role: string) 
 export const GET: RequestHandler = async ({ locals, params }) => {
     const user = locals.user;
     if (!user || !user.role || !user.userId || user.role === 'guest') throw error(401, "Unauthenticated");
+    if (!params.id) throw error(400, "No parameter")
     const ticketId = parseInt(params.id);
     if (Number.isNaN(ticketId)) throw error(400, "Invalid ticket id");
 
@@ -46,7 +47,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 export const POST: RequestHandler = async ({ locals, params, request, fetch }) => {
     const user = locals.user;
     if (!user || !user.role || !user.userId || user.role === 'guest') throw error(401, "Unauthenticated");
-
+    if (!params.id) throw error(400, "No parameter")
     const ticketId = parseInt(params.id);
     if (Number.isNaN(ticketId)) throw error(400, "Invalid ticket id");
 

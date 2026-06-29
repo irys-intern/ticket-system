@@ -180,7 +180,7 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket?.id, content: reason }),
+        body: JSON.stringify({ ticketId: ticket?.id, content: `Ticket closed: ${reason}` }),
       });
       const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
         method: 'POST',
@@ -200,7 +200,7 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket?.id, content: reason }),
+        body: JSON.stringify({ ticketId: ticket?.id, content: `Ticket closed: ${reason}` }),
       });
       const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
         method: 'POST',
