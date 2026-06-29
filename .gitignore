@@ -49,3 +49,4 @@ __pycache__/
 *.pyc
 local_model/*
 nlp_service/local_model/*
+*.safetensors

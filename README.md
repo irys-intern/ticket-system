@@ -2,10 +2,11 @@
 
 A full-stack support ticket management system built with SvelteKit, Express, PostgreSQL, and Redis. Supports role-based access for users, agents, and admins with a full audit trail.
 
-The project is split into two independent SvelteKit apps:
+The project is split into two independent SvelteKit apps and a FastAPI server:
 
 - **`frontend/`** — Svelte UI (pages, components, client-side logic)
 - **`backend/`** — API-only SvelteKit server (JSON endpoints, DB, auth)
+- **`nlp_service/`** — Basic NLP to predict ticket priority
 
 ---
 
@@ -35,7 +36,7 @@ The project is split into two independent SvelteKit apps:
 
 ### Steps
 
-Run both apps in separate terminals:
+Run all apps in separate terminals:
 
 ```bash
 # Terminal 1 — backend
@@ -51,9 +52,17 @@ npm run dev
 # Terminal 2 — frontend
 cd frontend
 npm install
-cp .env.example .env   # set BACKEND_URL
+cp .env.example .env   # set env vars
 npm run dev
 # Runs at http://localhost:5173
+```
+
+```bash
+# Terminal 3 — NLP
+cd nlp_service
+pip install -r requirements.txt
+uvicorn main:app --port 8000
+# Runs at http://localhost:8000 unless specified otherwise
 ```
 
 ### Docker (coming soon)
@@ -69,6 +78,7 @@ The compose file will expose:
 - Backend: port `5172`
 - PostgreSQL: port `5432`
 - Redis: port `6379`
+- NLP: port `8000`
 
 ---
 
@@ -93,6 +103,7 @@ The compose file will expose:
 | `PORT` | Yes | Port for the frontend dev server (default: `5173`) |
 | `NODE_ENV` | Yes | `development` or `production` |
 | `BACKEND_URL` | Yes | URL of the backend API (e.g. `http://localhost:5172`) |
+| `NLP_SERVICE_URL` | Yes | URL of the NLP API (e.g. `http://localhost:8000`) |
 
 ---
 
