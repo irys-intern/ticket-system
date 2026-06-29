@@ -44,3 +44,8 @@ backend/.svelte-kit/ambient.d.ts
 backend/.svelte-kit/generated/server/internal.js
 frontend/.svelte-kit/ambient.d.ts
 frontend/.svelte-kit/generated/server/internal.js
+nlp_service/__pycache__/**
+__pycache__/
+*.pyc
+local_model/*
+nlp_service/local_model/*

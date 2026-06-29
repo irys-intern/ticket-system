@@ -8,7 +8,7 @@
   import { Textarea } from '$lib/components/ui/textarea';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { PUBLIC_BACKEND_URL, PUBLIC_NLP_SERVER_URL } from '$env/static/public';
 
   let title = $state('');
   let description = $state('');
@@ -16,6 +16,47 @@
   let priority = $state('low');
   let successMessage = $state('');
   let errors: string[] = $state([]);
+
+  let suggestedPriority = $state('');
+  let suggestionScore = $state(0);
+  let suggestionLoading = $state(false);
+  let debounceTimer: ReturnType<typeof setTimeout>;
+  
+  const PRIORITY_LABELS: Record<string, string> = {
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
+    critical: 'Critical',
+  };
+
+  function onDescriptionInput() {
+    clearTimeout(debounceTimer);
+    suggestedPriority = '';
+    if (description.length < 20) return;
+    debounceTimer = setTimeout(fetchSuggestion, 600);
+  }
+
+  async function fetchSuggestion() {
+    suggestionLoading = true;
+    try {
+      const res = await fetch(`${PUBLIC_NLP_SERVER_URL}/suggest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: [title, description].filter(Boolean).join(' — ') }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.priority) {
+        suggestedPriority = data.priority;
+        suggestionScore = data.score;
+        priority = data.priority;
+      }
+    } catch {
+      // NLP service unavailable — user sets priority manually
+    } finally {
+      suggestionLoading = false;
+    }
+  }
 
   onMount(() => {
     document.title = 'Create Ticket';
@@ -80,7 +121,7 @@
 
         <div class="space-y-1.5">
           <Label for="description">Description</Label>
-          <Textarea id="description" rows={4} bind:value={description} required />
+          <Textarea id="description" rows={4} bind:value={description} oninput={onDescriptionInput} required />
         </div>
 
         <div class="space-y-1.5">
@@ -103,6 +144,15 @@
             <option value="high">High</option>
             <option value="critical">Critical</option>
           </select>
+          {#if suggestionLoading}
+            <p class="text-xs text-muted-foreground">Analyzing severity…</p>
+          {:else if suggestedPriority}
+            <p class="text-xs text-muted-foreground">
+              Suggested: <span class="font-medium text-foreground">{PRIORITY_LABELS[suggestedPriority]}</span>
+              <span class="text-muted-foreground">({Math.round(suggestionScore * 100)}% confidence)</span>
+              — you can change this.
+            </p>
+          {/if}
         </div>
 
         <Button type="submit">Submit Ticket</Button>

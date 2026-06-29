@@ -44,6 +44,13 @@
         <li>Comply with legal obligations</li>
       </ul>
     </section>
+    
+    <section>
+      <h2 class="text-foreground font-semibold">Natural Language Processing</h2>
+      <p class="text-muted-foreground">
+        When you create a ticket, its details may be processed to detect a priority level. This processing does not include any sensitive data.
+      </p>
+    </section>
 
     <section>
       <h2 class="text-foreground font-semibold">Data Security</h2>
