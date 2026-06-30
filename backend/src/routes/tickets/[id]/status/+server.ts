@@ -7,11 +7,12 @@ export const GET: RequestHandler = async ({locals, params}) => {
     const user = locals.user;
     if (!user || !user.role || !user.userId || user.role==='guest') throw error(401, "Unauthenticated");
     let ticket;
+    if (!params.id) throw error(400, "No params.id")
     if (user.role === 'user') {
         ticket = await db.select()
                          .from(ticketsTable)
                          .where(and(
-                            eq(ticketsTable.createdBy, parseInt(user.userId)),
+                            eq(ticketsTable.createdBy, user.userId),
                             eq(ticketsTable.id, parseInt(params.id))
                         )).limit(1)
     } else {
