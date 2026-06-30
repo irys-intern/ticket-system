@@ -72,7 +72,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             return json({success: true, ticket: ret})
         } else if (data.action === 'forfeit') {
             const current_assignment = await db.select().from(ticketsTable).where(and(eq(ticketsTable.id, parseInt(params.id)), eq(ticketsTable.assignedTo, user.userId)))
-            if (current_assignment.length === 0) {
+            if (current_assignment.length === 0 || current_assignment[0].status === 'closed') {
                 return json({success:false})
             }
             await db.update(ticketsTable).set({assignedTo: null, status: 'open'}).where(eq(ticketsTable.id, parseInt(params.id)))
@@ -93,6 +93,8 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             })
             return json({success: true})
         } else if (data.action === 'close') {
+            const ticketToClose = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1)
+            if (ticketToClose.length === 0 || ticketToClose[0].status === 'closed') return json({ok: false, success: false})
             await fetch('/admin/audit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -104,6 +106,8 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
         } else if (data.action === 'update_status') {
             const statussy = ["open", "in_progress", "waiting_for_response", "resolved"]
             if (statussy.indexOf(data.status) === -1) return json({ok:false, success:false})
+            const ticketToUpdate = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1)
+            if (ticketToUpdate.length === 0 || ticketToUpdate[0].status === 'closed') return json({ok: false, success: false})
             await fetch('/admin/audit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -190,6 +194,8 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             })
             return json({success: true})
         } else if (data.action === 'close') {
+            const ticketToClose = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1)
+            if (ticketToClose.length === 0 || ticketToClose[0].status === 'closed') return json({ok: false, success: false})
             await fetch('/admin/audit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -239,6 +245,8 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
         return json({success: false, body: 'Invalid action'})
     } else if (user.role === 'user') {
         if (data.action === 'close') {
+            const ticketToClose = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1)
+            if (ticketToClose.length === 0 || ticketToClose[0].status === 'closed') return json({ok: false, success: false})
             await fetch('/admin/audit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

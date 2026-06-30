@@ -279,14 +279,16 @@
 
           {#if user.role === 'agent'}
             {#if ticket.assignedTo && user.userId === ticket.assignedTo}
-              {#if ticket.status !== 'resolved'}
+              {#if ticket.status !== 'resolved' && ticket.status !== 'closed'}
                 <Button size="sm" variant="secondary" onclick={updateStatus}>Update Status</Button>
                 {#if ticket.status === 'waiting_for_response'}
                   <Button size="sm" variant="secondary" onclick={updateStatusBack}>Mark In Progress</Button>
                 {/if}
                 <Button size="sm" variant="outline" onclick={forfeitTicket}>Forfeit</Button>
               {/if}
-              <Button size="sm" variant="destructive" onclick={closeTicketAgent}>Close Ticket</Button>
+              {#if ticket.status !== 'closed'}
+                <Button size="sm" variant="destructive" onclick={closeTicketAgent}>Close Ticket</Button>
+              {/if}
             {:else if (!ticket.assignedTo || ticket.assignedTo === '') && ticket.status !== 'closed'}
               <Button size="sm" onclick={claimTicket}>Claim Ticket</Button>
             {/if}
