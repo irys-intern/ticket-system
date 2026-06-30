@@ -168,10 +168,11 @@
         ) / done.length
       : null;
     return [
-      { title: 'Lifetime Assigned', value: agentTickets.length },
       { title: 'In Progress', value: by('in_progress'), color: STATUS_COLORS['in_progress'] },
       { title: 'Waiting', value: by('waiting_for_response'), color: STATUS_COLORS['waiting_for_response'] },
       { title: 'Resolved', value: by('resolved'), color: STATUS_COLORS['resolved'] },
+      { title: 'Closed', value: by('closed'), color: STATUS_COLORS['closed'] },
+      { title: 'Lifetime Assigned', value: agentTickets.length },
       { title: 'Avg Resolution', value: avgMs !== null ? Math.round(avgMs / 86_400_000) : '—', suffix: avgMs !== null ? 'd' : undefined },
     ];
   });
@@ -224,6 +225,152 @@
       return { key: item, label: labels[item], color: colors[item], count, pct: total > 0 ? count / total : 0 };
     });
   });
+
+  // ── Time-series helpers ─────────────────────────────────────────────
+  const AGENT_LINE_COLORS = ['#3b82f6','#f97316','#a855f7','#22c55e','#ec4899','#14b8a6','#eab308','#ef4444'];
+  const TPAD = { top: 20, right: 24, bottom: 44, left: 46 };
+  const TCH = 200;
+  const TIW = SVG_W - TPAD.left - TPAD.right;
+  const TIH = TCH - TPAD.top - TPAD.bottom;
+
+  function monthKey(d: Date | string): string {
+    const dt = new Date(d);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+  }
+  function monthLabel(key: string): string {
+    const [y, m] = key.split('-');
+    return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  }
+  function fmtDays(days: number | null): string {
+    if (days === null) return '—';
+    if (days < 1) return `${Math.round(days * 24)}h`;
+    return `${days.toFixed(1)}d`;
+  }
+  function labelStep(n: number): number { return n <= 6 ? 1 : n <= 12 ? 2 : n <= 24 ? 3 : 6; }
+
+  const allMonths = $derived.by((): string[] => {
+    if (!tickets.length) return [];
+    const keys = tickets.map(t => monthKey(t.createdAt));
+    const minKey = keys.reduce((a, b) => (a < b ? a : b));
+    const nowKey = monthKey(new Date());
+    const out: string[] = [];
+    let [y, m] = minKey.split('-').map(Number);
+    for (;;) {
+      const k = `${y}-${String(m).padStart(2, '0')}`;
+      out.push(k);
+      if (k >= nowKey) break;
+      if (++m > 12) { m = 1; y++; }
+    }
+    return out;
+  });
+
+  const volumeByMonth = $derived.by(() =>
+    allMonths.map(mo => {
+      const mt = tickets.filter(t => monthKey(t.createdAt) === mo);
+      return { month: mo, counts: Object.fromEntries(STATUSES.map(s => [s, mt.filter(t => t.status === s).length])), total: mt.length };
+    })
+  );
+
+  const maxVol = $derived.by(() => Math.max(...volumeByMonth.map(d => d.total), 1));
+
+  const barRects = $derived.by(() => {
+    const n = allMonths.length;
+    if (!n) return [];
+    const slotW = TIW / n;
+    const bw = Math.max(slotW * 0.65, 4);
+    return volumeByMonth.map((d, i) => {
+      const bx = TPAD.left + i * slotW + (slotW - bw) / 2;
+      const rects: { y: number; h: number; s: string }[] = [];
+      let bottom = TPAD.top + TIH;
+      for (const s of STATUSES) {
+        const count = d.counts[s] ?? 0;
+        if (!count) continue;
+        const h = (count / maxVol) * TIH;
+        rects.push({ y: bottom - h, h, s });
+        bottom -= h;
+      }
+      return { bx, bw, rects, month: d.month };
+    });
+  });
+
+  const barLabelStep = $derived.by(() => labelStep(allMonths.length));
+
+  const resTimeByMonth = $derived.by(() =>
+    allMonths.map(mo => {
+      const done = tickets.filter(t => (t.status === 'resolved' || t.status === 'closed') && monthKey(t.updatedAt) === mo);
+      if (!done.length) return { month: mo, avgDays: null as number | null };
+      return { month: mo, avgDays: done.reduce((s, t) => s + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) / done.length / 86_400_000 };
+    })
+  );
+
+  const resTimeByAgent = $derived.by(() =>
+    agents.slice(0, 6).map((agent, i) => ({
+      agent,
+      color: AGENT_LINE_COLORS[i % AGENT_LINE_COLORS.length],
+      data: allMonths.map(mo => {
+        const done = tickets.filter(t => t.assignedTo === agent.id && (t.status === 'resolved' || t.status === 'closed') && monthKey(t.updatedAt) === mo);
+        if (!done.length) return null as number | null;
+        return done.reduce((s, t) => s + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) / done.length / 86_400_000;
+      }),
+    }))
+  );
+
+  const maxResDay = $derived.by(() => Math.max(
+    ...resTimeByMonth.filter(d => d.avgDays !== null).map(d => d.avgDays!),
+    ...resTimeByAgent.flatMap(a => a.data.filter((d): d is number => d !== null)),
+    1
+  ));
+
+  const resYTicks = $derived.by(() =>
+    [0.25, 0.5, 0.75, 1].map(frac => ({ y: TPAD.top + TIH * (1 - frac), label: fmtDays(maxResDay * frac) }))
+  );
+
+  const lineXTicks = $derived.by(() => {
+    const n = allMonths.length;
+    const step = labelStep(n);
+    return allMonths.flatMap((mo, i) => {
+      if (i % step !== 0 && i !== n - 1) return [];
+      return [{ x: TPAD.left + (n <= 1 ? TIW / 2 : (i / (n - 1)) * TIW), label: monthLabel(mo) }];
+    });
+  });
+
+  const agentComparison = $derived.by(() =>
+    agents.map((agent, i) => {
+      const agentT = tickets.filter(t => t.assignedTo === agent.id);
+      const done = agentT.filter(t => t.status === 'resolved' || t.status === 'closed');
+      const avgMs = done.length ? done.reduce((s, t) => s + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) / done.length : null;
+      return {
+        agent, color: AGENT_LINE_COLORS[i % AGENT_LINE_COLORS.length],
+        total: agentT.length,
+        active: agentT.filter(t => t.status !== 'resolved' && t.status !== 'closed').length,
+        resolved: done.length,
+        avgDays: avgMs !== null ? avgMs / 86_400_000 : null,
+        rate: agentT.length > 0 ? done.length / agentT.length : 0,
+      };
+    }).sort((a, b) => b.total - a.total)
+  );
+
+  function lineSegs(data: (number | null)[], maxVal: number): string[] {
+    const n = allMonths.length;
+    const xOf = (i: number) => TPAD.left + (n <= 1 ? TIW / 2 : (i / (n - 1)) * TIW);
+    const yOf = (v: number) => TPAD.top + (1 - v / maxVal) * TIH;
+    const segs: string[] = [];
+    let cur: string[] = [];
+    for (let i = 0; i < data.length; i++) {
+      const v = data[i];
+      if (v === null) { if (cur.length >= 2) segs.push(cur.join(' ')); cur = []; }
+      else cur.push(`${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`);
+    }
+    if (cur.length >= 2) segs.push(cur.join(' '));
+    return segs;
+  }
+
+  function lineDots(data: (number | null)[], maxVal: number): { x: number; y: number; v: number }[] {
+    const n = allMonths.length;
+    const xOf = (i: number) => TPAD.left + (n <= 1 ? TIW / 2 : (i / (n - 1)) * TIW);
+    const yOf = (v: number) => TPAD.top + (1 - v / maxVal) * TIH;
+    return data.flatMap((v, i) => v !== null ? [{ x: xOf(i), y: yOf(v), v }] : []);
+  }
 
   onMount(async () => {
     const [ticketsRes, usersRes, auditRes] = await Promise.all([
@@ -365,6 +512,29 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Comparison + time-series skeletons -->
+      <div class="rounded-xl bg-muted/30 p-6 space-y-3">
+        <div class="h-5 w-40 rounded-md bg-muted"></div>
+        {#each Array(4) as _}
+          <div class="flex items-center gap-4">
+            <div class="h-4 w-32 rounded bg-muted shrink-0"></div>
+            <div class="h-3.5 w-10 rounded bg-muted ml-auto"></div>
+            <div class="h-3.5 w-10 rounded bg-muted"></div>
+            <div class="h-3.5 w-10 rounded bg-muted"></div>
+            <div class="h-3.5 w-10 rounded bg-muted"></div>
+            <div class="h-2 flex-1 rounded-full bg-muted"></div>
+          </div>
+        {/each}
+      </div>
+      <div class="rounded-xl bg-muted/30 p-6 h-52">
+        <div class="h-5 w-44 rounded-md bg-muted mb-4"></div>
+        <div class="h-36 w-full rounded-lg bg-muted/60"></div>
+      </div>
+      <div class="rounded-xl bg-muted/30 p-6 h-52">
+        <div class="h-5 w-52 rounded-md bg-muted mb-4"></div>
+        <div class="h-36 w-full rounded-lg bg-muted/60"></div>
       </div>
     </div>
   {:else}
@@ -667,5 +837,138 @@
         </Card>
       {/if}
     </div>
+
+    <!-- ── Agent Comparison ──────────────────────────────────────────── -->
+    <Card>
+      <CardHeader><CardTitle>Agent Comparison</CardTitle></CardHeader>
+      <CardContent>
+        {#if agents.length === 0}
+          <p class="text-center text-muted-foreground text-sm py-8">No agents found.</p>
+        {:else}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border text-left">
+                  {#each ['Agent','Total','Active','Resolved','Avg Time','Resolution Rate'] as h}
+                    <th class="pb-2.5 {h === 'Agent' ? 'pr-6' : h === 'Resolution Rate' ? 'pl-4' : 'px-4 text-right'} text-xs font-medium text-muted-foreground uppercase tracking-wide">{h}</th>
+                  {/each}
+                </tr>
+              </thead>
+              <tbody>
+                {#each agentComparison as row (row.agent.id)}
+                  <tr class="border-b border-border/40 last:border-0">
+                    <td class="py-3 pr-6">
+                      <div class="flex items-center gap-2">
+                        <span class="size-2.5 rounded-full shrink-0" style="background:{row.color}"></span>
+                        <span class="font-medium">{row.agent.name}</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-right tabular-nums">{row.total}</td>
+                    <td class="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.active}</td>
+                    <td class="py-3 px-4 text-right tabular-nums">{row.resolved}</td>
+                    <td class="py-3 px-4 text-right tabular-nums">{fmtDays(row.avgDays)}</td>
+                    <td class="py-3 pl-4">
+                      <div class="flex items-center gap-2 min-w-32">
+                        <div class="flex-1 h-1.5 rounded-full bg-muted/40">
+                          <div class="h-full rounded-full transition-all" style="width:{(row.rate * 100).toFixed(0)}%;background:{row.color}"></div>
+                        </div>
+                        <span class="text-xs text-muted-foreground w-8 text-right tabular-nums">{(row.rate * 100).toFixed(0)}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </CardContent>
+    </Card>
+
+    <!-- ── Ticket Volume Over Time ────────────────────────────────────── -->
+    <Card>
+      <CardHeader><CardTitle>Ticket Volume Over Time</CardTitle></CardHeader>
+      <CardContent>
+        {#if tickets.length === 0}
+          <p class="text-center text-muted-foreground text-sm py-8">No tickets yet.</p>
+        {:else}
+          <div class="flex flex-wrap gap-4 mb-4">
+            {#each STATUSES as s}
+              <span class="flex items-center gap-1.5 text-sm">
+                <span class="size-2.5 rounded-full shrink-0" style="background:{STATUS_COLORS[s]}"></span>
+                {STATUS_LABELS[s]}
+              </span>
+            {/each}
+          </div>
+          <div class="overflow-x-auto">
+            <svg viewBox="0 0 {SVG_W} {TCH}" class="w-full min-w-100" aria-label="Ticket volume by month">
+              {#each [0.25, 0.5, 0.75, 1] as frac}
+                {@const y = TPAD.top + TIH * (1 - frac)}
+                <line x1={TPAD.left} x2={TPAD.left + TIW} y1={y} y2={y} stroke="currentColor" stroke-opacity="0.08"/>
+                <text x={TPAD.left - 5} y={y} text-anchor="end" dominant-baseline="middle" font-size="10" fill="currentColor" fill-opacity="0.5">{Math.round(maxVol * frac)}</text>
+              {/each}
+              <line x1={TPAD.left} x2={TPAD.left + TIW} y1={TPAD.top + TIH} y2={TPAD.top + TIH} stroke="currentColor" stroke-opacity="0.15"/>
+              {#each barRects as bar, i}
+                {#each bar.rects as rect}
+                  <rect x={bar.bx} y={rect.y} width={bar.bw} height={rect.h} fill={STATUS_COLORS[rect.s]} fill-opacity="0.85" rx="1"/>
+                {/each}
+                {#if i % barLabelStep === 0 || i === barRects.length - 1}
+                  <text x={bar.bx + bar.bw / 2} y={TPAD.top + TIH + 14} text-anchor="middle" font-size="10" fill="currentColor" fill-opacity="0.5">{monthLabel(bar.month)}</text>
+                {/if}
+              {/each}
+            </svg>
+          </div>
+        {/if}
+      </CardContent>
+    </Card>
+
+    <!-- ── Resolution Time Over Time ─────────────────────────────────── -->
+    <Card>
+      <CardHeader><CardTitle>Resolution Time Over Time</CardTitle></CardHeader>
+      <CardContent>
+        {#if tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length === 0}
+          <p class="text-center text-muted-foreground text-sm py-8">No resolved tickets yet.</p>
+        {:else}
+          <div class="flex flex-wrap gap-x-5 gap-y-2 mb-4 text-sm">
+            <span class="flex items-center gap-2">
+              <svg width="20" height="10" aria-hidden="true"><line x1="0" y1="5" x2="20" y2="5" stroke="currentColor" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+              <span class="text-muted-foreground">Team avg</span>
+            </span>
+            {#each resTimeByAgent as a}
+              <span class="flex items-center gap-2">
+                <svg width="20" height="10" aria-hidden="true"><line x1="0" y1="5" x2="20" y2="5" stroke={a.color} stroke-width="2" stroke-opacity="0.8"/></svg>
+                <span class="text-muted-foreground">{a.agent.name}</span>
+              </span>
+            {/each}
+          </div>
+          <div class="overflow-x-auto">
+            <svg viewBox="0 0 {SVG_W} {TCH}" class="w-full min-w-100" aria-label="Resolution time over time">
+              {#each resYTicks as tick}
+                <line x1={TPAD.left} x2={TPAD.left + TIW} y1={tick.y} y2={tick.y} stroke="currentColor" stroke-opacity="0.08"/>
+                <text x={TPAD.left - 5} y={tick.y} text-anchor="end" dominant-baseline="middle" font-size="10" fill="currentColor" fill-opacity="0.5">{tick.label}</text>
+              {/each}
+              <line x1={TPAD.left} x2={TPAD.left + TIW} y1={TPAD.top + TIH} y2={TPAD.top + TIH} stroke="currentColor" stroke-opacity="0.15"/>
+              {#each lineXTicks as tick}
+                <text x={tick.x} y={TPAD.top + TIH + 14} text-anchor="middle" font-size="10" fill="currentColor" fill-opacity="0.5">{tick.label}</text>
+              {/each}
+              {#each resTimeByAgent as a}
+                {#each lineSegs(a.data, maxResDay) as pts}
+                  <polyline points={pts} fill="none" stroke={a.color} stroke-width="1.5" stroke-opacity="0.8"/>
+                {/each}
+                {#each lineDots(a.data, maxResDay) as d}
+                  <circle cx={d.x} cy={d.y} r="2.5" fill={a.color}/>
+                {/each}
+              {/each}
+              {#each lineSegs(resTimeByMonth.map(d => d.avgDays), maxResDay) as pts}
+                <polyline points={pts} fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity="0.35"/>
+              {/each}
+              {#each lineDots(resTimeByMonth.map(d => d.avgDays), maxResDay) as d}
+                <circle cx={d.x} cy={d.y} r="2" fill="currentColor" fill-opacity="0.35"/>
+              {/each}
+            </svg>
+          </div>
+        {/if}
+      </CardContent>
+    </Card>
+
   {/if}
 </div>
