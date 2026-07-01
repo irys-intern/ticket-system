@@ -123,6 +123,11 @@ No `.env` file needed. The model path and port are configured directly in `nlp_s
 | **Agent** | View open/assigned tickets, claim and forfeit tickets, update ticket status and metadata (priority/category), comment, access training materials |
 | **Admin** | Full access: all tickets, user management, assignments, audit log, stats dashboard, manage training materials |
 
+![User dashboard](images/userdashboard.png)
+![Agent dashboard](images/agentdashboard.png)
+![Admin dashboard](images/admindashboard.png)
+![My tickets](images/mytickets.png)
+
 ### Ticket Lifecycle
 
 1. A **user** creates a ticket with a title, description, priority, and category.
@@ -131,6 +136,12 @@ No `.env` file needed. The model path and port are configured directly in `nlp_s
 4. Status can progress through: `open` → `in_progress` → `waiting_for_response` → `resolved` → `closed`.
 5. A ticket can hit `in_progress` and `waiting_for_response` multiple times before continuing to `resolved`.
 6. Once `closed`, no further comments can be added.
+
+![Ticket as seen by user](images/ticketintuser.png)
+![Unclaimed ticket (agent view)](images/unclaimedticketint.png)
+![Assigned ticket (agent view)](images/assignedticketagent.png)
+
+![Ticket Lifecycle](images/ticketlifecycle.png)
 
 ### Priorities
 
@@ -143,6 +154,8 @@ No `.env` file needed. The model path and port are configured directly in `nlp_s
 ---
 
 ## Architecture
+
+![Ticket System Diagram](images/ticketsystemdiagram.png)
 
 ```
 ticket-system/
@@ -228,6 +241,8 @@ The NLP service exposes a single endpoint used by the ticket creation form to su
 4. The priority dropdown is pre-filled with the suggestion and a confidence note is shown. The user can override it freely before submitting.
 5. If the service is unreachable, the form falls back silently — the user just picks priority manually.
 
+![Partially filled ticket](images/ticketconfidence.png)
+
 ### Model setup
 
 The model is **not included in the repository** (weights are large and gitignored). You have two options:
@@ -305,6 +320,9 @@ The body must include an `action` field:
 | `assign` | Admin | Assign ticket to any agent; sets status → `in_progress` |
 | `unassign` | Admin | Remove assignment; sets status → `open` |
 
+![Admin ticket view](images/adminticketint.png)
+![Assign agent dialog](images/assignagent.png)
+
 ### Admin
 
 | Method | Path | Description | Auth required |
@@ -315,6 +333,10 @@ The body must include an `action` field:
 | `GET` | `/admin/audit` | Get audit events (filterable by ticket) | Admin |
 | `POST` | `/admin/audit` | Log an audit event | Admin |
 | `GET` | `/admin/stats` | Aggregate ticket and user statistics | Admin |
+
+![Manage users](images/manageusers.png)
+![Audit log](images/auditlog.png)
+![Stats dashboard](images/agentstats.png)
 
 ### Training Materials
 
@@ -331,6 +353,8 @@ Training materials are Markdown files stored in `backend/training-materials/`. A
 `POST /training` body: `{ title: string, content: string }`. The slug is derived from the title (lowercase alphanumeric + hyphens). Returns `{ slug }` on success.
 
 `PUT /training/[slug]` body: `{ content: string }` (title is not updated; rename by delete + create).
+
+![Training materials](images/trainingmaterialsview.png)
 
 ---
 
