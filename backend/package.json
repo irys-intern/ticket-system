@@ -13,7 +13,8 @@
     "test:unit": "vitest",
     "test": "npm run test:unit -- --run && npm run test:e2e",
     "test:e2e": "playwright install && playwright test",
-    "seed": "tsx src/db/seed.ts"
+    "seed": "tsx src/db/seed.ts",
+    "create_admin": "tsx src/scripts/create_admin.ts"
   },
   "type": "module",
   "devDependencies": {

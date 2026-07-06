@@ -32,15 +32,16 @@ The project is split into three independent services:
 
 ### Prerequisites
 
-- Node.js 20+
-- PostgreSQL 16
-- Redis 7
-- Python 3.10+
+- [Node.js](https://nodejs.org/) 20+
+- [PostgreSQL](https://www.postgresql.org/) 16
+- [Redis](https://redis.io/) 7
+- [Python](https://www.python.org/) 3.10+
 
 ### Steps
 
 Run all apps in separate terminals:
 
+Note: you need a Better-Auth key from [better-auth.com](https://better-auth.com/docs/installation)
 ```bash
 # Backend
 cd backend
@@ -203,13 +204,13 @@ ticket-system/
 
 | Layer | Technology |
 |---|---|
-| Frontend | SvelteKit 5, Svelte 5, Tailwind CSS 4 |
-| Backend | SvelteKit 5 (API routes only) |
-| NLP service | FastAPI, Hugging Face Transformers (`facebook/bart-large-mnli`, zero-shot classification) |
-| Auth | Better Auth 1.6 (HTTP-only cookie sessions, PostgreSQL session store, Redis session cache) |
-| ORM | Drizzle ORM 0.45 |
-| Database | PostgreSQL 16 |
-| Cache | Redis 7 (Better Auth secondary storage — session token cache) |
+| Frontend | [SvelteKit](https://kit.svelte.dev/) 5, [Svelte](https://svelte.dev/) 5, [Tailwind CSS](https://tailwindcss.com/) 4 |
+| Backend | [SvelteKit](https://kit.svelte.dev/) 5 (API routes only) |
+| NLP service | [FastAPI](https://fastapi.tiangolo.com/), [Hugging Face Transformers](https://huggingface.co/docs/transformers) ([`facebook/bart-large-mnli`](https://huggingface.co/facebook/bart-large-mnli), zero-shot classification) |
+| Auth | [Better Auth](https://better-auth.com/) 1.6 (HTTP-only cookie sessions, PostgreSQL session store, Redis session cache) |
+| ORM | [Drizzle ORM](https://orm.drizzle.team/) 0.45 |
+| Database | [PostgreSQL](https://www.postgresql.org/) 16 |
+| Cache | [Redis](https://redis.io/) 7 (Better Auth secondary storage — session token cache) |
 <!-- | Testing | Vitest (unit), Playwright (E2E) | -->
 
 ### Database Schema
@@ -410,7 +411,7 @@ cd backend && node build
 cd frontend && node build
 ```
 
-Use a process manager (e.g. PM2) to keep both processes running and restart on crash.
+Use a process manager (e.g. [PM2](https://pm2.keymetrics.io/)) to keep both processes running and restart on crash.
 
 ### NLP service (production)
 
@@ -423,7 +424,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 Update the `allow_origins` list in `nlp_service/main.py` to include your production frontend domain before deploying.
 
-The `local_model/` directory must be present on the server. Either commit the weights out-of-band (e.g. via Git LFS or a cloud volume) or run the auto-download on first start with an internet connection.
+The `local_model/` directory must be present on the server. Either commit the weights out-of-band (e.g. via [Git LFS](https://git-lfs.com/) or a cloud volume) or run the auto-download on first start with an internet connection.
 
 ### Checklist
 
@@ -434,7 +435,7 @@ The `local_model/` directory must be present on the server. Either commit the we
 - [ ] `BACKEND_URL` matches your production backend domain (frontend)
 - [ ] `NODE_ENV=production` in both apps
 - [ ] Migrations have been run against the production database
-- [ ] HTTPS is terminated upstream (reverse proxy like nginx or a platform like Railway/Render)
+- [ ] HTTPS is terminated upstream (reverse proxy like [nginx](https://nginx.org/) or a platform like [Railway](https://railway.app/)/[Render](https://render.com/))
 - [ ] `allow_origins` in `nlp_service/main.py` includes the production frontend URL
 - [ ] `local_model/` weights are present on the production server
 - [ ] NLP service is running and reachable from the frontend origin
