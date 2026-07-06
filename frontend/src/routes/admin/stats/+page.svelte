@@ -6,6 +6,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Label } from '$lib/components/ui/label';
+  import InfoTooltip from '$lib/components/InfoTooltip.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import type { Ticket, User, AuditEvent } from '../../../types';
 
@@ -78,6 +79,11 @@
     const created = new Date(t.createdAt).getTime();
     const updated = new Date(t.updatedAt).getTime();
     return updated > created ? updated - created : Date.now() - created;
+  }
+
+  // Resolution time can never be negative; clamp away any clock-skew artifacts in the data.
+  function resolutionMs(t: Ticket): number {
+    return Math.max(0, new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime());
   }
 
   const scatterData = $derived.by(() => {
@@ -155,25 +161,30 @@
   }
 
   // --- Agent stat cards ---
-  type StatCard = { title: string; value: number | string; suffix?: string; color?: string };
+  type StatCard = { title: string; value: number | string; suffix?: string; color?: string; info?: string };
 
   const agentStats = $derived.by((): StatCard[] => {
     const by = (s: string) => agentTickets.filter((t) => t.status === s).length;
     const done = agentTickets.filter((t) => t.status === 'resolved' || t.status === 'closed');
     const avgMs = done.length
-      ? done.reduce(
-          (sum, t) =>
-            sum + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()),
-          0,
-        ) / done.length
+      ? done.reduce((sum, t) => sum + resolutionMs(t), 0) / done.length
       : null;
     return [
       { title: 'In Progress', value: by('in_progress'), color: STATUS_COLORS['in_progress'] },
       { title: 'Waiting', value: by('waiting_for_response'), color: STATUS_COLORS['waiting_for_response'] },
       { title: 'Resolved', value: by('resolved'), color: STATUS_COLORS['resolved'] },
       { title: 'Closed', value: by('closed'), color: STATUS_COLORS['closed'] },
-      { title: 'Lifetime Assigned', value: agentTickets.length },
-      { title: 'Avg Resolution', value: avgMs !== null ? Math.round(avgMs / 86_400_000) : '—', suffix: avgMs !== null ? 'd' : undefined },
+      {
+        title: 'Lifetime Assigned',
+        value: agentTickets.length,
+        info: 'Total tickets assigned to this agent',
+      },
+      {
+        title: 'Avg Resolution',
+        value: avgMs !== null ? Math.round(avgMs / 86_400_000) : '—',
+        suffix: avgMs !== null ? 'd' : undefined,
+        info: 'Average calendar days between ticket creation and it being marked resolved or closed.',
+      },
     ];
   });
 
@@ -299,7 +310,7 @@
     allMonths.map(mo => {
       const done = tickets.filter(t => (t.status === 'resolved' || t.status === 'closed') && monthKey(t.updatedAt) === mo);
       if (!done.length) return { month: mo, avgDays: null as number | null };
-      return { month: mo, avgDays: done.reduce((s, t) => s + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) / done.length / 86_400_000 };
+      return { month: mo, avgDays: done.reduce((s, t) => s + resolutionMs(t), 0) / done.length / 86_400_000 };
     })
   );
 
@@ -310,7 +321,7 @@
       data: allMonths.map(mo => {
         const done = tickets.filter(t => t.assignedTo === agent.id && (t.status === 'resolved' || t.status === 'closed') && monthKey(t.updatedAt) === mo);
         if (!done.length) return null as number | null;
-        return done.reduce((s, t) => s + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) / done.length / 86_400_000;
+        return done.reduce((s, t) => s + resolutionMs(t), 0) / done.length / 86_400_000;
       }),
     }))
   );
@@ -338,7 +349,7 @@
     agents.map((agent, i) => {
       const agentT = tickets.filter(t => t.assignedTo === agent.id);
       const done = agentT.filter(t => t.status === 'resolved' || t.status === 'closed');
-      const avgMs = done.length ? done.reduce((s, t) => s + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()), 0) / done.length : null;
+      const avgMs = done.length ? done.reduce((s, t) => s + resolutionMs(t), 0) / done.length : null;
       return {
         agent, color: AGENT_LINE_COLORS[i % AGENT_LINE_COLORS.length],
         total: agentT.length,
@@ -542,7 +553,10 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <Card>
         <CardHeader class="pb-1 pt-4">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Tickets</p>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            Total Tickets
+            <InfoTooltip text="All tickets ever created, regardless of status." />
+          </p>
         </CardHeader>
         <CardContent class="pb-4">
           <p class="text-3xl font-bold">{tickets.length}</p>
@@ -550,7 +564,10 @@
       </Card>
       <Card>
         <CardHeader class="pb-1 pt-4">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Open & Unassigned</p>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            Open & Unassigned
+            <InfoTooltip text="Tickets still in the 'open' status that have not been claimed or assigned to an agent." />
+          </p>
         </CardHeader>
         <CardContent class="pb-4">
           <p class="text-3xl font-bold">{tickets.filter(t => t.status === 'open' && !t.assignedTo).length}</p>
@@ -558,7 +575,10 @@
       </Card>
       <Card>
         <CardHeader class="pb-1 pt-4">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Avg Time to Assignment</p>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            Avg Time to Assignment
+            <InfoTooltip text="Average time between a ticket being created and an agent first being assigned, based on the audit log." />
+          </p>
         </CardHeader>
         <CardContent class="pb-4">
           <p class="text-3xl font-bold">{avgTimeToAssignment}</p>
@@ -570,7 +590,10 @@
     <Card>
       <CardHeader>
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Ticket Timeline</CardTitle>
+          <CardTitle class="flex items-center gap-1.5">
+            Ticket Timeline
+            <InfoTooltip text="Each dot is one ticket, plotted by how long it took to resolve (or how long it's been open, if still active) and colored by its current status." />
+          </CardTitle>
           <div class="flex items-center gap-2">
             <Label for="group-by" class="text-sm whitespace-nowrap">Y axis</Label>
             <select id="group-by" bind:value={groupBy} class="{selectClass} min-w-36">
@@ -741,8 +764,9 @@
           {#each agentStats as card}
             <Card>
               <CardHeader class="pb-1 pt-4">
-                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                   {card.title}
+                  {#if card.info}<InfoTooltip text={card.info} />{/if}
                 </p>
               </CardHeader>
               <CardContent class="pb-4">
@@ -760,7 +784,10 @@
         <Card>
           <CardHeader>
             <div class="flex items-center justify-between gap-3 flex-wrap">
-              <CardTitle class="text-base">Ticket Distribution</CardTitle>
+              <CardTitle class="text-base flex items-center gap-1.5">
+                Ticket Distribution
+                <InfoTooltip text="How this agent's assigned tickets break down by priority or category." />
+              </CardTitle>
               <div class="flex rounded-lg border border-input overflow-hidden text-sm">
                 <button
                   onclick={() => (distGroupBy = 'priority')}
@@ -802,7 +829,10 @@
         <!-- Donut chart -->
         <Card>
           <CardHeader>
-            <CardTitle class="text-base">Status Breakdown</CardTitle>
+            <CardTitle class="text-base flex items-center gap-1.5">
+              Status Breakdown
+              <InfoTooltip text="Distribution of this agent's currently active tickets by status. Closed tickets are excluded." />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {#if donutData.length === 0}
@@ -840,7 +870,12 @@
 
     <!-- ── Agent Comparison ──────────────────────────────────────────── -->
     <Card>
-      <CardHeader><CardTitle>Agent Comparison</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle class="flex items-center gap-1.5">
+          Agent Comparison
+          <InfoTooltip text="Side-by-side workload and performance metrics across all agents." />
+        </CardTitle>
+      </CardHeader>
       <CardContent>
         {#if agents.length === 0}
           <p class="text-center text-muted-foreground text-sm py-8">No agents found.</p>
@@ -849,8 +884,20 @@
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-border text-left">
-                  {#each ['Agent','Total','Active','Resolved','Avg Time','Resolution Rate'] as h}
-                    <th class="pb-2.5 {h === 'Agent' ? 'pr-6' : h === 'Resolution Rate' ? 'pl-4' : 'px-4 text-right'} text-xs font-medium text-muted-foreground uppercase tracking-wide">{h}</th>
+                  {#each [
+                    { label: 'Agent' },
+                    { label: 'Total', info: 'All tickets ever assigned to this agent.' },
+                    { label: 'Active', info: 'Currently assigned tickets that are not yet resolved or closed.' },
+                    { label: 'Resolved', info: 'Tickets this agent has marked resolved or closed.' },
+                    { label: 'Avg Time', info: 'Average calendar days from creation to resolution or closure.' },
+                    { label: 'Resolution Rate', info: 'Share of this agent\'s total tickets that have been resolved or closed.' },
+                  ] as h}
+                    <th class="pb-2.5 {h.label === 'Agent' ? 'pr-6' : h.label === 'Resolution Rate' ? 'pl-4' : 'px-4 text-right'} text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      <span class="inline-flex items-center gap-1.5 {h.label !== 'Agent' && h.label !== 'Resolution Rate' ? 'justify-end w-full' : ''}">
+                        {h.label}
+                        {#if h.info}<InfoTooltip text={h.info} />{/if}
+                      </span>
+                    </th>
                   {/each}
                 </tr>
               </thead>
@@ -886,7 +933,12 @@
 
     <!-- ── Ticket Volume Over Time ────────────────────────────────────── -->
     <Card>
-      <CardHeader><CardTitle>Ticket Volume Over Time</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle class="flex items-center gap-1.5">
+          Ticket Volume Over Time
+          <InfoTooltip text="Number of tickets created each month, stacked and colored by their current status." />
+        </CardTitle>
+      </CardHeader>
       <CardContent>
         {#if tickets.length === 0}
           <p class="text-center text-muted-foreground text-sm py-8">No tickets yet.</p>
@@ -915,6 +967,17 @@
                   <text x={bar.bx + bar.bw / 2} y={TPAD.top + TIH + 14} text-anchor="middle" font-size="10" fill="currentColor" fill-opacity="0.5">{monthLabel(bar.month)}</text>
                 {/if}
               {/each}
+              <text
+                x="12"
+                y={TPAD.top + TIH / 2}
+                text-anchor="middle"
+                dominant-baseline="middle"
+                font-size="10"
+                fill="currentColor"
+                fill-opacity="0.4"
+                transform="rotate(-90, 12, {TPAD.top + TIH / 2})"
+                >Tickets</text
+              >
             </svg>
           </div>
         {/if}
@@ -923,7 +986,12 @@
 
     <!-- ── Resolution Time Over Time ─────────────────────────────────── -->
     <Card>
-      <CardHeader><CardTitle>Resolution Time Over Time</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle class="flex items-center gap-1.5">
+          Resolution Time Over Time
+          <InfoTooltip text="Average days-to-resolve for tickets resolved or closed each month, shown per agent and as a team-wide dashed average." />
+        </CardTitle>
+      </CardHeader>
       <CardContent>
         {#if tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length === 0}
           <p class="text-center text-muted-foreground text-sm py-8">No resolved tickets yet.</p>
@@ -964,6 +1032,17 @@
               {#each lineDots(resTimeByMonth.map(d => d.avgDays), maxResDay) as d}
                 <circle cx={d.x} cy={d.y} r="2" fill="currentColor" fill-opacity="0.35"/>
               {/each}
+              <text
+                x="12"
+                y={TPAD.top + TIH / 2}
+                text-anchor="middle"
+                dominant-baseline="middle"
+                font-size="10"
+                fill="currentColor"
+                fill-opacity="0.4"
+                transform="rotate(-90, 12, {TPAD.top + TIH / 2})"
+                >Avg days to resolve</text
+              >
             </svg>
           </div>
         {/if}

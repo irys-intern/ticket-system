@@ -17,6 +17,7 @@
   let errors: string[] = $state([]);
   let sortBy: keyof (typeof users)[0] = $state('id');
   let showEditModal = $state(false);
+  let currentUserId: string | null = $state(null);
 
   let sortedUsers = $derived.by(() => {
     return [...users].sort((a, b) =>
@@ -35,6 +36,12 @@
   );
 
   onMount(async () => {
+    const meRes = await fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' });
+    if (meRes.ok) {
+      const meData = await meRes.json();
+      currentUserId = meData.session?.userId ?? null;
+    }
+
     const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', { credentials: 'include' });
     const result = await response.json();
     if (!response.ok) {
@@ -47,6 +54,20 @@
   function handleEdit(user: typeof users[0]) {
     selectedUser = { ...user };
     showEditModal = true;
+  }
+
+  async function handleDelete(user: typeof users[0]) {
+    if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
+    const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      errors = [result.message ?? 'Unable to delete user'];
+      return;
+    }
+    users = users.filter((u) => u.id !== user.id);
   }
 
   function handleSave() {
@@ -113,8 +134,13 @@
             <TableCell>{user.name}</TableCell>
             <TableCell class="text-muted-foreground">{user.email}</TableCell>
             <TableCell><Badge variant={roleVariant(user.role)}>{user.role}</Badge></TableCell>
-            <TableCell>
-              <Button size="sm" variant="outline" onclick={() => handleEdit(user)}>Edit</Button>
+            <TableCell class="space-x-1.5">
+              {#if user.id === currentUserId}
+                <span class="text-xs text-muted-foreground">(you)</span>
+              {:else}
+                <Button size="sm" variant="outline" onclick={() => handleEdit(user)}>Edit</Button>
+                <Button size="sm" variant="destructive" onclick={() => handleDelete(user)}>Delete</Button>
+              {/if}
             </TableCell>
           </TableRow>
         {/each}

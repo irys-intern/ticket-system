@@ -1,7 +1,7 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit'
 import { db } from '../../../db/index.ts'
 import { ticketsTable } from '../../../db/schema.ts'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 export const GET: RequestHandler = async ({ params, locals }) => {
     const id = Number(params.id)
     if (Number.isNaN(id)) {
@@ -115,7 +115,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             });
             await db.update(ticketsTable).set({status: data.status}).where(eq(ticketsTable.id, parseInt(params.id)));
             if (data.status==='resolved') {
-                await db.update(ticketsTable).set({updatedAt: sql`now()`}).where(eq(ticketsTable.id, parseInt(params.id)));
+                await db.update(ticketsTable).set({updatedAt: new Date()}).where(eq(ticketsTable.id, parseInt(params.id)));
             }
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",

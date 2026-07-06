@@ -2,6 +2,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { toast } from '$lib/toast';
   import { Button } from '$lib/components/ui/button';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
@@ -22,12 +23,15 @@
 
       if (!response.ok) {
         errors = result.errors ?? [result.message ?? 'Unable to log out'];
+        toast.error(errors[0]);
       } else {
         successMessage = result.message ?? 'You have been logged out successfully.';
+        toast.success(successMessage);
         await goto(resolve('/'), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the logout service. Please try again later.'];
+      toast.error(errors[0]);
       console.error(error);
     }
   }

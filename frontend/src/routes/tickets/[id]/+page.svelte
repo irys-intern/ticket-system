@@ -11,6 +11,7 @@
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { toast, queueToast } from '$lib/toast';
 
   let user: { userId: string; email: string; name: string; role: string } | null = $state(null);
   let ticket: Ticket | null = $state(null);
@@ -99,22 +100,24 @@
     const body = action === 'unassign'
       ? { ticketId: ticket.id, action }
       : { agent: selectedAgentId, ticketId: ticket.id, action };
-    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       credentials: 'include'
     });
+    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Assignment updated.' : 'Failed to update assignment.');
     window.location.reload();
   }
 
   async function claimTicket() {
-    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'claim' }),
     });
+    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket claimed.' : 'Failed to claim ticket.');
     window.location.reload();
   }
 
@@ -124,34 +127,37 @@
     const newStatus = statuses[statuses.indexOf(ticket.status) + 1];
     if (!newStatus?.trim()) return;
     if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
-    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim() }),
     });
+    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Status updated.' : 'Failed to update status.');
     window.location.reload();
   }
 
   async function updateStatusBack() {
     if (!ticket) return;
     if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
-    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_status', status: 'in_progress' }),
     });
+    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Status updated.' : 'Failed to update status.');
     window.location.reload();
   }
 
   async function forfeitTicket() {
-    await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'forfeit' }),
     });
+    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket forfeited.' : 'Failed to forfeit ticket.');
     window.location.reload();
   }
 
@@ -170,7 +176,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) {
+        queueToast('success', 'Ticket closed.');
+        window.location.reload();
+      } else {
+        toast.error('Failed to close ticket.');
+      }
     }
   }
 
@@ -190,7 +201,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'close' }),
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) {
+        queueToast('success', 'Ticket closed.');
+        window.location.reload();
+      } else {
+        toast.error('Failed to close ticket.');
+      }
     }
   }
 
@@ -210,7 +226,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) {
+        queueToast('success', 'Ticket closed.');
+        window.location.reload();
+      } else {
+        toast.error('Failed to close ticket.');
+      }
     }
   }
 
@@ -221,12 +242,13 @@
 
   async function updateMetadata(field: 'priority' | 'category', value: string) {
     if (!ticket) return;
-    await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_metadata', [field]: value }),
     });
+    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket updated.' : 'Failed to update ticket.');
     window.location.reload();
   }
 </script>

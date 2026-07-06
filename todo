@@ -3,4 +3,11 @@
 ## Infrastructure
 - Create Dockerfile and docker-compose.yml
 
-## Stats
+[x] Add password verfication
+[x] Add info bubble to stats
+    Labels
+Cleanup for demo:
+* Build run script for frontend, backend, nlp
+Global toasts on redirect
+DB seeding w/ sample data
+[x] Comments should be recent --> oldest

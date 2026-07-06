@@ -9,6 +9,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { PUBLIC_BACKEND_URL, PUBLIC_NLP_SERVER_URL } from '$env/static/public';
+  import { toast, queueToast } from '$lib/toast';
 
   let title = $state('');
   let description = $state('');
@@ -78,9 +79,11 @@
       description = '';
       category = 'bug';
       priority = 'low';
+      queueToast('success', successMessage);
       location.href = `/tickets/${result.ticketId}`;
     } else {
       errors = result.errors ?? [result.message ?? 'Failed to create ticket. Please try again.'];
+      toast.error(errors[0]);
     }
   }
 </script>

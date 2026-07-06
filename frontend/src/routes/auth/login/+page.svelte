@@ -2,6 +2,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { toast } from '$lib/toast';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
@@ -32,14 +33,17 @@
 
       if (!response.ok) {
         errors = result.errors ?? [result.message ?? 'Unable to log in'];
+        toast.error(errors[0]);
       } else {
         successMessage = result.message ?? 'Login successful.';
         email = '';
         password = '';
+        toast.success(successMessage);
         await goto(resolve('/'), { replaceState: true });
       }
     } catch (error) {
       errors = ['Unable to reach the login service. Please try again later.'];
+      toast.error(errors[0]);
       console.error(error);
     } finally {
       submitting = false;

@@ -7,6 +7,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Separator } from '$lib/components/ui/separator';
   import { PUBLIC_BACKEND_URL } from '$env/static/public'
+  import { toast } from '$lib/toast';
 
   let comments: { id: string; userName: string; createdAt: string; content: string }[] = $state([]);
   let newComment = $state('');
@@ -14,6 +15,8 @@
   let error: string | null = $state(null);
   let ticketUrl = $state('');
   let awaitingResponse = $state(false);
+
+  let reversedComments = $derived([...comments].reverse());
 
   onMount(async () => {
     const locationURL = new URL(window.location.href).pathname;
@@ -64,8 +67,10 @@
       if (data.resumedTicket) awaitingResponse = false;
       newComment = '';
       await fetchComments();
+      toast.success('Comment posted.');
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
+      toast.error(error);
     }
   }
 </script>
@@ -106,7 +111,7 @@
     <p class="text-muted-foreground text-sm">No comments yet.</p>
   {:else}
     <div class="max-h-[60vh] overflow-y-auto space-y-3">
-      {#each comments as comment (comment.id)}
+      {#each reversedComments as comment (comment.id)}
         <Card>
           <CardHeader class="pb-1 pt-4 px-4">
             <div class="flex items-center justify-between">

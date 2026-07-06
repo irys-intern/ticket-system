@@ -23,6 +23,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     if ((!manageUserId) || (!modification)) {
         throw error(400, "Malformed request")
     }
+    if (manageUserId === locals.user.userId) {
+        throw error(400, "Cannot change your own access level")
+    }
     if ((modification === 'user' || modification === 'agent' || modification === 'admin') && manageUserId) {
         updatedUser = await db.update(userTable).set({role: modification}).where(eq(userTable.id, manageUserId)).returning()
     }

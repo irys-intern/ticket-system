@@ -6,19 +6,27 @@
   import { Label } from '$lib/components/ui/label';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { toast, queueToast } from '$lib/toast';
 
   let name = $state('');
   let email = $state('');
   let password = $state('');
+  let confirmPassword = $state('');
   let submitting = $state(false);
   let successMessage = $state('');
   let errors: string[] = $state([]);
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
-    submitting = true;
     successMessage = '';
     errors = [];
+
+    if (password !== confirmPassword) {
+      errors = ['Passwords do not match'];
+      return;
+    }
+
+    submitting = true;
 
     try {
       const response = await fetch(`${PUBLIC_BACKEND_URL}/auth/register`, {
@@ -31,15 +39,19 @@
 
       if (!response.ok) {
         errors = result.errors ?? [result.message ?? 'Unable to register'];
+        toast.error(errors[0]);
       } else {
         successMessage = result.message ?? 'Registration successful. Redirecting to login…';
         name = '';
         email = '';
         password = '';
+        confirmPassword = '';
+        queueToast('success', successMessage);
         location.href = '/auth/login';
       }
     } catch (error) {
       errors = ['Unable to reach the registration service. Please try again later.'];
+      toast.error(errors[0]);
       console.error(error);
     } finally {
       submitting = false;
@@ -88,6 +100,11 @@
     <div class="space-y-1.5">
       <Label for="password">Password</Label>
       <Input id="password" type="password" bind:value={password} required minlength={8} placeholder="At least 8 characters" />
+    </div>
+
+    <div class="space-y-1.5">
+      <Label for="confirm-password">Confirm Password</Label>
+      <Input id="confirm-password" type="password" bind:value={confirmPassword} required minlength={8} placeholder="Re-enter your password" />
     </div>
 
     <Button type="submit" class="w-full" disabled={submitting}>
