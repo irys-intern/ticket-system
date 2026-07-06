@@ -51,5 +51,5 @@ __pycache__
 local_model/*
 nlp_service/local_model/
 *.safetensors
-/backend/.svelte-kit/*.ts
-/backend/.svelte-kit/*.js
+backend/.svelte-kit/**
+frontend/.svelte-kit/**
