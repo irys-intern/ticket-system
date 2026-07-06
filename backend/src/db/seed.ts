@@ -24,27 +24,27 @@ const chance = (p: number) => rand() < p;
 const DAY_MS = 86_400_000;
 
 const CUSTOMERS = [
-  { id: 'seed-user-1', name: 'Alice Nguyen', email: 'alice@example.com', role: 'user' },
-  { id: 'seed-user-2', name: 'Marcus Webb', email: 'marcus@example.com', role: 'user' },
-  { id: 'seed-user-3', name: 'Priya Patel', email: 'priya@example.com', role: 'user' },
-  { id: 'seed-user-4', name: 'Diego Alvarez', email: 'diego@example.com', role: 'user' },
-  { id: 'seed-user-5', name: 'Hana Kobayashi', email: 'hana@example.com', role: 'user' },
-  { id: 'seed-user-6', name: 'Owen Fitzgerald', email: 'owen@example.com', role: 'user' },
-  { id: 'seed-user-7', name: 'Zara Ahmed', email: 'zara@example.com', role: 'user' },
-  { id: 'seed-user-8', name: 'Lucas Meier', email: 'lucas@example.com', role: 'user' },
+  { id: 'demo-user-1', name: 'Alice Nguyen', email: 'alice@demo.example.com', role: 'user' },
+  { id: 'demo-user-2', name: 'Marcus Webb', email: 'marcus@demo.example.com', role: 'user' },
+  { id: 'demo-user-3', name: 'Priya Patel', email: 'priya@demo.example.com', role: 'user' },
+  { id: 'demo-user-4', name: 'Diego Alvarez', email: 'diego@demo.example.com', role: 'user' },
+  { id: 'demo-user-5', name: 'Hana Kobayashi', email: 'hana@demo.example.com', role: 'user' },
+  { id: 'demo-user-6', name: 'Owen Fitzgerald', email: 'owen@demo.example.com', role: 'user' },
+  { id: 'demo-user-7', name: 'Zara Ahmed', email: 'zara@demo.example.com', role: 'user' },
+  { id: 'demo-user-8', name: 'Lucas Meier', email: 'lucas@demo.example.com', role: 'user' },
 ] as const;
 
 // speed multiplier applied to resolution time — lower resolves faster
 const AGENTS = [
-  { id: 'seed-agent-1', name: 'Bob Chen', email: 'bob@example.com', role: 'agent', speed: 0.7 },
-  { id: 'seed-agent-2', name: 'Renee Dubois', email: 'renee@example.com', role: 'agent', speed: 1.4 },
-  { id: 'seed-agent-3', name: 'Tomas Novak', email: 'tomas@example.com', role: 'agent', speed: 1.0 },
-  { id: 'seed-agent-4', name: 'Aisha Yusuf', email: 'aisha@example.com', role: 'agent', speed: 0.5 },
-  { id: 'seed-agent-5', name: 'Grace Lindqvist', email: 'grace@example.com', role: 'agent', speed: 1.8 },
+  { id: 'demo-agent-1', name: 'Bob Chen', email: 'bob@demo.example.com', role: 'agent', speed: 0.7 },
+  { id: 'demo-agent-2', name: 'Renee Dubois', email: 'renee@demo.example.com', role: 'agent', speed: 1.4 },
+  { id: 'demo-agent-3', name: 'Tomas Novak', email: 'tomas@demo.example.com', role: 'agent', speed: 1.0 },
+  { id: 'demo-agent-4', name: 'Aisha Yusuf', email: 'aisha@demo.example.com', role: 'agent', speed: 0.5 },
+  { id: 'demo-agent-5', name: 'Grace Lindqvist', email: 'grace@demo.example.com', role: 'agent', speed: 1.8 },
 ] as const;
 
 const ADMINS = [
-  { id: 'seed-admin-1', name: 'Carol Reyes', email: 'carol@example.com', role: 'admin' },
+  { id: 'demo-admin-1', name: 'Carol Reyes', email: 'carol@demo.example.com', role: 'admin' },
 ] as const;
 
 const USERS = [...CUSTOMERS, ...AGENTS.map(({ speed, ...a }) => a), ...ADMINS];
