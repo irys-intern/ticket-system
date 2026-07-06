@@ -201,12 +201,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
-            await fetch('/admin/audit', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
-            })
-            await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            await db.update(ticketsTable).set({status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -252,12 +247,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
-            await fetch('/admin/audit', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({action: "ticket reassigned", ticketId: params.id})
-            })
-            await db.update(ticketsTable).set({assignedTo: null, status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            await db.update(ticketsTable).set({status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
             return json({ok: true, success: true})
         } else {
             return json({ok:false, success:false})
