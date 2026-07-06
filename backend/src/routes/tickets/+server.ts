@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({locals}) => {
         const dbHits = await db.select()
                          .from(ticketsTable)
                          .where(eq(ticketsTable.createdBy, userId))
-        return json({ tickets: dbHits })
+        return json({ tickets: dbHits, userRole })
     } else if (userRole === 'agent') {
         const dbHits = await db.select()
                                .from(ticketsTable)
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({locals}) => {
     } else if (userRole === 'admin') {
         const dbHits = await db.select()
                                .from(ticketsTable)
-        return json({ tickets: dbHits })
+        return json({ tickets: dbHits, userRole })
     } else {
         throw error(401, "Unauthenticated");
     }

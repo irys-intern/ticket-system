@@ -18,6 +18,8 @@
   let errors: string[] = $state([]);
   let tickets: Ticket[] = $state([]);
   let isLoading = $state(true);
+  let userRole = $state('guest');
+  let agentNames: Record<string, string> = $state({});
   let filteredTickets: Ticket[] = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
     const result = tickets.filter((t: Ticket) => {
@@ -27,6 +29,8 @@
     });
     if (sortBy === 'oldest') return [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     if (sortBy === 'priority') return [...result].sort((a, b) => (PRIORITY_RANK[b.priority] ?? 0) - (PRIORITY_RANK[a.priority] ?? 0));
+    if (sortBy === 'agent') return [...result].sort((a, b) =>
+      (agentNames[a.assignedTo ?? ''] ?? '').localeCompare(agentNames[b.assignedTo ?? ''] ?? ''));
     return [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });
 
@@ -39,8 +43,16 @@
       return;
     }
     tickets = result.tickets ?? [];
-    if (result.userRole === 'agent') {
+    userRole = result.userRole || 'guest';
+    if (userRole === 'agent') {
       statusFilter = 'in_progress';
+    }
+    if (userRole === 'admin') {
+      const usersResponse = await fetch(PUBLIC_BACKEND_URL+'/admin/users', {credentials: 'include'});
+      const usersResult = await usersResponse.json();
+      if (usersResponse.ok) {
+        agentNames = Object.fromEntries((usersResult.users ?? []).map((u: { id: string; name: string }) => [u.id, u.name]));
+      }
     }
     isLoading = false;
   });
@@ -49,6 +61,11 @@
     s === 'open' ? 'secondary'
     : s === 'closed' ? 'outline'
     : 'default';
+
+  const priorityVariant = (p: string) =>
+    p === 'critical' || p === 'high' ? 'destructive'
+    : p === 'medium' ? 'default'
+    : 'secondary';
 </script>
 
 <div class="space-y-4">
@@ -78,6 +95,9 @@
         <option value="newest">Newest</option>
         <option value="oldest">Oldest</option>
         <option value="priority">Priority</option>
+        {#if userRole === 'admin'}
+          <option value="agent">Agent</option>
+        {/if}
       </select>
     </div>
   </div>
@@ -122,7 +142,11 @@
             <CardTitle class="text-base">{ticket.title}</CardTitle>
             <div class="flex gap-1.5 shrink-0">
               <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
+              <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
               <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
+              {#if userRole === 'admin'}
+                <Badge variant="outline">{ticket.assignedTo ? (agentNames[ticket.assignedTo] ?? 'Unknown agent') : 'Unassigned'}</Badge>
+              {/if}
             </div>
           </div>
         </CardHeader>
