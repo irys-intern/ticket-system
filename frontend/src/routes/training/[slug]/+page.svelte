@@ -8,6 +8,7 @@
   import { Card, CardContent } from '$lib/components/ui/card';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { marked } from 'marked';
+  import DOMPurify from 'dompurify';
 
   let content = $state('');
   let renderedHtml = $state('');
@@ -35,7 +36,7 @@
 
     const data = await matRes.json();
     content = data.content ?? '';
-    renderedHtml = await marked.parse(content);
+    renderedHtml = DOMPurify.sanitize(await marked.parse(content));
     loading = false;
   });
 </script>

@@ -2,6 +2,7 @@ import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { readdir, writeFile, access } from 'fs/promises';
 import { join } from 'path';
 import { z } from 'zod';
+import { sanitizeMarkdown } from '../../utils/sanitizeMarkdown.ts';
 
 const MATERIALS_DIR = join(process.cwd(), 'training-materials');
 
@@ -60,6 +61,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         throw error(409, 'A material with that title already exists');
     }
 
-    await writeFile(filePath, content, 'utf-8');
+    await writeFile(filePath, sanitizeMarkdown(content), 'utf-8');
     return json({ slug }, { status: 201 });
 };

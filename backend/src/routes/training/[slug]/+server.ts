@@ -2,6 +2,7 @@ import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { readFile, writeFile, unlink, access } from 'fs/promises';
 import { join } from 'path';
 import { z } from 'zod';
+import { sanitizeMarkdown } from '../../../utils/sanitizeMarkdown.ts';
 
 const MATERIALS_DIR = join(process.cwd(), 'training-materials');
 
@@ -47,7 +48,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
     await getFile(params.slug!);
 
     const filePath = join(MATERIALS_DIR, `${params.slug}.md`);
-    await writeFile(filePath, parsed.data.content, 'utf-8');
+    await writeFile(filePath, sanitizeMarkdown(parsed.data.content), 'utf-8');
     return json({ ok: true });
 };
 

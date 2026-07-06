@@ -10,6 +10,7 @@
   import { Label } from '$lib/components/ui/label';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { marked } from 'marked';
+  import DOMPurify from 'dompurify';
 
   let slug = $derived(page.params.slug);
   let content = $state('');
@@ -34,7 +35,7 @@
 
   async function togglePreview() {
     if (!showPreview) {
-      preview = await marked.parse(content);
+      preview = DOMPurify.sanitize(await marked.parse(content));
     }
     showPreview = !showPreview;
   }

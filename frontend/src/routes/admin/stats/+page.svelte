@@ -67,6 +67,7 @@
   let loading = $state(true);
   let errors = $state<string[]>([]);
   let hoveredTicket = $state<Ticket | null>(null);
+  let hoveredAgentId = $state<string | null>(null);
   let mouseX = $state(0);
   let mouseY = $state(0);
 
@@ -315,15 +316,18 @@
   );
 
   const resTimeByAgent = $derived.by(() =>
-    agents.slice(0, 6).map((agent, i) => ({
-      agent,
-      color: AGENT_LINE_COLORS[i % AGENT_LINE_COLORS.length],
-      data: allMonths.map(mo => {
-        const done = tickets.filter(t => t.assignedTo === agent.id && (t.status === 'resolved' || t.status === 'closed') && monthKey(t.updatedAt) === mo);
-        if (!done.length) return null as number | null;
-        return done.reduce((s, t) => s + resolutionMs(t), 0) / done.length / 86_400_000;
-      }),
-    }))
+    [...agents]
+      .sort((a, b) => tickets.filter(t => t.assignedTo === b.id).length - tickets.filter(t => t.assignedTo === a.id).length)
+      .slice(0, AGENT_LINE_COLORS.length)
+      .map((agent, i) => ({
+        agent,
+        color: AGENT_LINE_COLORS[i % AGENT_LINE_COLORS.length],
+        data: allMonths.map(mo => {
+          const done = tickets.filter(t => t.assignedTo === agent.id && (t.status === 'resolved' || t.status === 'closed') && monthKey(t.updatedAt) === mo);
+          if (!done.length) return null as number | null;
+          return done.reduce((s, t) => s + resolutionMs(t), 0) / done.length / 86_400_000;
+        }),
+      }))
   );
 
   const maxResDay = $derived.by(() => Math.max(
@@ -1002,12 +1006,22 @@
               <span class="text-muted-foreground">Team avg</span>
             </span>
             {#each resTimeByAgent as a}
-              <span class="flex items-center gap-2">
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
+              <span
+                class="flex items-center gap-2 cursor-default rounded px-1 -mx-1 transition-colors {hoveredAgentId === a.agent.id ? 'bg-muted/60' : ''}"
+                onmouseenter={() => (hoveredAgentId = a.agent.id)}
+                onmouseleave={() => (hoveredAgentId = null)}
+              >
                 <svg width="20" height="10" aria-hidden="true"><line x1="0" y1="5" x2="20" y2="5" stroke={a.color} stroke-width="2" stroke-opacity="0.8"/></svg>
-                <span class="text-muted-foreground">{a.agent.name}</span>
+                <span class={hoveredAgentId === a.agent.id ? 'text-foreground font-medium' : 'text-muted-foreground'}>{a.agent.name}</span>
               </span>
             {/each}
           </div>
+          {#if agents.length > AGENT_LINE_COLORS.length}
+            <p class="text-xs text-muted-foreground mb-4">
+              Showing the {AGENT_LINE_COLORS.length} agents with the most assigned tickets, out of {agents.length} total.
+            </p>
+          {/if}
           <div class="overflow-x-auto">
             <svg viewBox="0 0 {SVG_W} {TCH}" class="w-full min-w-100" aria-label="Resolution time over time">
               {#each resYTicks as tick}
@@ -1019,18 +1033,26 @@
                 <text x={tick.x} y={TPAD.top + TIH + 14} text-anchor="middle" font-size="10" fill="currentColor" fill-opacity="0.5">{tick.label}</text>
               {/each}
               {#each resTimeByAgent as a}
+                {@const isHovered = hoveredAgentId === a.agent.id}
+                {@const isDimmed = hoveredAgentId !== null && !isHovered}
                 {#each lineSegs(a.data, maxResDay) as pts}
-                  <polyline points={pts} fill="none" stroke={a.color} stroke-width="1.5" stroke-opacity="0.8"/>
+                  <polyline
+                    points={pts}
+                    fill="none"
+                    stroke={a.color}
+                    stroke-width={isHovered ? 3 : 1.5}
+                    stroke-opacity={isDimmed ? 0.15 : 0.8}
+                  />
                 {/each}
                 {#each lineDots(a.data, maxResDay) as d}
-                  <circle cx={d.x} cy={d.y} r="2.5" fill={a.color}/>
+                  <circle cx={d.x} cy={d.y} r={isHovered ? 3.5 : 2.5} fill={a.color} fill-opacity={isDimmed ? 0.15 : 1} />
                 {/each}
               {/each}
               {#each lineSegs(resTimeByMonth.map(d => d.avgDays), maxResDay) as pts}
-                <polyline points={pts} fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity="0.35"/>
+                <polyline points={pts} fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity={hoveredAgentId ? 0.12 : 0.35}/>
               {/each}
               {#each lineDots(resTimeByMonth.map(d => d.avgDays), maxResDay) as d}
-                <circle cx={d.x} cy={d.y} r="2" fill="currentColor" fill-opacity="0.35"/>
+                <circle cx={d.x} cy={d.y} r="2" fill="currentColor" fill-opacity={hoveredAgentId ? 0.12 : 0.35}/>
               {/each}
               <text
                 x="12"
