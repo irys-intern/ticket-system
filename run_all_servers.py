@@ -1,11 +1,23 @@
 import subprocess
 import os
+import shutil
 
 commands = [
     "cd backend && npm run dev",
     "cd frontend && npm run dev",
     "cd nlp_service && uvicorn main:app --host 0.0.0.0 --port 8000"
 ]
+
+def open_in_windows_terminal(commands, cwd=None):
+    cwd = os.path.abspath(cwd) if cwd else os.getcwd()
+    args = ['wt']
+    for i, command in enumerate(commands):
+        pane_cmd = ['cmd', '/k', f'cd /d "{cwd}" && {command}']
+        if i == 0:
+            args += ['-w', '0', 'new-tab'] + pane_cmd
+        else:
+            args += [';', 'split-pane'] + pane_cmd
+    subprocess.Popen(args, shell=True)
 
 def open_in_new_terminal(command, cwd=None):
     # Windows: open new cmd window and run command, keep it open
@@ -26,8 +38,8 @@ def open_in_new_terminal(command, cwd=None):
             # fallback: run in background
             subprocess.Popen(command, shell=True, cwd=cwd)
 
-import shutil
-
-for command in commands:
-    open_in_new_terminal(command, cwd=os.getcwd())
-    
+if os.name == 'nt' and shutil.which('wt'):
+    open_in_windows_terminal(commands, cwd=os.getcwd())
+else:
+    for command in commands:
+        open_in_new_terminal(command, cwd=os.getcwd())
