@@ -3,10 +3,11 @@
 A full-stack support ticket management system built with SvelteKit, PostgreSQL, and Redis. Supports role-based access for users, agents, and admins with a full audit trail. Includes an NLP service that suggests ticket priority in real time as users describe their issue.
 
 The project is split into three independent services:
-
-- **`frontend/`** — SvelteKit UI (pages, components, client-side logic)
-- **`backend/`** — API-only SvelteKit server (JSON endpoints, DB, auth)
-- **`nlp_service/`** — FastAPI server wrapping a zero-shot classifier that suggests ticket priority
+|Path|Description|
+| -- | -- |
+**`frontend/`** | SvelteKit UI (pages, components, client-side logic)
+**`backend/`** | API-only SvelteKit server (JSON endpoints, DB, auth)
+**`nlp_service/`** | FastAPI server wrapping a zero-shot classifier that suggests ticket priority
 
 ---
 
@@ -41,7 +42,7 @@ The project is split into three independent services:
 Run all apps in separate terminals:
 
 ```bash
-# Terminal 1 — backend
+# Backend
 cd backend
 npm install
 cp .env.example .env   # fill in env vars
@@ -51,7 +52,7 @@ npm run dev
 ```
 
 ```bash
-# Terminal 2 — frontend
+# Frontend
 cd frontend
 npm install
 cp .env.example .env   # set env vars
@@ -60,7 +61,7 @@ npm run dev
 ```
 
 ```bash
-# Terminal 3 — NLP service
+# NLP service
 cd nlp_service
 pip install -r requirements.txt
 # Place your local_model/ folder here (see NLP Service section below)
@@ -96,7 +97,7 @@ The compose file will expose:
 | `DATABASE_URL` | Yes | PostgreSQL connection string, e.g. `postgres://user:pass@host:5432/ticket_system` |
 | `REDIS_URL` | Yes | Redis connection string, e.g. `redis://host:6379` |
 | `BETTER_AUTH_SECRET` | Yes | Secret key for signing auth tokens |
-| `FRONTEND_URL` | Yes | URL of the frontend, used for CORS (e.g. `http://localhost:5173`) |
+| `FRONTEND_URL` | No | URL of the frontend, used for CORS (e.g. `http://localhost:5173`) |
 | `SUPERUSER_PASSWORD` | Yes | Password required to create the first admin account via `POST /create_admin` |
 
 ### Frontend (`frontend/.env`)
@@ -105,7 +106,7 @@ The compose file will expose:
 |---|---|---|
 | `PORT` | Yes | Port for the frontend dev server (default: `5173`) |
 | `NODE_ENV` | Yes | `development` or `production` |
-| `BACKEND_URL` | Yes | URL of the backend API (e.g. `http://localhost:5172`) |
+| `PUBLIC_BACKEND_URL` | Yes | URL of the backend API (e.g. `http://localhost:5172`) |
 
 ### NLP service
 
@@ -131,9 +132,9 @@ No `.env` file needed. The model path and port are configured directly in `nlp_s
 ### Ticket Lifecycle
 
 1. A **user** creates a ticket with a title, description, priority, and category.
-2. An **agent** claims the ticket (status → `in_progress`) or it can be assigned by an **admin**.
+2. An **agent** claims the ticket (status &rarr; `in_progress`) or it can be assigned by an **admin**.
 3. The agent works the ticket, adding comments and updating status.
-4. Status can progress through: `open` → `in_progress` → `waiting_for_response` → `resolved` → `closed`.
+4. Status can progress through: `open` &rarr; `in_progress` &rarr; `waiting_for_response` &rarr; `resolved` &rarr; `closed`.
 5. A ticket can hit `in_progress` and `waiting_for_response` multiple times before continuing to `resolved`.
 6. Once `closed`, no further comments can be added.
 
@@ -179,10 +180,10 @@ ticket-system/
 │   ├── training-materials/          # Markdown files served as training content
 │   └── src/
 │       ├── auth/                    # Better Auth server config + Redis session store
-│       ├── config/                  # env.ts — typed env vars
+│       ├── config/                  # env.ts: typed env vars
 │       ├── db/                      # Drizzle ORM schema + client
 │       │   └── schema.ts            # tickets, comments, users, audit tables
-│       ├── middleware/              # sessionValidator — reads cookie, populates locals.user
+│       ├── middleware/              # sessionValidator: reads cookie, populates locals.user
 │       ├── routes/                  # API endpoints (+server.ts files)
 │       │   ├── auth/                # register, login, logout, me
 │       │   ├── tickets/             # ticket CRUD and actions
@@ -193,7 +194,7 @@ ticket-system/
 │       └── types/                   # Shared TypeScript types
 │
 └── nlp_service/                     # FastAPI NLP microservice
-    ├── main.py                      # /suggest endpoint — zero-shot priority classification
+    ├── main.py                      # /suggest endpoint: zero-shot priority classification
     ├── requirements.txt             # Python dependencies
     └── local_model/                 # facebook/bart-large-mnli weights (not in git)
 ```
@@ -209,19 +210,21 @@ ticket-system/
 | ORM | Drizzle ORM 0.45 |
 | Database | PostgreSQL 16 |
 | Cache | Redis 7 (Better Auth secondary storage — session token cache) |
-| Testing | Vitest (unit), Playwright (E2E) |
+<!-- | Testing | Vitest (unit), Playwright (E2E) | -->
 
 ### Database Schema
 
 **Business tables** (defined in `backend/src/db/schema.ts`)
 
-- `usersTable` — email, password hash, role (`user` / `agent` / `admin`)
-- `ticketsTable` — title, description, status, priority, category, creator, assignee
-- `commentsTable` — content, ticket FK, user FK
-- `assignmentsTable` — ticket-to-user assignment records
-- `auditEventsTable` — action type, ticket FK, user FK, timestamp, optional display name
+| Table | Description |
+| -- | -- |
+| `usersTable` | email, password hash, role (`user` / `agent` / `admin`)
+| `ticketsTable` | title, description, status, priority, category, creator, assignee
+| `commentsTable` | content, ticket FK, user FK
+| `assignmentsTable` | ticket-to-user assignment records
+| `auditEventsTable` | action type, ticket FK, user FK, timestamp, optional display name
 
-**Training materials** — stored as Markdown files in `backend/training-materials/`, not in the database. Served via the `/training` API. Slugs are derived from filenames.
+**Training materials** are stored as Markdown files in `backend/training-materials/`, not in the database. Served via the `/training` API. Slugs are derived from filenames.
 
 **Auth tables** (managed by Better Auth)
 
@@ -239,7 +242,7 @@ The NLP service exposes a single endpoint used by the ticket creation form to su
 2. The service runs zero-shot classification against four natural-language label descriptions (one per priority level) using `facebook/bart-large-mnli`.
 3. The top-scoring label is returned as a priority string (`low` / `medium` / `high` / `critical`) along with a confidence score.
 4. The priority dropdown is pre-filled with the suggestion and a confidence note is shown. The user can override it freely before submitting.
-5. If the service is unreachable, the form falls back silently — the user just picks priority manually.
+5. If the service is unreachable, the form falls back silently and the user just picks priority manually.
 
 ![Partially filled ticket](images/ticketconfidence.png)
 
@@ -362,15 +365,15 @@ Training materials are Markdown files stored in `backend/training-materials/`. A
 
 Better Auth handles password hashing, session creation, and session validation. The custom routes (`/auth/register`, `/auth/login`, etc.) are thin wrappers that add input validation and shape the JSON response.
 
-1. **Registration** — `POST /auth/register` validates the input, then delegates to Better Auth's `signUpEmail()`. Better Auth hashes the password and writes a record to the `user` table and a credential record to the `account` table. A session is created and a `sessionId` HTTP-only cookie is returned.
+1. **Registration**: `POST /auth/register` validates the input, then delegates to Better Auth's `signUpEmail()`. Better Auth hashes the password and writes a record to the `user` table and a credential record to the `account` table. A session is created and a `sessionId` HTTP-only cookie is returned.
 
-2. **Login** — `POST /auth/login` validates the input, then delegates to Better Auth's `signInEmail()`. Better Auth verifies the password hash and writes a new session record to the `session` table in PostgreSQL. The `sessionId` cookie is set on the response.
+2. **Login**: `POST /auth/login` validates the input, then delegates to Better Auth's `signInEmail()`. Better Auth verifies the password hash and writes a new session record to the `session` table in PostgreSQL. The `sessionId` cookie is set on the response.
 
-3. **Request validation** — A global SvelteKit hook runs on every backend request. It calls Better Auth's `getSession()`, which reads the `sessionId` cookie and validates it first against the Redis session cache, falling back to the PostgreSQL `session` table on a cache miss. If valid, the hook fetches the user's role from `usersTable` and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
+3. **Request validation**: A global SvelteKit hook runs on every backend request. It calls Better Auth's `getSession()`, which reads the `sessionId` cookie and validates it first against the Redis session cache, falling back to the PostgreSQL `session` table on a cache miss. If valid, the hook fetches the user's role from `usersTable` and populates `event.locals.user`. Endpoints check `locals.user.role` to enforce access control.
 
-4. **Logout** — `POST /auth/logout` delegates to Better Auth's `signOut()`, which deletes the session record from PostgreSQL and clears the cookie.
+4. **Logout**: `POST /auth/logout` delegates to Better Auth's `signOut()`, which deletes the session record from PostgreSQL and clears the cookie.
 
-5. **Session storage** — Sessions are stored in PostgreSQL (the `session` table) as the source of truth. Active session tokens are also cached in Redis via Better Auth's `secondaryStorage` interface, so most `getSession()` calls are served from Redis without a database round-trip. Each session record includes `expiresAt` (3-day TTL), `ipAddress`, and `userAgent`.
+5. **Session storage**: Sessions are stored in PostgreSQL (the `session` table) as the source of truth. Active session tokens are also cached in Redis via Better Auth's `secondaryStorage` interface, so most `getSession()` calls are served from Redis without a database round-trip. Each session record includes `expiresAt` (3-day TTL), `ipAddress`, and `userAgent`.
 
 ---
 
