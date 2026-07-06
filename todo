@@ -1,12 +1,1 @@
 # Ticket System Project TODO
-
-## Infrastructure
-- Create Dockerfile and docker-compose.yml
-
-[x] Add password verfication
-[x] Add info bubble to stats
-Cleanup for demo:
-* Build run script for frontend, backend, nlp
-[x] Global toasts on redirect
-[x] DB seeding w/ sample data
-[x] Comments should be recent --> oldest
