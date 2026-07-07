@@ -9,7 +9,14 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
   import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { toast } from '$lib/toast';
+  import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+  import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
+  import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
 
   let users: { id: string; name: string; email: string; role: string; status: string }[] = $state([]);
   let searchQuery = $state('');
@@ -64,21 +71,35 @@
     });
     const result = await response.json();
     if (!response.ok) {
-      errors = [result.message ?? 'Unable to delete user'];
+      const message = result.message ?? 'Unable to delete user';
+      errors = [message];
+      toast.error(message);
       return;
     }
     users = users.filter((u) => u.id !== user.id);
+    toast.success(`Deleted "${user.name}".`);
   }
 
-  function handleSave() {
+  function initials(name: string) {
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
+  }
+
+  async function handleSave() {
     if (!selectedUser) return;
-    fetch(PUBLIC_BACKEND_URL+'/admin/users', {
+    const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ manageUser: selectedUser.id, modification: selectedUser.role }),
     });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      toast.error(result.message ?? 'Unable to update user');
+      return;
+    }
     users = users.map((u) => (u.id === selectedUser!.id ? { ...u, role: selectedUser!.role } : u));
+    toast.success(`Updated "${selectedUser.name}".`);
     selectedUser = null;
     showEditModal = false;
   }
@@ -89,13 +110,17 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <BackLink href={resolve('/')} />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
+  <div class="flex items-center gap-2.5">
+    <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
+    <Badge variant="secondary">{users.length} users</Badge>
+  </div>
 
   {#if errors.length}
     <Alert variant="destructive">
+      <WarningCircleIcon />
       <AlertDescription>
         {#each errors as error (error)}<p>{error}</p>{/each}
       </AlertDescription>
@@ -103,7 +128,10 @@
   {/if}
 
   <div class="flex items-center gap-2">
-    <Input type="text" placeholder="Search users…" bind:value={searchQuery} class="max-w-xs" />
+    <div class="relative">
+      <MagnifyingGlassIcon class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+      <Input type="text" placeholder="Search users…" bind:value={searchQuery} class="max-w-xs pl-8" />
+    </div>
     <div class="flex items-center gap-1.5">
       <Label for="sort-by" class="text-sm whitespace-nowrap">Sort by</Label>
       <select id="sort-by" bind:value={sortBy}
@@ -130,16 +158,23 @@
       <TableBody>
         {#each filteredUsers as user (user.id)}
           <TableRow>
-            <TableCell class="font-mono text-xs">{user.id}</TableCell>
-            <TableCell>{user.name}</TableCell>
+            <TableCell class="font-mono text-xs text-muted-foreground">{user.id}</TableCell>
+            <TableCell>
+              <div class="flex items-center gap-2.5">
+                <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  {initials(user.name)}
+                </span>
+                <span class="font-medium">{user.name}</span>
+              </div>
+            </TableCell>
             <TableCell class="text-muted-foreground">{user.email}</TableCell>
             <TableCell><Badge variant={roleVariant(user.role)}>{user.role}</Badge></TableCell>
             <TableCell class="space-x-1.5">
               {#if user.id === currentUserId}
                 <span class="text-xs text-muted-foreground">(you)</span>
               {:else}
-                <Button size="sm" variant="outline" onclick={() => handleEdit(user)}>Edit</Button>
-                <Button size="sm" variant="destructive" onclick={() => handleDelete(user)}>Delete</Button>
+                <Button size="sm" variant="outline" onclick={() => handleEdit(user)}><PencilSimpleIcon /> Edit</Button>
+                <Button size="sm" variant="destructive" onclick={() => handleDelete(user)}><TrashIcon /> Delete</Button>
               {/if}
             </TableCell>
           </TableRow>
@@ -182,7 +217,7 @@
       </div>
       <DialogFooter>
         <Button variant="outline" onclick={() => { selectedUser = null; showEditModal = false; }}>Cancel</Button>
-        <Button onclick={handleSave}>Save</Button>
+        <Button onclick={handleSave}><FloppyDiskIcon /> Save</Button>
       </DialogFooter>
     </DialogContent>
   {/if}

@@ -6,6 +6,9 @@
   import { Button } from '$lib/components/ui/button';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import SignOutIcon from 'phosphor-svelte/lib/SignOutIcon';
 
   let errors: string[] = $state([]);
   let successMessage = $state('');
@@ -48,13 +51,15 @@
   </div>
 
   {#if successMessage}
-    <Alert class="border-green-200 bg-green-50 text-green-800">
+    <Alert variant="success">
+      <CheckCircleIcon />
       <AlertDescription>{successMessage}</AlertDescription>
     </Alert>
   {/if}
 
   {#if errors.length}
     <Alert variant="destructive">
+      <WarningCircleIcon />
       <AlertDescription>
         <ul class="list-disc list-inside space-y-1">
           {#each errors as error (error)}
@@ -66,7 +71,7 @@
   {/if}
 
   <form onsubmit={handleSubmit} class="flex gap-2">
-    <Button type="submit" variant="destructive">Log Out</Button>
+    <Button type="submit" variant="destructive"><SignOutIcon /> Log Out</Button>
     <Button type="button" variant="outline" onclick={backToHome}>Cancel</Button>
   </form>
 </div>

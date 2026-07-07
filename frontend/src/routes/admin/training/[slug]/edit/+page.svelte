@@ -8,9 +8,14 @@
   import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Label } from '$lib/components/ui/label';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
+  import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
+  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
 
   let slug = $derived(page.params.slug);
   let content = $state('');
@@ -65,26 +70,25 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <a
-      href={resolve('/admin/training')}
-      class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-    >&larr; Back to manage materials</a>
+    <BackLink href={resolve('/admin/training')} label="Back to manage materials" />
     <a
       href={resolve(`/training/${slug}`)}
-      class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-    >View published &rarr;</a>
+      class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+    >View published <ArrowRightIcon class="size-3.5" /></a>
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">Edit: <span class="font-mono text-lg text-muted-foreground">{slug}</span></h1>
 
   {#if errorMsg}
     <Alert variant="destructive">
+      <WarningCircleIcon />
       <AlertDescription>{errorMsg}</AlertDescription>
     </Alert>
   {/if}
 
   {#if successMsg}
-    <Alert>
+    <Alert variant="success">
+      <CheckCircleIcon />
       <AlertDescription>{successMsg}</AlertDescription>
     </Alert>
   {/if}
@@ -105,7 +109,7 @@
       {#if showPreview}
         <Card>
           <CardContent class="pt-6">
-            <div class="prose prose-invert max-w-none">
+            <div class="prose prose-sm dark:prose-invert max-w-none">
               {@html preview}
             </div>
           </CardContent>
@@ -122,7 +126,7 @@
 
       <div class="flex gap-3">
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
+          <FloppyDiskIcon /> {saving ? 'Saving…' : 'Save'}
         </Button>
         <Button
           type="button"

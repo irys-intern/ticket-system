@@ -8,7 +8,10 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+  import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
 
   const statuses = ['all', 'open', 'in_progress', 'waiting_for_response', 'closed'];
   const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
@@ -70,18 +73,21 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <BackLink href={resolve('/')} />
   </div>
 
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-2xl font-bold tracking-tight">My Tickets</h1>
     <div class="flex flex-wrap items-center gap-2">
-      <input
-        type="search"
-        bind:value={searchQuery}
-        placeholder="Search tickets…"
-        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring w-48"
-      />
+      <div class="relative">
+        <MagnifyingGlassIcon class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="search"
+          bind:value={searchQuery}
+          placeholder="Search tickets…"
+          class="h-8 rounded-lg border border-input bg-transparent pl-7 pr-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring w-48"
+        />
+      </div>
       <Label for="status-filter" class="text-sm">Status</Label>
       <select id="status-filter" bind:value={statusFilter}
         class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
@@ -157,7 +163,7 @@
         {/if}
         <CardContent class="pt-0">
           <Button size="sm" class="cursor-pointer" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
-            Go to ticket
+            Go to ticket <ArrowRightIcon />
           </Button>
         </CardContent>
       </Card>

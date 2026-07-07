@@ -7,7 +7,9 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Label } from '$lib/components/ui/label';
   import InfoTooltip from '$lib/components/InfoTooltip.svelte';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
   import type { Ticket, User, AuditEvent } from '../../../types';
 
   type GroupBy = 'priority' | 'category';
@@ -438,11 +440,7 @@
 
 <div class="space-y-6">
   <div>
-    <a
-      href={resolve('/')}
-      class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-      >&larr; Return home</a
-    >
+    <BackLink href={resolve('/')} />
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">Admin Stats</h1>
@@ -823,7 +821,9 @@
                   </div>
                 {/each}
                 {#if distGroupBy === 'priority' && priorityWarning}
-                  <p class="text-xs text-yellow-600 dark:text-yellow-400 pt-1">⚠ {priorityWarning}</p>
+                  <p class="flex items-start gap-1.5 text-xs text-yellow-600 dark:text-yellow-400 pt-1">
+                    <WarningIcon class="size-3.5 shrink-0 translate-y-0.5" /> {priorityWarning}
+                  </p>
                 {/if}
               </div>
             {/if}

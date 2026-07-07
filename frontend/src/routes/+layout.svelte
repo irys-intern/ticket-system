@@ -1,8 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
+  import { ModeWatcher } from 'mode-watcher';
   import { Toaster } from '$lib/components/ui/sonner';
   import { TooltipProvider } from '$lib/components/ui/tooltip';
+  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import { flushQueuedToast } from '$lib/toast';
   import './layout.css';
   let { children } = $props();
@@ -12,6 +14,7 @@
   });
 </script>
 
+<ModeWatcher defaultMode="dark" />
 <Toaster />
 
 <TooltipProvider>
@@ -24,9 +27,10 @@
           </div>
           <div>
             <p class="text-base font-semibold leading-tight">Ticket System</p>
-            <p class="text-xs text-muted-foreground">Irys Technologies</p>
+            <p class="text-xs text-muted-foreground">Eli Friedman & Irys Technologies</p>
           </div>
         </a>
+        <ThemeToggle />
       </div>
     </header>
 

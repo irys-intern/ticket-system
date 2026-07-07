@@ -10,6 +10,10 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { PUBLIC_BACKEND_URL, PUBLIC_NLP_SERVER_URL } from '$env/static/public';
   import { toast, queueToast } from '$lib/toast';
+  import BackLink from '$lib/components/BackLink.svelte';
+  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
 
   let title = $state('');
   let description = $state('');
@@ -90,7 +94,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <BackLink href={resolve('/')} />
   </div>
 
   <Card class="max-w-lg">
@@ -99,13 +103,15 @@
     </CardHeader>
     <CardContent class="space-y-4">
       {#if successMessage}
-        <Alert class="border-green-200 bg-green-50 text-green-800">
+        <Alert variant="success">
+          <CheckCircleIcon />
           <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       {/if}
 
       {#if errors.length}
         <Alert variant="destructive">
+          <WarningCircleIcon />
           <AlertDescription>
             <ul class="list-disc list-inside space-y-1">
               {#each errors as error (error)}
@@ -157,7 +163,7 @@
           {/if}
         </div>
 
-        <Button type="submit">Submit Ticket</Button>
+        <Button type="submit"><PlusCircleIcon /> Submit Ticket</Button>
       </form>
     </CardContent>
   </Card>

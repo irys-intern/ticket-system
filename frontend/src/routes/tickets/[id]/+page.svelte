@@ -10,8 +10,15 @@
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { toast, queueToast } from '$lib/toast';
+  import ChatCircleIcon from 'phosphor-svelte/lib/ChatCircleIcon';
+  import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
+  import HandPalmIcon from 'phosphor-svelte/lib/HandPalmIcon';
+  import XCircleIcon from 'phosphor-svelte/lib/XCircleIcon';
+  import UserSwitchIcon from 'phosphor-svelte/lib/UserSwitchIcon';
+  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
 
   let user: { userId: string; email: string; name: string; role: string } | null = $state(null);
   let ticket: Ticket | null = $state(null);
@@ -255,11 +262,11 @@
 
 {#if user}
 <div class="space-y-4">
-  <div class="flex gap-4 text-sm">
+  <div class="flex items-center gap-4 text-sm">
+    <BackLink href={resolve('/')} />
     {#if user.role === 'agent' || user.role === 'admin'}
-      <a href={resolve('/tickets/open')} class="text-muted-foreground hover:text-foreground underline underline-offset-4">Open tickets</a>
+      <a href={resolve('/tickets/open')} class="text-muted-foreground hover:text-foreground">Open tickets</a>
     {/if}
-    <a href={resolve('/')} class="text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
   </div>
 
   {#if loading}
@@ -288,28 +295,31 @@
         <Separator />
 
         {#if user.role === 'user' && ticket.status === 'waiting_for_response'}
-          <div class="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
-            <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
-            <p class="text-muted-foreground mt-0.5">Reply in the comments to resume work on this ticket.</p>
+          <div class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
+            <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400" />
+            <div>
+              <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
+              <p class="text-muted-foreground mt-0.5">Reply in the comments to resume work on this ticket.</p>
+            </div>
           </div>
         {/if}
 
         <div class="flex flex-wrap gap-2">
           <Button class="cursor-pointer" size="sm" onclick={() => (window.location.href = window.location.href + '/comments')}>
-            Comments
+            <ChatCircleIcon /> Comments
           </Button>
 
           {#if user.role === 'agent'}
             {#if ticket.assignedTo && user.userId === ticket.assignedTo}
               {#if ticket.status !== 'resolved' && ticket.status !== 'closed'}
-                <Button size="sm" variant="secondary" onclick={updateStatus}>Update Status</Button>
+                <Button size="sm" variant="secondary" onclick={updateStatus}><CheckIcon /> Update Status</Button>
                 {#if ticket.status === 'waiting_for_response'}
                   <Button size="sm" variant="secondary" onclick={updateStatusBack}>Mark In Progress</Button>
                 {/if}
-                <Button size="sm" variant="outline" onclick={forfeitTicket}>Forfeit</Button>
+                <Button size="sm" variant="outline" onclick={forfeitTicket}><HandPalmIcon /> Forfeit</Button>
               {/if}
               {#if ticket.status !== 'closed'}
-                <Button size="sm" variant="destructive" onclick={closeTicketAgent}>Close Ticket</Button>
+                <Button size="sm" variant="destructive" onclick={closeTicketAgent}><XCircleIcon /> Close Ticket</Button>
               {/if}
             {:else if (!ticket.assignedTo || ticket.assignedTo === '') && ticket.status !== 'closed'}
               <Button size="sm" onclick={claimTicket}>Claim Ticket</Button>
@@ -342,13 +352,13 @@
 
           {:else if user.role === 'user'}
             {#if ticket.status !== 'closed'}
-              <Button size="sm" variant="destructive" onclick={closeTicketUser}>Close Ticket</Button>
+              <Button size="sm" variant="destructive" onclick={closeTicketUser}><XCircleIcon /> Close Ticket</Button>
             {/if}
 
           {:else if user.role === 'admin'}
             {#if ticket.status !== 'closed'}
-            <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}>Assign Agent</Button>
-            <Button size="sm" variant="destructive" onclick={closeTicketAdmin}>Close Ticket</Button>
+            <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}><UserSwitchIcon /> Assign Agent</Button>
+            <Button size="sm" variant="destructive" onclick={closeTicketAdmin}><XCircleIcon /> Close Ticket</Button>
             <div class="ml-auto flex gap-2">
               <select
                 value={ticket.priority}

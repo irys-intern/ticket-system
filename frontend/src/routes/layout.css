@@ -2,59 +2,140 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-/* Phlox dark theme — deep purple-black base, vivid magenta-violet accent */
-@theme {
-	/* backgrounds — near-black with a purple undertone */
-	--color-background: oklch(0.13 0.025 295);
-	--color-foreground: oklch(0.93 0.018 295);
+@custom-variant dark (&:where(.dark, .dark *));
 
-	/* cards sit slightly above background */
-	--color-card: oklch(0.17 0.03 295);
-	--color-card-foreground: oklch(0.93 0.018 295);
+/* Phlox theme — vivid magenta-violet accent over a light or deep purple-black base */
+:root {
+	--background: oklch(0.99 0.006 295);
+	--foreground: oklch(0.19 0.03 295);
 
-	--color-popover: oklch(0.17 0.03 295);
-	--color-popover-foreground: oklch(0.93 0.018 295);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.19 0.03 295);
 
-	/* primary = phlox magenta, toned down */
-	--color-primary: oklch(0.55 0.22 325);
-	--color-primary-foreground: oklch(0.98 0.005 325);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.19 0.03 295);
 
-	/* secondary = dark desaturated purple */
-	--color-secondary: oklch(0.22 0.045 295);
-	--color-secondary-foreground: oklch(0.88 0.03 295);
+	--primary: oklch(0.55 0.22 325);
+	--primary-foreground: oklch(0.98 0.005 325);
 
-	/* muted = slightly lighter than secondary */
-	--color-muted: oklch(0.21 0.035 295);
-	--color-muted-foreground: oklch(0.62 0.06 295);
+	--secondary: oklch(0.95 0.012 295);
+	--secondary-foreground: oklch(0.27 0.04 295);
 
-	/* accent = violet, a step away from primary */
-	--color-accent: oklch(0.28 0.07 295);
-	--color-accent-foreground: oklch(0.93 0.018 295);
+	--muted: oklch(0.96 0.01 295);
+	--muted-foreground: oklch(0.48 0.03 295);
 
-	/* destructive = saturated red-orange */
-	--color-destructive: oklch(0.62 0.22 22);
-	--color-destructive-foreground: oklch(0.98 0 0);
+	--accent: oklch(0.93 0.03 300);
+	--accent-foreground: oklch(0.27 0.04 295);
 
-	/* borders and inputs */
-	--color-border: oklch(1 0 0 / 10%);
-	--color-input: oklch(1 0 0 / 12%);
+	--destructive: oklch(0.58 0.22 22);
+	--destructive-foreground: oklch(0.98 0 0);
 
-	/* ring matches primary */
-	--color-ring: oklch(0.55 0.22 325);
+	--success: oklch(0.55 0.15 152);
+	--success-foreground: oklch(0.98 0 0);
 
-	/* sidebar same family */
-	--color-sidebar: oklch(0.15 0.03 295);
-	--color-sidebar-foreground: oklch(0.93 0.018 295);
-	--color-sidebar-primary: oklch(87.528% 0.11094 324.421);
-	--color-sidebar-primary-foreground: oklch(0.98 0.005 325);
-	--color-sidebar-accent: oklch(0.22 0.045 295);
-	--color-sidebar-accent-foreground: oklch(0.88 0.03 295);
-	--color-sidebar-border: oklch(1 0 0 / 10%);
-	--color-sidebar-ring: oklch(0.55 0.22 325);
+	--border: oklch(0 0 0 / 8%);
+	--input: oklch(0 0 0 / 12%);
+	--ring: oklch(0.55 0.22 325);
+
+	--sidebar: oklch(0.97 0.01 295);
+	--sidebar-foreground: oklch(0.19 0.03 295);
+	--sidebar-primary: oklch(0.55 0.22 325);
+	--sidebar-primary-foreground: oklch(0.98 0.005 325);
+	--sidebar-accent: oklch(0.93 0.03 300);
+	--sidebar-accent-foreground: oklch(0.27 0.04 295);
+	--sidebar-border: oklch(0 0 0 / 8%);
+	--sidebar-ring: oklch(0.55 0.22 325);
 
 	--radius: 0.625rem;
-	--radius-sm: calc(0.625rem - 4px);
-	--radius-md: calc(0.625rem - 2px);
-	--radius-lg: 0.625rem;
-	--radius-xl: calc(0.625rem + 4px);
+}
+
+.dark {
+	/* backgrounds — near-black with a purple undertone */
+	--background: oklch(0.13 0.025 295);
+	--foreground: oklch(0.93 0.018 295);
+
+	/* cards sit slightly above background */
+	--card: oklch(0.17 0.03 295);
+	--card-foreground: oklch(0.93 0.018 295);
+
+	--popover: oklch(0.17 0.03 295);
+	--popover-foreground: oklch(0.93 0.018 295);
+
+	/* primary = phlox magenta, toned down */
+	--primary: oklch(0.55 0.22 325);
+	--primary-foreground: oklch(0.98 0.005 325);
+
+	/* secondary = dark desaturated purple */
+	--secondary: oklch(0.22 0.045 295);
+	--secondary-foreground: oklch(0.88 0.03 295);
+
+	/* muted = slightly lighter than secondary */
+	--muted: oklch(0.21 0.035 295);
+	--muted-foreground: oklch(0.62 0.06 295);
+
+	/* accent = violet, a step away from primary */
+	--accent: oklch(0.28 0.07 295);
+	--accent-foreground: oklch(0.93 0.018 295);
+
+	/* destructive = saturated red-orange */
+	--destructive: oklch(0.62 0.22 22);
+	--destructive-foreground: oklch(0.98 0 0);
+
+	/* success = muted emerald, tuned to sit quietly next to the magenta accent */
+	--success: oklch(0.68 0.15 152);
+	--success-foreground: oklch(0.98 0 0);
+
+	/* borders and inputs */
+	--border: oklch(1 0 0 / 10%);
+	--input: oklch(1 0 0 / 12%);
+
+	/* ring matches primary */
+	--ring: oklch(0.55 0.22 325);
+
+	/* sidebar same family */
+	--sidebar: oklch(0.15 0.03 295);
+	--sidebar-foreground: oklch(0.93 0.018 295);
+	--sidebar-primary: oklch(87.528% 0.11094 324.421);
+	--sidebar-primary-foreground: oklch(0.98 0.005 325);
+	--sidebar-accent: oklch(0.22 0.045 295);
+	--sidebar-accent-foreground: oklch(0.88 0.03 295);
+	--sidebar-border: oklch(1 0 0 / 10%);
+	--sidebar-ring: oklch(0.55 0.22 325);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
 }

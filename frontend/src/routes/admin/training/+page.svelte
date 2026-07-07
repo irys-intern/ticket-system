@@ -8,7 +8,13 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
+  import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
+  import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
 
   type Material = { slug: string; title: string };
 
@@ -90,22 +96,21 @@
 
 <div class="space-y-8">
   <div>
-    <a
-      href={resolve('/training')}
-      class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-    >&larr; Back to training materials</a>
+    <BackLink href={resolve('/training')} label="Back to training materials" />
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">Manage Training Materials</h1>
 
   {#if errorMsg}
     <Alert variant="destructive">
+      <WarningCircleIcon />
       <AlertDescription>{errorMsg}</AlertDescription>
     </Alert>
   {/if}
 
   {#if successMsg}
-    <Alert>
+    <Alert variant="success">
+      <CheckCircleIcon />
       <AlertDescription>{successMsg}</AlertDescription>
     </Alert>
   {/if}
@@ -138,7 +143,7 @@
           ></textarea>
         </div>
         <Button type="submit" disabled={creating}>
-          {creating ? 'Creating…' : 'Create'}
+          <PlusCircleIcon /> {creating ? 'Creating…' : 'Create'}
         </Button>
       </form>
     </CardContent>
@@ -164,18 +169,19 @@
               href={resolve(`/training/${m.slug}`)}
               class="font-medium hover:underline underline-offset-4"
             >{m.title}</a>
-            <div class="flex items-center gap-3">
-              <a
+            <div class="flex items-center gap-2">
+              <Button
                 href={resolve(`/admin/training/${m.slug}/edit`)}
-                class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-              >Edit</a>
+                variant="outline"
+                size="sm"
+              ><PencilSimpleIcon /> Edit</Button>
               <Button
                 variant="destructive"
                 size="sm"
                 disabled={deletingSlug === m.slug}
                 onclick={() => handleDelete(m.slug, m.title)}
               >
-                {deletingSlug === m.slug ? 'Deleting…' : 'Delete'}
+                <TrashIcon /> {deletingSlug === m.slug ? 'Deleting…' : 'Delete'}
               </Button>
             </div>
           </CardContent>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Tooltip from '$lib/components/ui/tooltip';
-  import InfoIcon from 'phosphor-svelte/lib/Info';
+  import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
 
   let { text }: { text: string } = $props();
 </script>

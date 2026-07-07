@@ -8,6 +8,9 @@
   import { Separator } from '$lib/components/ui/separator';
   import { PUBLIC_BACKEND_URL } from '$env/static/public'
   import { toast } from '$lib/toast';
+  import BackLink from '$lib/components/BackLink.svelte';
+  import PaperPlaneTiltIcon from 'phosphor-svelte/lib/PaperPlaneTiltIcon';
+  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
 
   let comments: { id: string; userName: string; createdAt: string; content: string }[] = $state([]);
   let newComment = $state('');
@@ -77,9 +80,7 @@
 
 <div class="space-y-4">
   <div>
-    <a href={ticketUrl} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
-      &larr; Back to ticket
-    </a>
+    <BackLink href={ticketUrl} label="Back to ticket" />
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">Comments</h1>
@@ -130,9 +131,12 @@
   <Separator />
 
   {#if awaitingResponse}
-    <div class="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
-      <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
-      <p class="text-muted-foreground mt-0.5">Posting a comment will move this ticket back to in progress.</p>
+    <div class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
+      <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400" />
+      <div>
+        <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
+        <p class="text-muted-foreground mt-0.5">Posting a comment will move this ticket back to in progress.</p>
+      </div>
     </div>
   {/if}
 
@@ -144,7 +148,7 @@
       disabled={loading}
     />
     <Button class="cursor-pointer" onclick={postComment} disabled={!newComment.trim() || loading}>
-      Post Comment
+      <PaperPlaneTiltIcon /> Post Comment
     </Button>
   </div>
 </div>

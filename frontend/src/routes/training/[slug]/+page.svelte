@@ -6,9 +6,11 @@
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent } from '$lib/components/ui/card';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
 
   let content = $state('');
   let renderedHtml = $state('');
@@ -43,21 +45,19 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <a
-      href={resolve('/training')}
-      class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-    >&larr; Back to training materials</a>
+    <BackLink href={resolve('/training')} label="Back to training materials" />
 
     {#if userRole === 'admin'}
       <a
         href={resolve(`/admin/training/${slug}/edit`)}
-        class="text-sm font-medium underline underline-offset-4 hover:text-foreground text-muted-foreground"
+        class="text-sm font-medium hover:text-foreground text-muted-foreground"
       >Edit</a>
     {/if}
   </div>
 
   {#if errorMsg}
     <Alert variant="destructive">
+      <WarningCircleIcon />
       <AlertDescription>{errorMsg}</AlertDescription>
     </Alert>
   {/if}
@@ -74,7 +74,7 @@
   {:else if renderedHtml}
     <Card>
       <CardContent class="pt-6">
-        <div class="prose prose-invert max-w-none">
+        <div class="prose prose-sm dark:prose-invert max-w-none">
           {@html renderedHtml}
         </div>
       </CardContent>

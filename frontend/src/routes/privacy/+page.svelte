@@ -1,6 +1,7 @@
 <title>Privacy Policy</title>
 <script>
   import { resolve } from '$app/paths';
+  import BackLink from '$lib/components/BackLink.svelte';
 </script>
 
 <svelte:head>
@@ -9,12 +10,12 @@
 
 <div class="space-y-4 max-w-2xl">
   <div>
-    <a href={resolve('/')} class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">&larr; Return home</a>
+    <BackLink href={resolve('/')} />
   </div>
 
   <h1 class="text-2xl font-bold tracking-tight">Privacy Policy</h1>
 
-  <div class="prose prose-sm prose-slate max-w-none space-y-6 text-foreground">
+  <div class="prose prose-sm max-w-none space-y-6 text-foreground">
     <section>
       <h2 class="text-foreground font-semibold">Introduction</h2>
       <p class="text-muted-foreground">

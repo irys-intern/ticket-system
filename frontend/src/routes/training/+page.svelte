@@ -5,7 +5,10 @@
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import BookOpenIcon from 'phosphor-svelte/lib/BookOpenIcon';
 
   type Material = { slug: string; title: string };
 
@@ -39,16 +42,11 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <div>
-      <a
-        href={resolve('/')}
-        class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
-      >&larr; Return home</a>
-    </div>
+    <BackLink href={resolve('/')} />
     {#if userRole === 'admin'}
       <a
         href={resolve('/admin/training')}
-        class="text-sm font-medium underline underline-offset-4 hover:text-foreground text-muted-foreground"
+        class="text-sm font-medium hover:text-foreground text-muted-foreground"
       >Manage materials</a>
     {/if}
   </div>
@@ -57,6 +55,7 @@
 
   {#if errorMsg}
     <Alert variant="destructive">
+      <WarningCircleIcon />
       <AlertDescription>{errorMsg}</AlertDescription>
     </Alert>
   {/if}
@@ -75,7 +74,9 @@
         <a href={resolve(`/training/${m.slug}`)}>
           <Card class="hover:bg-muted/30 transition-colors cursor-pointer">
             <CardHeader class="py-4">
-              <CardTitle class="text-base">{m.title}</CardTitle>
+              <CardTitle class="flex items-center gap-2 text-base">
+                <BookOpenIcon class="size-4 text-primary" /> {m.title}
+              </CardTitle>
             </CardHeader>
           </Card>
         </a>
