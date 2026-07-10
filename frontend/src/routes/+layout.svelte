@@ -34,8 +34,8 @@
       </div>
     </header>
 
-    <main class="flex-1 flex items-start justify-center py-10 px-4 sm:px-6 lg:px-8">
-      <div class="w-full max-w-4xl">
+    <main class="flex-1 py-10">
+      <div class="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
         {@render children()}
       </div>
     </main>
