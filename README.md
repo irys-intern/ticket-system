@@ -24,6 +24,8 @@ The project is split into three independent services:
   - [Admin](#admin)
   - [Training Materials](#training-materials)
 - [Auth Flow](#auth-flow)
+- [Rate Limiting](#rate-limiting)
+- [Testing](#testing)
 - [Deployment](#deployment)
 
 ---
@@ -69,21 +71,6 @@ pip install -r requirements.txt
 uvicorn main:app --port 8000
 # Runs at http://localhost:8000
 ```
-
-### Docker (coming soon)
-
-Docker and docker-compose configuration is in progress. When complete, the full stack (frontend, backend, PostgreSQL, Redis) will be startable with:
-
-```bash
-docker-compose up
-```
-
-The compose file will expose:
-- Frontend: port `5173`
-- Backend: port `5172`
-- PostgreSQL: port `5432`
-- Redis: port `6379`
-- NLP: port `8000`
 
 ---
 
@@ -377,9 +364,42 @@ Better Auth handles password hashing, session creation, and session validation. 
 
 ---
 
-## Deployment
+## Rate Limiting
 
-> Docker-based deployment is in progress. The steps below are for a manual deployment.
+The backend's global SvelteKit hook (`hooks.server.ts`) applies a Redis-backed fixed-window rate limit, keyed by client IP, before any auth or session checks run:
+
+| Route(s) | Limit |
+| -- | -- |
+| `POST /auth/login`, `POST /auth/register` | 10 requests / 60s |
+| `POST /create_ticket` | 30 requests / 60s |
+
+Requests over the limit receive a `429` response with a `Retry-After` header indicating how many seconds until the window resets. The limiter logic lives in `backend/src/lib/rateLimit.ts` and is unit tested independently of Redis via an in-memory fake store.
+
+---
+
+## Testing
+
+### Backend
+
+Unit tests cover request validation (`utils/validators.ts`), markdown sanitization (`utils/sanitizeMarkdown.ts`), and the rate limiter (`lib/rateLimit.ts`).
+
+```bash
+cd backend
+npm run test:unit
+```
+
+### Frontend
+
+An end-to-end test (`src/routes/golden-path.e2e.ts`) drives a real browser through the core golden path — register, log in, create a ticket — against a live backend, database, and Redis instance. Start the backend (and Postgres/Redis) first, then run:
+
+```bash
+cd frontend
+npm run test:e2e
+```
+
+---
+
+## Deployment
 
 ### Build
 

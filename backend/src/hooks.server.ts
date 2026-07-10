@@ -2,8 +2,16 @@ import { initializeDatabase, db } from './db/index.ts';
 import { auth } from './auth/auth.ts';
 import { userTable } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
+import { redis } from './lib/redis.ts';
+import { checkRateLimit } from './lib/rateLimit.ts';
 
 await initializeDatabase();
+
+// Stricter limits on unauthenticated, abuse-prone endpoints; a looser default elsewhere.
+const RATE_LIMIT_RULES: { pattern: RegExp; limit: number; windowSeconds: number }[] = [
+    { pattern: /^\/auth\/(login|register)$/, limit: 10, windowSeconds: 10 },
+    { pattern: /^\/create_ticket$/, limit: 30, windowSeconds: 60 },
+];
 
 export async function handle({ event, resolve }) {
     const origin = event.request.headers.get('origin') ?? '*';
@@ -16,6 +24,26 @@ export async function handle({ event, resolve }) {
 
     if (event.request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    const rule = RATE_LIMIT_RULES.find((r) => r.pattern.test(event.url.pathname));
+    if (rule) {
+        const ip = event.getClientAddress();
+        const key = `ratelimit:${event.url.pathname}:${ip}`;
+        const result = await checkRateLimit(redis, key, rule.limit, rule.windowSeconds);
+        if (!result.allowed) {
+            return new Response(
+                JSON.stringify({ success: false, errors: ['Too many requests, please try again later'] }),
+                {
+                    status: 429,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Retry-After': String(result.retryAfterSeconds),
+                        ...corsHeaders,
+                    },
+                },
+            );
+        }
     }
 
     const session = await auth.api.getSession({
