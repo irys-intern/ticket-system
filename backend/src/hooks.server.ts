@@ -30,19 +30,24 @@ export async function handle({ event, resolve }) {
     if (rule) {
         const ip = event.getClientAddress();
         const key = `ratelimit:${event.url.pathname}:${ip}`;
-        const result = await checkRateLimit(redis, key, rule.limit, rule.windowSeconds);
-        if (!result.allowed) {
-            return new Response(
-                JSON.stringify({ success: false, errors: ['Too many requests, please try again later'] }),
-                {
-                    status: 429,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Retry-After': String(result.retryAfterSeconds),
-                        ...corsHeaders,
+        try {
+            const result = await checkRateLimit(redis, key, rule.limit, rule.windowSeconds);
+            if (!result.allowed) {
+                return new Response(
+                    JSON.stringify({ success: false, errors: ['Too many requests, please try again later'] }),
+                    {
+                        status: 429,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Retry-After': String(result.retryAfterSeconds),
+                            ...corsHeaders,
+                        },
                     },
-                },
-            );
+                );
+            }
+        } catch (err) {
+            // Fail open: if Redis is unavailable, skip rate limiting rather than 500ing every request.
+            console.error('Rate limit check failed, allowing request:', err);
         }
     }
 

@@ -25,6 +25,15 @@
     </section>
 
     <section>
+      <h2 class="text-foreground font-semibold">Site Ownership</h2>
+      <p class="text-muted-foreground">
+        This website is not maintained by Irys Technologies. Eli Friedman
+        (<a href="mailto:elimfriedman22@gmail.com" class="text-muted-foreground underline underline-offset-4 hover:text-foreground">elimfriedman22@gmail.com</a>)
+        is solely responsible for its operation and content.
+      </p>
+    </section>
+
+    <section>
       <h2 class="text-foreground font-semibold">Information We Collect</h2>
       <p class="text-muted-foreground">We may collect the following information:</p>
       <ul class="list-disc list-inside text-muted-foreground space-y-1 mt-2">
@@ -65,7 +74,7 @@
       <h2 class="text-foreground font-semibold">Contact Us</h2>
       <p class="text-muted-foreground">
         If you have questions about this Privacy Policy, please contact us at
-        <a href="mailto:info@irystechnologies.com" class="text-muted-foreground underline underline-offset-4 hover:text-foreground">info@irystechnologies.com</a>.
+        <a href="mailto:elimfriedman22@gmail.com" class="text-muted-foreground underline underline-offset-4 hover:text-foreground">elimfriedman22@gmail.com</a>.
       </p>
     </section>
   </div>

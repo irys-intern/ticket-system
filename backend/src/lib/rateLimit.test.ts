@@ -59,4 +59,15 @@ describe('checkRateLimit', () => {
     await checkRateLimit(store, 'k', 5, 60);
     expect(await store.ttl('k')).toBe(60);
   });
+
+  it('propagates a store failure to the caller (caller is responsible for failing open)', async () => {
+    const failingStore: RateLimitStore = {
+      incr: async () => {
+        throw new Error('connection lost');
+      },
+      expire: async () => undefined,
+      ttl: async () => -1,
+    };
+    await expect(checkRateLimit(failingStore, 'k', 5, 60)).rejects.toThrow('connection lost');
+  });
 });
