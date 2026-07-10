@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import type { Ticket } from '../../types/index.ts';
   import { resolve } from '$app/paths';
-  import { Button } from '$lib/components/ui/button';
+  import { goto } from '$app/navigation';
   import { Badge } from '$lib/components/ui/badge';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
@@ -67,8 +67,24 @@
 
   const priorityVariant = (p: string) =>
     p === 'critical' || p === 'high' ? 'destructive'
-    : p === 'medium' ? 'default'
     : 'secondary';
+
+  const priorityClass = (p: string) =>
+    p === 'critical' ? 'bg-destructive text-destructive-foreground dark:bg-destructive dark:text-destructive-foreground'
+    : p === 'medium' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+    : '';
+
+  const formatRelativeTime = (date: string | Date) => {
+    const diffMs = Date.now() - new Date(date).getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.round(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.round(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return new Date(date).toLocaleDateString();
+  };
 </script>
 
 <div class="space-y-4">
@@ -142,31 +158,33 @@
   {:else}
     <div class="space-y-3">
       {#each filteredTickets as ticket (ticket.id)}
-      <Card>
-        <CardHeader class="pb-2">
-          <div class="flex items-start justify-between gap-2">
-            <CardTitle class="text-base">{ticket.title}</CardTitle>
-            <div class="flex gap-1.5 shrink-0">
+      <a href={resolve(`/tickets/${ticket.id}`)} onclick={(e) => { e.preventDefault(); goto(resolve(`/tickets/${ticket.id}`)); }} class="group block">
+        <Card class="transition-shadow hover:shadow-sm hover:ring-foreground/20">
+          <CardHeader class="pb-2">
+            <div class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span class="font-mono">#{ticket.id}</span>
+              <span>{formatRelativeTime(ticket.createdAt)}</span>
+            </div>
+            <div class="flex items-start justify-between gap-2">
+              <CardTitle class="text-base">{ticket.title}</CardTitle>
+              <ArrowRightIcon class="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
               <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
-              <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
-              <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
+              <Badge variant={priorityVariant(ticket.priority)} class={priorityClass(ticket.priority)}>{ticket.priority}</Badge>
+              <Badge variant="ghost">{ticket.category.replace(/_/g, ' ')}</Badge>
               {#if userRole === 'admin'}
                 <Badge variant="outline">{ticket.assignedTo ? (agentNames[ticket.assignedTo] ?? 'Unknown agent') : 'Unassigned'}</Badge>
               {/if}
             </div>
-          </div>
-        </CardHeader>
-        {#if ticket.description}
-          <CardContent class="pb-3 pt-0">
-            <p class="text-sm text-muted-foreground line-clamp-2">{ticket.description}</p>
-          </CardContent>
-        {/if}
-        <CardContent class="pt-0">
-          <Button size="sm" class="cursor-pointer" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
-            Go to ticket <ArrowRightIcon />
-          </Button>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          {#if ticket.description}
+            <CardContent class="pb-3 pt-0">
+              <p class="text-sm text-muted-foreground line-clamp-2">{ticket.description}</p>
+            </CardContent>
+          {/if}
+        </Card>
+      </a>
     {/each}
     </div>
   {/if}
