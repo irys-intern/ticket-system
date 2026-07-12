@@ -265,7 +265,7 @@
 {#if user}
 <div class="space-y-4">
   <div class="flex items-center gap-4 text-sm">
-    <BackLink href={resolve('/')} />
+    <BackLink href={resolve('/tickets')} label="Back to tickets" />
     {#if user.role === 'agent' || user.role === 'admin'}
       <a href={resolve('/tickets/open')} class="text-muted-foreground hover:text-foreground">Open tickets</a>
     {/if}
