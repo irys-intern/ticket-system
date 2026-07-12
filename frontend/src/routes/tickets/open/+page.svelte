@@ -3,15 +3,12 @@
   import { onMount } from 'svelte';
   import type { Ticket } from '../../../types/index.ts';
   import { resolve } from '$app/paths';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
+  import TicketCard from '$lib/components/TicketCard.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
-  import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
 
   const severities = ['all', 'low', 'medium', 'high', 'critical'];
   const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
@@ -41,11 +38,6 @@
     }
     tickets = result.tickets ?? [];
   });
-
-  const priorityVariant = (p: string) =>
-    p === 'critical' ? 'destructive'
-    : p === 'high' ? 'default'
-    : 'secondary';
 </script>
 
 <div class="space-y-4">
@@ -98,27 +90,7 @@
 
   <div class="space-y-3">
     {#each filteredTickets as ticket (ticket.id)}
-      <Card>
-        <CardHeader class="pb-2">
-          <div class="flex items-start justify-between gap-2">
-            <CardTitle class="text-base">{ticket.title}</CardTitle>
-            <div class="flex gap-1.5 shrink-0">
-              <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
-              <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
-            </div>
-          </div>
-        </CardHeader>
-        {#if ticket.description}
-          <CardContent class="pb-3 pt-0">
-            <p class="text-sm text-muted-foreground line-clamp-2">{ticket.description}</p>
-          </CardContent>
-        {/if}
-        <CardContent class="pt-0">
-          <Button size="sm" onclick={() => (window.location.href = `/tickets/${ticket.id}`)}>
-            Go to ticket <ArrowRightIcon />
-          </Button>
-        </CardContent>
-      </Card>
+      <TicketCard {ticket} />
     {/each}
   </div>
 </div>

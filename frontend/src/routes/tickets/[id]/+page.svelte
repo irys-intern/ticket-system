@@ -247,6 +247,9 @@
   const statusVariant = (s: string) =>
     s === 'closed' ? 'outline' : s === 'open' ? 'secondary' : 'default';
 
+  const formatDateTime = (date: string | Date) =>
+    new Date(date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
   async function updateMetadata(field: 'priority' | 'category', value: string) {
     if (!ticket) return;
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
@@ -284,6 +287,9 @@
             <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
           </div>
         </div>
+        <p class="text-xs text-muted-foreground">
+          Created {formatDateTime(ticket.createdAt)} &middot; Updated {formatDateTime(ticket.updatedAt)}
+        </p>
       </CardHeader>
       <CardContent class="space-y-3">
         <p class="text-sm text-muted-foreground">{ticket.description}</p>
@@ -440,15 +446,11 @@
             <ul class="space-y-3">
               {#each auditTrail as audit, i (audit.id ?? i)}
                 <li class="text-sm border-l-2 border-border pl-3">
-                  {#if typeof audit === 'object' && audit !== null}
-                    <p class="font-medium">{audit.createdAt ?? 'Unknown time'}</p>
-                    <p class="text-muted-foreground">{audit.action ?? 'Audit entry'}</p>
-                    {#if audit.userId}
-                      <p class="text-xs text-muted-foreground">User: {audit.userDisplay ?? audit.userId}</p>
-                    {/if}
-                  {:else}
-                    <pre class="text-xs">{JSON.stringify(audit)}</pre>
-                  {/if}
+                  <p class="font-medium">{audit.action ?? 'Audit entry'}</p>
+                  <p class="text-xs text-muted-foreground">
+                    {audit.createdAt ? formatDateTime(audit.createdAt) : 'Unknown time'}
+                    {#if audit.userId}&middot; {audit.userDisplay ?? audit.userId}{/if}
+                  </p>
                 </li>
               {/each}
             </ul>
