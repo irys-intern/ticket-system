@@ -1,14 +1,13 @@
 <title>Homepage</title>
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Separator } from '$lib/components/ui/separator';
   import StatCard from '$lib/components/StatCard.svelte';
   import ToolLinkCard from '$lib/components/ToolLinkCard.svelte';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import type { PageData } from './$types';
 
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
   import TrayIcon from 'phosphor-svelte/lib/TrayIcon';
@@ -25,44 +24,24 @@
   import SignInIcon from 'phosphor-svelte/lib/SignInIcon';
   import UserPlusIcon from 'phosphor-svelte/lib/UserPlusIcon';
 
-  let userRole = $state('guest');
-  let userName = $state('Guest User');
-  let openTicketsUser: unknown[] = $state([]);
-  let resolvedTicketsUser: unknown[] = $state([]);
-  let closedTicketsUser: unknown[] = $state([]);
-  let progressTicketsUser: unknown[] = $state([]);
-  let assignedAgentTickets: unknown[] = $state([]);
-  let adminTotal = $state('...');
-  let adminOpen = $state('...');
-  let adminUsers = $state('...');
-  let loading = $state(true);
+  let { data }: { data: PageData } = $props();
 
-  onMount(async () => {
-    const response = await fetch(PUBLIC_BACKEND_URL, {credentials: 'include'});
-    const data = await response.json();
-    userRole = data.userRole || 'guest';
-    userName = data.userName || 'Guest User';
-    openTicketsUser = data.openTicketsUser || [];
-    resolvedTicketsUser = data.resolvedTicketsUser || [];
-    closedTicketsUser = data.closedTicketsUser || [];
-    progressTicketsUser = data.progressTicketsUser || [];
-    assignedAgentTickets = data.assignedAgentTickets || [];
-    adminTotal = data.adminTotal ?? 0;
-    adminOpen = data.adminOpen ?? 0;
-    adminUsers = data.adminUsers ?? 0;
-    loading = false;
-  });
+  function withMinDelay<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.all([promise, new Promise((resolve) => setTimeout(resolve, ms))]).then(([result]) => result);
+  }
+
+  let stats = $derived(withMinDelay(data.stats, 600));
 </script>
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-      <p class="text-muted-foreground text-sm">Welcome back, {userName}</p>
+      <p class="text-muted-foreground text-sm">Welcome back, {data.userName}</p>
     </div>
     <div class="flex items-center gap-3">
-      <Badge variant="secondary" class="capitalize">{userRole}</Badge>
-      {#if userRole !== 'guest'}
+      <Badge variant="secondary" class="capitalize">{data.userRole}</Badge>
+      {#if data.userRole !== 'guest'}
         <Button href={resolve('/auth/logout')} variant="outline" size="sm">Logout</Button>
       {/if}
     </div>
@@ -70,44 +49,20 @@
 
   <Separator />
 
-  {#if loading}
-    <div class="skeleton-fade-in space-y-6">
-    <div class="grid gap-4 sm:grid-cols-2">
-      {#each Array(4).keys() as index (index)}
-        <Card>
-          <CardContent class="flex items-start gap-3">
-            <div class="size-9 shrink-0 animate-pulse rounded-lg bg-muted"></div>
-            <div class="min-w-0 flex-1 space-y-2">
-              <div class="h-9 w-12 animate-pulse rounded bg-muted"></div>
-              <div class="h-3.5 w-24 animate-pulse rounded bg-muted"></div>
-            </div>
-          </CardContent>
-        </Card>
-      {/each}
-    </div>
-    <Card>
-      <CardHeader><div class="h-5 w-28 animate-pulse rounded bg-muted"></div></CardHeader>
-      <CardContent class="grid gap-3 sm:grid-cols-2">
-        {#each Array(4).keys() as index (index)}
-          <div class="ring-foreground/10 flex items-start gap-3 rounded-xl p-4 ring-1">
-            <div class="size-9 shrink-0 animate-pulse rounded-lg bg-muted"></div>
-            <div class="min-w-0 flex-1 space-y-2">
-              <div class="h-4 w-32 animate-pulse rounded bg-muted"></div>
-              <div class="h-3 w-40 animate-pulse rounded bg-muted"></div>
-            </div>
-            <div class="size-4 shrink-0 animate-pulse rounded bg-muted"></div>
-          </div>
-        {/each}
-      </CardContent>
-    </Card>
-    </div>
-
-  {:else if userRole === 'admin'}
-    <div class="grid gap-4 sm:grid-cols-3">
-      <StatCard icon={TicketIcon} label="Total Tickets" value={adminTotal} />
-      <StatCard icon={TrayIcon} label="Open (Unassigned)" value={adminOpen} />
-      <StatCard icon={UsersIcon} label="Users" value={adminUsers} />
-    </div>
+  {#if data.userRole === 'admin'}
+    {#await stats}
+      <div class="grid gap-4 sm:grid-cols-3">
+        <StatCard icon={TicketIcon} label="Total Tickets" loading />
+        <StatCard icon={TrayIcon} label="Open (Unassigned)" loading />
+        <StatCard icon={UsersIcon} label="Users" loading />
+      </div>
+    {:then stats}
+      <div class="grid gap-4 sm:grid-cols-3">
+        <StatCard icon={TicketIcon} label="Total Tickets" value={stats.adminTotal} />
+        <StatCard icon={TrayIcon} label="Open (Unassigned)" value={stats.adminOpen} />
+        <StatCard icon={UsersIcon} label="Users" value={stats.adminUsers} />
+      </div>
+    {/await}
     <Card>
       <CardHeader><CardTitle>Admin Tools</CardTitle></CardHeader>
       <CardContent class="grid gap-3 sm:grid-cols-2">
@@ -144,10 +99,16 @@
       </CardContent>
     </Card>
 
-  {:else if userRole === 'agent'}
-    <div class="grid gap-4 sm:grid-cols-2">
-      <StatCard icon={TicketIcon} label="Tickets assigned to you" value={assignedAgentTickets.length} />
-    </div>
+  {:else if data.userRole === 'agent'}
+    {#await stats}
+      <div class="grid gap-4 sm:grid-cols-2">
+        <StatCard icon={TicketIcon} label="Tickets assigned to you" loading />
+      </div>
+    {:then stats}
+      <div class="grid gap-4 sm:grid-cols-2">
+        <StatCard icon={TicketIcon} label="Tickets assigned to you" value={stats.assignedAgentTickets.length} />
+      </div>
+    {/await}
     <Card>
       <CardHeader><CardTitle>Agent Tools</CardTitle></CardHeader>
       <CardContent class="flex flex-wrap gap-2">
@@ -157,33 +118,62 @@
       </CardContent>
     </Card>
 
-  {:else if userRole === 'user'}
-    <div class="grid gap-4 sm:grid-cols-2">
-      <StatCard
-        icon={CircleDashedIcon}
-        label="Open Tickets"
-        value={openTicketsUser.length}
-        tooltip="A ticket that has been submitted and is waiting to be picked up by an agent."
-      />
-      <StatCard
-        icon={ArrowsClockwiseIcon}
-        label="In Progress Tickets"
-        value={progressTicketsUser.length}
-        tooltip="A ticket that is currently being worked on by an agent or awaiting your interaction."
-      />
-      <StatCard
-        icon={CheckCircleIcon}
-        label="Resolved Tickets"
-        value={resolvedTicketsUser.length}
-        tooltip="A ticket that has been addressed and is awaiting your confirmation or closure."
-      />
-      <StatCard
-        icon={ArchiveIcon}
-        label="Closed Tickets"
-        value={closedTicketsUser.length}
-        tooltip="A ticket that has been completed and closed after resolution."
-      />
-    </div>
+  {:else if data.userRole === 'user'}
+    {#await stats}
+      <div class="grid gap-4 sm:grid-cols-2">
+        <StatCard
+          icon={CircleDashedIcon}
+          label="Open Tickets"
+          loading
+          tooltip="A ticket that has been submitted and is waiting to be picked up by an agent."
+        />
+        <StatCard
+          icon={ArrowsClockwiseIcon}
+          label="In Progress Tickets"
+          loading
+          tooltip="A ticket that is currently being worked on by an agent or awaiting your interaction."
+        />
+        <StatCard
+          icon={CheckCircleIcon}
+          label="Resolved Tickets"
+          loading
+          tooltip="A ticket that has been addressed and is awaiting your confirmation or closure."
+        />
+        <StatCard
+          icon={ArchiveIcon}
+          label="Closed Tickets"
+          loading
+          tooltip="A ticket that has been completed and closed after resolution."
+        />
+      </div>
+    {:then stats}
+      <div class="grid gap-4 sm:grid-cols-2">
+        <StatCard
+          icon={CircleDashedIcon}
+          label="Open Tickets"
+          value={stats.openTicketsUser.length}
+          tooltip="A ticket that has been submitted and is waiting to be picked up by an agent."
+        />
+        <StatCard
+          icon={ArrowsClockwiseIcon}
+          label="In Progress Tickets"
+          value={stats.progressTicketsUser.length}
+          tooltip="A ticket that is currently being worked on by an agent or awaiting your interaction."
+        />
+        <StatCard
+          icon={CheckCircleIcon}
+          label="Resolved Tickets"
+          value={stats.resolvedTicketsUser.length}
+          tooltip="A ticket that has been addressed and is awaiting your confirmation or closure."
+        />
+        <StatCard
+          icon={ArchiveIcon}
+          label="Closed Tickets"
+          value={stats.closedTicketsUser.length}
+          tooltip="A ticket that has been completed and closed after resolution."
+        />
+      </div>
+    {/await}
     <Card>
       <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
       <CardContent class="grid gap-3 sm:grid-cols-2">
@@ -222,20 +212,3 @@
     </Card>
   {/if}
 </div>
-
-<style>
-  @keyframes skeleton-fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .skeleton-fade-in {
-    opacity: 0;
-    animation: skeleton-fade-in 150ms ease-in forwards;
-    animation-delay: 100ms;
-  }
-</style>
