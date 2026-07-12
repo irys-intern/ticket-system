@@ -4,8 +4,7 @@ export type ToastKind = 'success' | 'error';
 
 const STORAGE_KEY = 'ticket-system:pending-toast';
 
-const OUTLINE_CLASS: Record<ToastKind, string> = {
-  success: '!border-2 !border-green-500',
+const OUTLINE_CLASS: Partial<Record<ToastKind, string>> = {
   error: '!border-2 !border-red-500',
 };
 

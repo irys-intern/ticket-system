@@ -1,9 +1,7 @@
 <title>Ticket</title>
 <script lang="ts">
-  import { page } from '$app/state';
   import { resolve } from '$app/paths';
-  import type { AuditEvent, Ticket } from '../../../types/index.ts';
-  import { onMount } from 'svelte';
+  import type { AuditEvent } from '../../../types/index.ts';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -20,86 +18,31 @@
   import XCircleIcon from 'phosphor-svelte/lib/XCircleIcon';
   import UserSwitchIcon from 'phosphor-svelte/lib/UserSwitchIcon';
   import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+  import type { PageData } from './$types';
 
-  let user: { userId: string; email: string; name: string; role: string } | null = $state(null);
-  let ticket: Ticket | null = $state(null);
-  let loading = $state(true);
-  let error: string | null = $state(null);
-  let assignmentStringState = $state('');
-  let agents: Array<{ id: string; name: string; role: string }> = $state([]);
+  let { data }: { data: PageData } = $props();
+
+  let user = $derived(data.user);
+  let ticket = $derived(data.ticket);
+  let error = $derived(data.error);
+  let assignmentStringState = $derived(data.assignmentString);
+  let agents = $derived(data.agents);
   let selectedAgentId = $state('');
   let showAssignModal = $state(false);
   let auditTrail: AuditEvent[] = $state([]);
   let loadingAuditTrail = $state(true);
 
-  onMount(async () => {
-    const meRes = await fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' });
-    if (!meRes.ok) { window.location.href = '/auth/login'; return; }
-    const meData = await meRes.json();
-    if (!meData.valid || !meData.session?.userId) { window.location.href = '/auth/login'; return; }
-    user = meData.session;
-
-    try {
-      const id = page.params.id;
-      const response = await fetch(PUBLIC_BACKEND_URL+`/tickets/${id}`, {credentials: 'include'});
-      if (!response.ok) throw new Error('Failed to fetch ticket');
-      ticket = await response.json();
-
-      if (ticket?.assignedTo) {
-        assignmentStringState = await assignmentString(ticket.assignedTo);
-      }
-      if (user?.role === 'admin') {
-        await loadAgents();
-      }
-    } catch (err) {
-      error = err instanceof Error ? err.message : 'An error occurred';
-    } finally {
-      loading = false;
-    }
-
-    loadAuditTrail();
+  $effect(() => {
+    if (agents.length > 0 && !selectedAgentId) selectedAgentId = agents[0].id;
   });
 
-  async function loadAuditTrail() {
-    const id = page.params.id;
-    try {
-      const headers = id ? { 'X-Ticket-Id': String(id) } : undefined;
-      const audits = await fetch(PUBLIC_BACKEND_URL + '/admin/audit', { method: 'GET', headers, credentials: 'include' });
-      if (audits.ok) {
-        auditTrail = (await audits.json()).audits || [];
-        for (const entry of auditTrail) {
-          if (entry?.userId) {
-            try {
-              const r = await fetch(PUBLIC_BACKEND_URL+`/admin/users/${entry.userId}`, {credentials: 'include'});
-              if (r.ok) {
-                const j = await r.json();
-                entry.userDisplay = `${j.user?.name ?? j.user?.username ?? 'User'} (${entry.userId})`;
-              }
-            } catch (e) {
-              console.log(e);
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
+  $effect(() => {
+    loadingAuditTrail = true;
+    data.auditTrail.then((trail) => {
+      auditTrail = trail;
       loadingAuditTrail = false;
-    }
-  }
-
-  async function loadAgents() {
-    try {
-      const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', {credentials: 'include'});
-      if (!response.ok) throw new Error('Failed to load agents');
-      const allUsers = await response.json();
-      const users = allUsers.users ?? [];
-      agents = users.filter((u: { id: string; role: string; name: string }) => u.role === 'agent');
-      selectedAgentId = agents[0]?.id ?? '';
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    });
+  });
 
   async function assignSelectedAgent() {
     if (!ticket || !selectedAgentId) return;
@@ -167,13 +110,6 @@
     });
     queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket forfeited.' : 'Failed to forfeit ticket.');
     window.location.reload();
-  }
-
-  async function assignmentString(userId: string | undefined) {
-    if (!userId) return '';
-    const res = await fetch(PUBLIC_BACKEND_URL+`/admin/users/${userId}`, {credentials: 'include'});
-    const resp = await res.json();
-    return `${resp.user.name} (${userId})`;
   }
 
   async function closeTicketUser() {
@@ -262,7 +198,6 @@
   }
 </script>
 
-{#if user}
 <div class="space-y-4">
   <div class="flex items-center gap-4 text-sm">
     <BackLink href={resolve('/tickets')} label="Back to tickets" />
@@ -271,9 +206,7 @@
     {/if}
   </div>
 
-  {#if loading}
-    <p class="text-muted-foreground">Loading…</p>
-  {:else if error}
+  {#if error}
     <p class="text-destructive">Error: {error}</p>
   {:else if ticket}
     <Card>
@@ -463,4 +396,3 @@
     <p class="text-muted-foreground">Ticket not found.</p>
   {/if}
 </div>
-{/if}
