@@ -40,7 +40,7 @@
   });
 </script>
 
-<div class="space-y-6">
+<div class="space-y-4">
   <div class="flex items-center justify-between">
     <BackLink href={resolve('/')} />
     {#if userRole === 'admin'}

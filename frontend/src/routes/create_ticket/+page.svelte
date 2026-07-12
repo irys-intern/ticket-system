@@ -93,7 +93,7 @@
 
 <title>Create Ticket</title>
 
-<div class="space-y-6">
+<div class="space-y-4">
   <div>
     <BackLink href={resolve('/')} />
   </div>

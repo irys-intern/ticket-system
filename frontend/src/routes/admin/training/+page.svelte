@@ -94,7 +94,7 @@
   }
 </script>
 
-<div class="space-y-8">
+<div class="space-y-4">
   <div>
     <BackLink href={resolve('/training')} label="Back to training materials" />
   </div>

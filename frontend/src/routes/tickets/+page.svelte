@@ -74,7 +74,7 @@
 
 <title>All Tickets</title>
 
-<div class="flex min-h-0 flex-1 flex-col space-y-4">
+<div class="flex flex-col space-y-4">
   <div class="shrink-0">
     <BackLink href={resolve('/')} />
   </div>
@@ -138,7 +138,7 @@
 
   {#if isLoading}
     <div
-      class="skeleton-fade-in -mt-1 -mr-1 -ml-1 min-h-0 flex-1 space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1"
+      class="skeleton-fade-in -mt-1 -mr-1 -ml-1 max-h-[65vh] space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1"
     >
       {#each Array(3).keys() as index (index)}
         <Card>
@@ -167,8 +167,8 @@
       {/each}
     </div>
   {:else}
-    <div class="relative min-h-0 flex-1">
-      <div class="-mt-1 -mr-1 -ml-1 h-full space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1">
+    <div class="relative">
+      <div class="-mt-1 -mr-1 -ml-1 max-h-[65vh] space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1">
         {#each filteredTickets as ticket (ticket.id)}
           <TicketCard {ticket} {userRole} {agentNames} />
         {/each}
