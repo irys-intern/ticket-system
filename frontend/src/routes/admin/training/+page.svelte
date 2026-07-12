@@ -99,7 +99,10 @@
     <BackLink href={resolve('/training')} label="Back to training materials" />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Manage Training Materials</h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Manage Training Materials</h1>
+    <p class="text-sm text-muted-foreground">Create, edit, and organize training content for agents.</p>
+  </div>
 
   {#if errorMsg}
     <Alert variant="destructive">

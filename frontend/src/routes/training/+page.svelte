@@ -51,7 +51,10 @@
     {/if}
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Training Materials</h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Training Materials</h1>
+    <p class="text-sm text-muted-foreground">Browse guides and resources to help you resolve tickets.</p>
+  </div>
 
   {#if errorMsg}
     <Alert variant="destructive">

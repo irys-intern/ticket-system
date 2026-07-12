@@ -77,7 +77,10 @@
     >View published <ArrowRightIcon class="size-3.5" /></a>
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Edit: <span class="font-mono text-lg text-muted-foreground">{slug}</span></h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Edit: <span class="font-mono text-lg text-muted-foreground">{slug}</span></h1>
+    <p class="text-sm text-muted-foreground">Update the content of this training material.</p>
+  </div>
 
   {#if errorMsg}
     <Alert variant="destructive">

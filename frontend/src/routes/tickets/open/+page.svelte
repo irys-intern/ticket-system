@@ -46,7 +46,10 @@
   </div>
 
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h1 class="text-2xl font-bold tracking-tight">Open Tickets</h1>
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Open Tickets</h1>
+      <p class="text-sm text-muted-foreground">Tickets awaiting an agent's attention.</p>
+    </div>
     <div class="flex flex-wrap items-center gap-2">
       <div class="relative">
         <MagnifyingGlassIcon class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />

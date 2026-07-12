@@ -129,9 +129,12 @@
     <BackLink href={resolve('/')} />
   </div>
 
-  <div class="flex items-center gap-2.5">
-    <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
-    <Badge variant="secondary">{users.length} users</Badge>
+  <div>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
+      <Badge variant="secondary">{users.length} users</Badge>
+    </div>
+    <p class="text-sm text-muted-foreground">View and manage user accounts and roles.</p>
   </div>
 
   {#if errors.length}

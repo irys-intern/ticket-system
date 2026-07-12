@@ -443,7 +443,10 @@
     <BackLink href={resolve('/')} />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Admin Stats</h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Admin Stats</h1>
+    <p class="text-sm text-muted-foreground">Ticket volume and agent performance at a glance.</p>
+  </div>
 
   {#if errors.length}
     <Alert variant="destructive">

@@ -60,9 +60,12 @@
   </div>
 
   <div class="flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-2.5">
-      <h1 class="text-2xl font-bold tracking-tight">Audit Log</h1>
-      <Badge variant="secondary">{filtered.length} of {events.length} events</Badge>
+    <div>
+      <div class="flex items-center gap-2.5">
+        <h1 class="text-2xl font-bold tracking-tight">Audit Log</h1>
+        <Badge variant="secondary">{filtered.length} of {events.length} events</Badge>
+      </div>
+      <p class="text-sm text-muted-foreground">Review a history of system and account actions.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <div class="relative">

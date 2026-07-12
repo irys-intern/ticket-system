@@ -83,7 +83,10 @@
     <BackLink href={ticketUrl} label="Back to ticket" />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Comments</h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Comments</h1>
+    <p class="text-sm text-muted-foreground">Discussion history for this ticket.</p>
+  </div>
 
   {#if error}
     <Alert variant="destructive">
