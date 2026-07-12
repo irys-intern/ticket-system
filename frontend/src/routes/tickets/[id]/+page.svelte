@@ -7,6 +7,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
@@ -242,8 +243,6 @@
     }
   }
 
-  const priorityVariant = (p: string) =>
-    p === 'critical' ? 'destructive' : p === 'high' ? 'default' : 'secondary';
   const statusVariant = (s: string) =>
     s === 'closed' ? 'outline' : s === 'open' ? 'secondary' : 'default';
 
@@ -282,7 +281,7 @@
         <div class="flex items-start justify-between gap-2 flex-wrap">
           <CardTitle>Ticket #{ticket.id}: {ticket.title}</CardTitle>
           <div class="flex gap-1.5 flex-wrap">
-            <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+            <PriorityBadge priority={ticket.priority} />
             <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
             <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
           </div>

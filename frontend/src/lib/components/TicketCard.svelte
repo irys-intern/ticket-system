@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { Badge } from '$lib/components/ui/badge';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import type { Ticket } from '../../types/index.ts';
   import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
 
@@ -20,15 +21,6 @@
     s === 'open' ? 'secondary'
     : s === 'closed' ? 'outline'
     : 'default';
-
-  const priorityVariant = (p: string) =>
-    p === 'critical' || p === 'high' ? 'destructive'
-    : 'secondary';
-
-  const priorityClass = (p: string) =>
-    p === 'critical' ? 'bg-destructive text-destructive-foreground dark:bg-destructive dark:text-destructive-foreground'
-    : p === 'medium' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-    : '';
 
   const formatRelativeTime = (date: string | Date) => {
     const diffMs = Date.now() - new Date(date).getTime();
@@ -56,7 +48,7 @@
       </div>
       <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
         <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
-        <Badge variant={priorityVariant(ticket.priority)} class={priorityClass(ticket.priority)}>{ticket.priority}</Badge>
+        <PriorityBadge priority={ticket.priority} />
         <Badge variant="ghost">{ticket.category.replace(/_/g, ' ')}</Badge>
         {#if userRole === 'admin'}
           <Badge variant="outline">{ticket.assignedTo ? (agentNames[ticket.assignedTo] ?? 'Unknown agent') : 'Unassigned'}</Badge>
