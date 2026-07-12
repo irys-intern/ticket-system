@@ -85,7 +85,7 @@
       </select>
       <Label for="sort-by" class="text-sm">Sort</Label>
       <select id="sort-by" bind:value={sortBy}
-        class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+        class="h-8 w-28 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
         <option value="newest">Newest</option>
         <option value="oldest">Oldest</option>
         <option value="priority">Priority</option>
