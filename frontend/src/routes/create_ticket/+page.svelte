@@ -92,14 +92,19 @@
   }
 </script>
 
-<div class="space-y-4">
+<div class="mx-auto max-w-lg space-y-6">
   <div>
     <BackLink href={resolve('/')} />
   </div>
 
-  <Card class="max-w-lg">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Create Ticket</h1>
+    <p class="text-muted-foreground text-sm">Submit a new issue or request for support.</p>
+  </div>
+
+  <Card>
     <CardHeader>
-      <CardTitle>Create Ticket</CardTitle>
+      <CardTitle>Ticket Details</CardTitle>
     </CardHeader>
     <CardContent class="space-y-4">
       {#if successMessage}
