@@ -71,10 +71,35 @@
   <Separator />
 
   {#if loading}
-    <div class="grid gap-4 sm:grid-cols-3">
-      {#each Array(3).keys() as index (index)}
-        <Card><CardContent class="h-16 animate-pulse rounded-md bg-muted/40"></CardContent></Card>
+    <div class="skeleton-fade-in space-y-6">
+    <div class="grid gap-4 sm:grid-cols-2">
+      {#each Array(4).keys() as index (index)}
+        <Card>
+          <CardContent class="flex items-start gap-3">
+            <div class="size-9 shrink-0 animate-pulse rounded-lg bg-muted"></div>
+            <div class="min-w-0 flex-1 space-y-2">
+              <div class="h-9 w-12 animate-pulse rounded bg-muted"></div>
+              <div class="h-3.5 w-24 animate-pulse rounded bg-muted"></div>
+            </div>
+          </CardContent>
+        </Card>
       {/each}
+    </div>
+    <Card>
+      <CardHeader><div class="h-5 w-28 animate-pulse rounded bg-muted"></div></CardHeader>
+      <CardContent class="grid gap-3 sm:grid-cols-2">
+        {#each Array(4).keys() as index (index)}
+          <div class="ring-foreground/10 flex items-start gap-3 rounded-xl p-4 ring-1">
+            <div class="size-9 shrink-0 animate-pulse rounded-lg bg-muted"></div>
+            <div class="min-w-0 flex-1 space-y-2">
+              <div class="h-4 w-32 animate-pulse rounded bg-muted"></div>
+              <div class="h-3 w-40 animate-pulse rounded bg-muted"></div>
+            </div>
+            <div class="size-4 shrink-0 animate-pulse rounded bg-muted"></div>
+          </div>
+        {/each}
+      </CardContent>
+    </Card>
     </div>
 
   {:else if userRole === 'admin'}
@@ -197,3 +222,20 @@
     </Card>
   {/if}
 </div>
+
+<style>
+  @keyframes skeleton-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .skeleton-fade-in {
+    opacity: 0;
+    animation: skeleton-fade-in 150ms ease-in forwards;
+    animation-delay: 100ms;
+  }
+</style>
