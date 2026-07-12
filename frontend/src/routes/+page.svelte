@@ -7,6 +7,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Separator } from '$lib/components/ui/separator';
   import StatCard from '$lib/components/StatCard.svelte';
+  import ToolLinkCard from '$lib/components/ToolLinkCard.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
@@ -84,12 +85,37 @@
     </div>
     <Card>
       <CardHeader><CardTitle>Admin Tools</CardTitle></CardHeader>
-      <CardContent class="flex flex-wrap gap-2">
-        <Button href="/admin/users"><UsersIcon /> Manage Users</Button>
-        <Button href="/tickets" variant="secondary"><UserSwitchIcon /> Manage Assignments</Button>
-        <Button href="/training" variant="secondary"><BookOpenIcon /> Manage Training Materials</Button>
-        <Button href="/admin/audit" variant="outline"><ClipboardTextIcon /> View Audit Log</Button>
-        <Button href="/admin/stats" variant="outline"><ChartBarIcon /> View Statistics</Button>
+      <CardContent class="grid gap-3 sm:grid-cols-2">
+        <ToolLinkCard
+          icon={UsersIcon}
+          label="Manage Users"
+          description="Create, edit, and manage user accounts and roles."
+          href="/admin/users"
+        />
+        <ToolLinkCard
+          icon={UserSwitchIcon}
+          label="Manage Assignments"
+          description="View and reassign tickets across agents."
+          href="/tickets"
+        />
+        <ToolLinkCard
+          icon={BookOpenIcon}
+          label="Manage Training Materials"
+          description="Create and edit training content for agents."
+          href="/training"
+        />
+        <ToolLinkCard
+          icon={ClipboardTextIcon}
+          label="View Audit Log"
+          description="Review a history of system and account actions."
+          href="/admin/audit"
+        />
+        <ToolLinkCard
+          icon={ChartBarIcon}
+          label="View Statistics"
+          description="See ticket volume, resolution trends, and metrics."
+          href="/admin/stats"
+        />
       </CardContent>
     </Card>
 
@@ -135,20 +161,38 @@
     </div>
     <Card>
       <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
-      <CardContent class="flex flex-wrap gap-2">
-        <Button href="/create_ticket"><PlusCircleIcon /> Create New Ticket</Button>
-        <Button href="/tickets" variant="secondary"><TicketIcon /> View My Tickets</Button>
+      <CardContent class="grid gap-3 sm:grid-cols-2">
+        <ToolLinkCard
+          icon={PlusCircleIcon}
+          label="Create New Ticket"
+          description="Submit a new issue or request for support."
+          href="/create_ticket"
+        />
+        <ToolLinkCard
+          icon={TicketIcon}
+          label="View My Tickets"
+          description="See the status and history of tickets you've submitted."
+          href="/tickets"
+        />
       </CardContent>
     </Card>
 
   {:else}
     <Card>
-      <CardContent class="pt-6">
-        <p class="text-muted-foreground mb-4">You have limited access. Please log in or register to create and manage tickets.</p>
-        <div class="flex gap-2">
-          <Button href="/auth/login"><SignInIcon /> Login</Button>
-          <Button href="/auth/register" variant="outline"><UserPlusIcon /> Register</Button>
-        </div>
+      <CardHeader><CardTitle>Get Started</CardTitle></CardHeader>
+      <CardContent class="grid gap-3 sm:grid-cols-2">
+        <ToolLinkCard
+          icon={SignInIcon}
+          label="Login"
+          description="Access your account to create and manage tickets."
+          href="/auth/login"
+        />
+        <ToolLinkCard
+          icon={UserPlusIcon}
+          label="Register"
+          description="Create a new account to get started."
+          href="/auth/register"
+        />
       </CardContent>
     </Card>
   {/if}
