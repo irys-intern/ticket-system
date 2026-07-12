@@ -11,7 +11,6 @@
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import EnvelopeSimpleIcon from 'phosphor-svelte/lib/EnvelopeSimpleIcon';
   import LockKeyIcon from 'phosphor-svelte/lib/LockKeyIcon';
-  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import CircleNotchIcon from 'phosphor-svelte/lib/CircleNotchIcon';
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
@@ -19,13 +18,11 @@
   let email = $state('');
   let password = $state('');
   let submitting = $state(false);
-  let successMessage = $state('');
   let errors: string[] = $state([]);
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
     submitting = true;
-    successMessage = '';
     errors = [];
 
     try {
@@ -42,10 +39,8 @@
         errors = result.errors ?? [result.message ?? 'Unable to log in'];
         toast.error(errors[0]);
       } else {
-        successMessage = result.message ?? 'Login successful.';
         email = '';
         password = '';
-        toast.success(successMessage);
         await goto(resolve('/'), { replaceState: true });
       }
     } catch (error) {
@@ -72,13 +67,6 @@
     </CardHeader>
 
     <CardContent>
-      {#if successMessage}
-        <Alert variant="success" class="mb-4">
-          <CheckCircleIcon />
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      {/if}
-
       {#if errors.length}
         <Alert variant="destructive" class="mb-4">
           <WarningCircleIcon />
