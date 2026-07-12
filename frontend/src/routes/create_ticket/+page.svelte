@@ -131,11 +131,13 @@
         <div class="space-y-1.5">
           <Label for="title">Title</Label>
           <Input id="title" type="text" bind:value={title} required />
+          <p class="text-xs text-muted-foreground">A short summary of the issue or request.</p>
         </div>
 
         <div class="space-y-1.5">
           <Label for="description">Description</Label>
           <Textarea id="description" rows={4} bind:value={description} oninput={onDescriptionInput} required />
+          <p class="text-xs text-muted-foreground">Include steps to reproduce, expected behavior, and any relevant context.</p>
         </div>
 
         <div class="space-y-1.5">
@@ -147,6 +149,7 @@
             <option value="support">Support</option>
             <option value="other">Other</option>
           </select>
+          <p class="text-xs text-muted-foreground">What kind of ticket is this?</p>
         </div>
 
         <div class="space-y-1.5">
@@ -165,6 +168,8 @@
               Suggested (BETA): <span class="font-medium text-foreground">{PRIORITY_LABELS[suggestedPriority]}</span>
               <span class="text-muted-foreground">({Math.round(suggestionScore * 100)}% confidence)</span>. You can change this.
             </p>
+          {:else}
+            <p class="text-xs text-muted-foreground">How urgent is this issue?</p>
           {/if}
         </div>
 
