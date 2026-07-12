@@ -111,7 +111,7 @@
   {/if}
 
   {#if isLoading}
-    <div class="space-y-3 overflow-y-auto min-h-0 flex-1 pt-1 pl-1 pr-1 pb-4 -mt-1 -ml-1 -mr-1">
+    <div class="skeleton-fade-in space-y-3 overflow-y-auto min-h-0 flex-1 pt-1 pl-1 pr-1 pb-4 -mt-1 -ml-1 -mr-1">
       {#each Array(3).keys() as index (index)}
         <Card>
           <CardHeader class="pb-2">
@@ -149,3 +149,20 @@
     </div>
   {/if}
 </div>
+
+<style>
+  @keyframes skeleton-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .skeleton-fade-in {
+    opacity: 0;
+    animation: skeleton-fade-in 150ms ease-in forwards;
+    animation-delay: 100ms;
+  }
+</style>

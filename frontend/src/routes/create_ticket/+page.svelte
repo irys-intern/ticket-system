@@ -92,7 +92,7 @@
   }
 </script>
 
-<div class="mx-auto max-w-lg space-y-6">
+<div class="space-y-6">
   <div>
     <BackLink href={resolve('/')} />
   </div>
@@ -168,7 +168,9 @@
           {/if}
         </div>
 
-        <Button type="submit"><PlusCircleIcon /> Submit Ticket</Button>
+        <div class="flex justify-end">
+          <Button type="submit"><PlusCircleIcon /> Submit Ticket</Button>
+        </div>
       </form>
     </CardContent>
   </Card>
