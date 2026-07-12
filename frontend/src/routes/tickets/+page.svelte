@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import type { Ticket } from '../../types/index.ts';
   import { resolve } from '$app/paths';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
@@ -59,12 +59,12 @@
   });
 </script>
 
-<div class="space-y-4">
-  <div>
+<div class="flex-1 min-h-0 flex flex-col space-y-4">
+  <div class="shrink-0">
     <BackLink href={resolve('/')} />
   </div>
 
-  <div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="flex flex-wrap items-center justify-between gap-3 shrink-0">
     <h1 class="text-2xl font-bold tracking-tight">My Tickets</h1>
     <div class="flex flex-wrap items-center gap-2">
       <div class="relative">
@@ -97,7 +97,7 @@
   </div>
 
   {#if errors.length}
-    <Alert variant="destructive">
+    <Alert variant="destructive" class="shrink-0">
       <AlertDescription>
         <ul class="list-disc list-inside space-y-1">
           {#each errors as error (error)}<li>{error}</li>{/each}
@@ -107,31 +107,45 @@
   {/if}
 
   {#if filteredTickets.length === 0 && !errors.length && !isLoading}
-    <p class="text-muted-foreground text-sm">No tickets found.</p>
+    <p class="text-muted-foreground text-sm shrink-0">No tickets found.</p>
   {/if}
 
   {#if isLoading}
-    <div class="space-y-3">
+    <div class="space-y-3 overflow-y-auto min-h-0 flex-1 pt-1 pl-1 pr-1 pb-4 -mt-1 -ml-1 -mr-1">
       {#each Array(3).keys() as index (index)}
         <Card>
-          <CardHeader>
-            <CardTitle class="text-base"><div class="h-12 rounded-md bg-muted/40"></div></CardTitle>
+          <CardHeader class="pb-2">
+            <div class="flex items-center justify-between gap-2 animate-pulse">
+              <div class="h-3 w-10 rounded bg-muted/40"></div>
+              <div class="h-3 w-14 rounded bg-muted/40"></div>
+            </div>
+            <div class="flex items-start justify-between gap-2 animate-pulse">
+              <div class="h-5 w-2/3 rounded bg-muted/40"></div>
+              <div class="h-4 w-4 rounded bg-muted/40"></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 mt-1 animate-pulse">
+              <div class="h-5 w-14 rounded-full bg-muted/40"></div>
+              <div class="h-5 w-14 rounded-full bg-muted/40"></div>
+              <div class="h-5 w-10 rounded-full bg-muted/40"></div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div class="space-y-3 animate-pulse">
-              <div class="h-12 rounded-md bg-muted/40"></div>
-              <div class="h-12 rounded-md bg-muted/40"></div>
-              <div class="h-12 rounded-md bg-muted/40"></div>
+          <CardContent class="pb-3 pt-0">
+            <div class="space-y-1 animate-pulse">
+              <div class="h-3 w-full rounded bg-muted/40"></div>
+              <div class="h-3 w-3/4 rounded bg-muted/40"></div>
             </div>
           </CardContent>
         </Card>
       {/each}
     </div>
   {:else}
-    <div class="space-y-3">
-      {#each filteredTickets as ticket (ticket.id)}
-        <TicketCard {ticket} {userRole} {agentNames} />
-      {/each}
+    <div class="relative min-h-0 flex-1">
+      <div class="space-y-3 overflow-y-auto h-full pt-1 pl-1 pr-1 pb-4 -mt-1 -ml-1 -mr-1">
+        {#each filteredTickets as ticket (ticket.id)}
+          <TicketCard {ticket} {userRole} {agentNames} />
+        {/each}
+      </div>
+      <div class="pointer-events-none absolute left-0 right-3 bottom-0 h-8 bg-linear-to-t from-background to-transparent"></div>
     </div>
   {/if}
 </div>
