@@ -1,30 +1,49 @@
-<title>User Management</title>
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import BackLink from '$lib/components/BackLink.svelte';
+  import { Alert, AlertDescription } from '$lib/components/ui/alert';
+  import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+  } from '$lib/components/ui/dialog';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Alert, AlertDescription } from '$lib/components/ui/alert';
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
-  import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
-  import BackLink from '$lib/components/BackLink.svelte';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '$lib/components/ui/table';
   import { toast } from '$lib/toast';
+  import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
   import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
   import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
-  import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
+  import type { PageData } from './$types';
 
-  let users: { id: string; name: string; email: string; role: string; status: string }[] = $state([]);
+  let { data }: { data: PageData } = $props();
+
+  let users: { id: string; name: string; email: string; role: string; status: string }[] = $state(
+    data.users
+  );
   let searchQuery = $state('');
-  let selectedUser: typeof users[0] | null = $state(null);
-  let errors: string[] = $state([]);
+  let selectedUser: (typeof users)[0] | null = $state(null);
+  let errors: string[] = $state(data.errors);
   let sortBy: keyof (typeof users)[0] = $state('id');
   let showEditModal = $state(false);
-  let currentUserId: string | null = $state(null);
+  let currentUserId: string | null = data.currentUserId;
+  let showDeleteModal = $state(false);
+  let userToDelete: (typeof users)[0] | null = $state(null);
 
   let sortedUsers = $derived.by(() => {
     return [...users].sort((a, b) =>
@@ -42,29 +61,21 @@
     )
   );
 
-  onMount(async () => {
-    const meRes = await fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' });
-    if (meRes.ok) {
-      const meData = await meRes.json();
-      currentUserId = meData.session?.userId ?? null;
-    }
-
-    const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', { credentials: 'include' });
-    const result = await response.json();
-    if (!response.ok) {
-      errors = result.errors ?? [result.message ?? 'Unable to fetch users'];
-      return;
-    }
-    users = result.users;
-  });
-
-  function handleEdit(user: typeof users[0]) {
+  function handleEdit(user: (typeof users)[0]) {
     selectedUser = { ...user };
     showEditModal = true;
   }
 
-  async function handleDelete(user: typeof users[0]) {
-    if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
+  function handleDelete(user: (typeof users)[0]) {
+    userToDelete = user;
+    showDeleteModal = true;
+  }
+
+  async function confirmDelete() {
+    if (!userToDelete) return;
+    const user = userToDelete;
+    showDeleteModal = false;
+    userToDelete = null;
     const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -87,7 +98,7 @@
 
   async function handleSave() {
     if (!selectedUser) return;
-    const response = await fetch(PUBLIC_BACKEND_URL+'/admin/users', {
+    const response = await fetch(PUBLIC_BACKEND_URL + '/admin/users', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -108,14 +119,19 @@
     role === 'admin' ? 'destructive' : role === 'agent' ? 'default' : 'secondary';
 </script>
 
+<title>User Management</title>
+
 <div class="space-y-4">
   <div>
     <BackLink href={resolve('/')} />
   </div>
 
-  <div class="flex items-center gap-2.5">
-    <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
-    <Badge variant="secondary">{users.length} users</Badge>
+  <div>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
+      <Badge variant="secondary">{users.length} users</Badge>
+    </div>
+    <p class="text-sm text-muted-foreground">View and manage user accounts and roles.</p>
   </div>
 
   {#if errors.length}
@@ -129,13 +145,23 @@
 
   <div class="flex items-center gap-2">
     <div class="relative">
-      <MagnifyingGlassIcon class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-      <Input type="text" placeholder="Search users…" bind:value={searchQuery} class="max-w-xs pl-8" />
+      <MagnifyingGlassIcon
+        class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+      />
+      <Input
+        type="text"
+        placeholder="Search users…"
+        bind:value={searchQuery}
+        class="max-w-xs pl-8"
+      />
     </div>
     <div class="flex items-center gap-1.5">
       <Label for="sort-by" class="text-sm whitespace-nowrap">Sort by</Label>
-      <select id="sort-by" bind:value={sortBy}
-        class="h-8 min-w-28 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+      <select
+        id="sort-by"
+        bind:value={sortBy}
+        class="h-8 min-w-28 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      >
         <option value="id">ID</option>
         <option value="name">Name</option>
         <option value="email">Email</option>
@@ -144,11 +170,11 @@
     </div>
   </div>
 
-  <div class="rounded-lg border overflow-hidden">
-    <Table>
+  <div class="overflow-hidden rounded-lg border border-input">
+    <Table class="table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead>ID</TableHead>
+          <TableHead class="w-48">ID</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
@@ -158,10 +184,14 @@
       <TableBody>
         {#each filteredUsers as user (user.id)}
           <TableRow>
-            <TableCell class="font-mono text-xs text-muted-foreground">{user.id}</TableCell>
+            <TableCell class="truncate font-mono text-xs text-muted-foreground" title={user.id}
+              >{user.id}</TableCell
+            >
             <TableCell>
               <div class="flex items-center gap-2.5">
-                <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                <span
+                  class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+                >
                   {initials(user.name)}
                 </span>
                 <span class="font-medium">{user.name}</span>
@@ -173,15 +203,21 @@
               {#if user.id === currentUserId}
                 <span class="text-xs text-muted-foreground">(you)</span>
               {:else}
-                <Button size="sm" variant="outline" onclick={() => handleEdit(user)}><PencilSimpleIcon /> Edit</Button>
-                <Button size="sm" variant="destructive" onclick={() => handleDelete(user)}><TrashIcon /> Delete</Button>
+                <Button size="sm" variant="outline" onclick={() => handleEdit(user)}
+                  ><PencilSimpleIcon /> Edit</Button
+                >
+                <Button size="sm" variant="destructive" onclick={() => handleDelete(user)}
+                  ><TrashIcon /> Delete</Button
+                >
               {/if}
             </TableCell>
           </TableRow>
         {/each}
         {#if filteredUsers.length === 0}
           <TableRow>
-            <TableCell colspan={5} class="text-center text-muted-foreground py-6">No users found.</TableCell>
+            <TableCell colspan={5} class="py-6 text-center text-muted-foreground"
+              >No users found.</TableCell
+            >
           </TableRow>
         {/if}
       </TableBody>
@@ -207,8 +243,11 @@
         </div>
         <div class="space-y-1.5">
           <Label for="edit-role">Role</Label>
-          <select id="edit-role" bind:value={selectedUser.role}
-            class="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+          <select
+            id="edit-role"
+            bind:value={selectedUser.role}
+            class="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
             <option value="admin">Admin</option>
             <option value="agent">Agent</option>
             <option value="user">User</option>
@@ -216,8 +255,38 @@
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onclick={() => { selectedUser = null; showEditModal = false; }}>Cancel</Button>
+        <Button
+          variant="outline"
+          onclick={() => {
+            selectedUser = null;
+            showEditModal = false;
+          }}>Cancel</Button
+        >
         <Button onclick={handleSave}><FloppyDiskIcon /> Save</Button>
+      </DialogFooter>
+    </DialogContent>
+  {/if}
+</Dialog>
+
+<!-- Delete user confirmation dialog -->
+<Dialog bind:open={showDeleteModal}>
+  {#if userToDelete}
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Delete user</DialogTitle>
+        <DialogDescription>
+          Delete user "{userToDelete.name}"? This cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onclick={() => {
+            userToDelete = null;
+            showDeleteModal = false;
+          }}>Cancel</Button
+        >
+        <Button variant="destructive" onclick={confirmDelete}><TrashIcon /> Delete</Button>
       </DialogFooter>
     </DialogContent>
   {/if}

@@ -1,6 +1,6 @@
-<title>Comments for Ticket</title>
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { Button } from '$lib/components/ui/button';
   import { Textarea } from '$lib/components/ui/textarea';
   import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
@@ -11,127 +11,62 @@
   import BackLink from '$lib/components/BackLink.svelte';
   import PaperPlaneTiltIcon from 'phosphor-svelte/lib/PaperPlaneTiltIcon';
   import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+  import type { PageData } from './$types';
 
-  let comments: { id: string; userName: string; createdAt: string; content: string }[] = $state([]);
+  let { data }: { data: PageData } = $props();
+
+  let comments = $derived(data.comments);
+  let error = $derived(data.error);
+  let awaitingResponse = $derived(data.awaitingResponse);
+  let ticketUrl = $derived(resolve('/tickets/[id]', { id: data.ticketId }));
+
   let newComment = $state('');
-  let loading = $state(true);
-  let error: string | null = $state(null);
-  let ticketUrl = $state('');
-  let awaitingResponse = $state(false);
+  let posting = $state(false);
 
   let reversedComments = $derived([...comments].reverse());
 
-  onMount(async () => {
-    const locationURL = new URL(window.location.href).pathname;
-    const parts = locationURL.split('/');
-    ticketUrl = parts.slice(0, parts.length - 1).join('/');
-
-    const [, meRes, ticketRes] = await Promise.all([
-      fetchComments(),
-      fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' }),
-      fetch(PUBLIC_BACKEND_URL + ticketUrl, { credentials: 'include' }),
-    ]);
-
-    if (meRes.ok && ticketRes.ok) {
-      const meData = await meRes.json();
-      const ticketData = await ticketRes.json();
-      const role = meData.session?.role;
-      const status = ticketData.status;
-      awaitingResponse = role === 'user' && status === 'waiting_for_response';
-    }
-  });
-
-  async function fetchComments() {
-    try {
-      loading = true;
-      const response = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch comments. Please reload.');
-      const data = await response.json();
-      comments = data.comments || [];
-      error = null;
-    } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
-    } finally {
-      loading = false;
-    }
-  }
-
   async function postComment() {
     if (!newComment.trim()) return;
+    posting = true;
     try {
-      const response = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+      const response = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ content: newComment }),
       });
       if (!response.ok) throw new Error('Failed to post comment. Ensure the ticket is open and you are logged in.');
-      const data = await response.json();
-      if (data.resumedTicket) awaitingResponse = false;
       newComment = '';
-      await fetchComments();
+      await invalidateAll();
       toast.success('Comment posted.');
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
-      toast.error(error);
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      posting = false;
     }
   }
 </script>
 
-<div class="space-y-4">
-  <div>
+<title>Comments for Ticket</title>
+
+<div class="flex flex-col space-y-4">
+  <div class="shrink-0">
     <BackLink href={ticketUrl} label="Back to ticket" />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Comments</h1>
+  <div class="shrink-0">
+    <h1 class="text-2xl font-bold tracking-tight">Comments</h1>
+    <p class="text-sm text-muted-foreground">Discussion history for this ticket.</p>
+  </div>
 
   {#if error}
-    <Alert variant="destructive">
+    <Alert variant="destructive" class="shrink-0">
       <AlertDescription>{error}</AlertDescription>
     </Alert>
   {/if}
 
-  {#if loading}
-    <div class="space-y-3">
-      {#each Array(3).keys() as index (index)}
-        <Card>
-          <CardHeader class="pb-1 pt-4 px-4">
-            <div class="flex items-center justify-between">
-              <div class="h-4 w-24 rounded-md bg-muted/40"></div>
-              <div class="h-3 w-20 rounded-md bg-muted/40"></div>
-            </div>
-          </CardHeader>
-          <CardContent class="px-4 pb-4 pt-1 space-y-2">
-            <div class="h-12 rounded-md bg-muted/40"></div>
-            <div class="h-12 rounded-md bg-muted/40"></div>
-          </CardContent>
-        </Card>
-      {/each}
-    </div>
-  {:else if !comments || comments.length === 0}
-    <p class="text-muted-foreground text-sm">No comments yet.</p>
-  {:else}
-    <div class="max-h-[60vh] overflow-y-auto space-y-3">
-      {#each reversedComments as comment (comment.id)}
-        <Card>
-          <CardHeader class="pb-1 pt-4 px-4">
-            <div class="flex items-center justify-between">
-              <span class="font-semibold text-sm">{comment.userName}</span>
-              <span class="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
-            </div>
-          </CardHeader>
-          <CardContent class="px-4 pb-4 pt-1">
-            <p class="text-sm">{comment.content}</p>
-          </CardContent>
-        </Card>
-      {/each}
-    </div>
-  {/if}
-
-  <Separator />
-
   {#if awaitingResponse}
-    <div class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
+    <div class="flex shrink-0 gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
       <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400" />
       <div>
         <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
@@ -140,15 +75,42 @@
     </div>
   {/if}
 
-  <div class="space-y-2">
+  <div class="shrink-0 space-y-2">
     <Textarea
       bind:value={newComment}
       placeholder="Write a comment…"
       rows={4}
-      disabled={loading}
+      disabled={posting}
     />
-    <Button class="cursor-pointer" onclick={postComment} disabled={!newComment.trim() || loading}>
+    <Button class="cursor-pointer" onclick={postComment} disabled={!newComment.trim() || posting}>
       <PaperPlaneTiltIcon /> Post Comment
     </Button>
   </div>
+
+  <Separator class="shrink-0" />
+
+  {#if !comments || comments.length === 0}
+    <p class="shrink-0 text-sm text-muted-foreground">No comments yet.</p>
+  {:else}
+    <div class="relative">
+      <div class="-mt-1 -mr-1 -ml-1 max-h-[50vh] space-y-2 overflow-y-auto pt-1 pr-1 pb-4 pl-1">
+        {#each reversedComments as comment (comment.id)}
+          <Card class="py-3">
+            <CardHeader class="px-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold">{comment.userName}</span>
+                <span class="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
+              </div>
+            </CardHeader>
+            <CardContent class="px-3 pt-0">
+              <p class="text-sm">{comment.content}</p>
+            </CardContent>
+          </Card>
+        {/each}
+      </div>
+      <div
+        class="pointer-events-none absolute right-3 bottom-0 left-0 h-8 bg-linear-to-t from-background to-transparent"
+      ></div>
+    </div>
+  {/if}
 </div>

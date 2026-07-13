@@ -13,7 +13,10 @@
     <BackLink href={resolve('/')} />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Privacy Policy</h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Privacy Policy</h1>
+    <p class="text-sm text-muted-foreground">How we collect, use, and protect your information.</p>
+  </div>
 
   <div class="prose prose-sm max-w-none space-y-6 text-foreground">
     <section>

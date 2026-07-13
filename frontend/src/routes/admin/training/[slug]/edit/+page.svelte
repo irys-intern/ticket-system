@@ -1,8 +1,6 @@
 <title>Edit Training Material</title>
 
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
@@ -16,27 +14,17 @@
   import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
+  import type { PageData } from './$types';
 
-  let slug = $derived(page.params.slug);
-  let content = $state('');
+  let { data }: { data: PageData } = $props();
+
+  let slug = $derived(data.slug);
+  let content = $state(data.content);
   let preview = $state('');
   let showPreview = $state(false);
-  let loading = $state(true);
   let saving = $state(false);
-  let errorMsg = $state('');
+  let errorMsg = $state(data.errorMsg);
   let successMsg = $state('');
-
-  onMount(async () => {
-    const res = await fetch(PUBLIC_BACKEND_URL + `/training/${slug}`, { credentials: 'include' });
-    if (!res.ok) {
-      errorMsg = res.status === 404 ? 'Material not found.' : 'Failed to load material.';
-      loading = false;
-      return;
-    }
-    const data = await res.json();
-    content = data.content ?? '';
-    loading = false;
-  });
 
   async function togglePreview() {
     if (!showPreview) {
@@ -68,7 +56,7 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-4">
   <div class="flex items-center justify-between">
     <BackLink href={resolve('/admin/training')} label="Back to manage materials" />
     <a
@@ -77,7 +65,10 @@
     >View published <ArrowRightIcon class="size-3.5" /></a>
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Edit: <span class="font-mono text-lg text-muted-foreground">{slug}</span></h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Edit: <span class="font-mono text-lg text-muted-foreground">{slug}</span></h1>
+    <p class="text-sm text-muted-foreground">Update the content of this training material.</p>
+  </div>
 
   {#if errorMsg}
     <Alert variant="destructive">
@@ -93,9 +84,7 @@
     </Alert>
   {/if}
 
-  {#if loading}
-    <div class="h-64 rounded-xl bg-muted/30 animate-pulse"></div>
-  {:else}
+  {#if !data.errorMsg}
     <form onsubmit={handleSave} class="space-y-4">
       <div class="flex items-center justify-between">
         <Label for="content">Content (Markdown)</Label>

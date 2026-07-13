@@ -1,11 +1,19 @@
 <title>Manage Training Materials</title>
 
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+  } from '$lib/components/ui/dialog';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
@@ -15,36 +23,22 @@
   import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
   import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
   import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
+  import type { PageData } from './$types';
 
   type Material = { slug: string; title: string };
 
-  let materials = $state<Material[]>([]);
-  let loading = $state(true);
-  let errorMsg = $state('');
+  let { data }: { data: PageData } = $props();
+
+  let materials = $derived(data.materials);
+  let errorMsg = $state(data.errorMsg);
   let successMsg = $state('');
 
   let newTitle = $state('');
   let newContent = $state('');
   let creating = $state(false);
   let deletingSlug = $state('');
-
-  onMount(async () => {
-    await loadMaterials();
-  });
-
-  async function loadMaterials() {
-    loading = true;
-    errorMsg = '';
-    const res = await fetch(PUBLIC_BACKEND_URL + '/training', { credentials: 'include' });
-    if (!res.ok) {
-      errorMsg = 'Failed to load materials.';
-      loading = false;
-      return;
-    }
-    const data = await res.json();
-    materials = data.materials ?? [];
-    loading = false;
-  }
+  let showDeleteModal = $state(false);
+  let materialToDelete: Material | null = $state(null);
 
   async function handleCreate(e: Event) {
     e.preventDefault();
@@ -70,11 +64,19 @@
     successMsg = `Created "${newTitle}". You can now edit it.`;
     newTitle = '';
     newContent = '';
-    await loadMaterials();
+    await invalidateAll();
   }
 
-  async function handleDelete(slug: string, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  function handleDelete(material: Material) {
+    materialToDelete = material;
+    showDeleteModal = true;
+  }
+
+  async function confirmDelete() {
+    if (!materialToDelete) return;
+    const { slug, title } = materialToDelete;
+    showDeleteModal = false;
+    materialToDelete = null;
     deletingSlug = slug;
     errorMsg = '';
     successMsg = '';
@@ -90,16 +92,19 @@
       return;
     }
     successMsg = `Deleted "${title}".`;
-    await loadMaterials();
+    await invalidateAll();
   }
 </script>
 
-<div class="space-y-8">
+<div class="space-y-4">
   <div>
     <BackLink href={resolve('/training')} label="Back to training materials" />
   </div>
 
-  <h1 class="text-2xl font-bold tracking-tight">Manage Training Materials</h1>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Manage Training Materials</h1>
+    <p class="text-sm text-muted-foreground">Create, edit, and organize training content for agents.</p>
+  </div>
 
   {#if errorMsg}
     <Alert variant="destructive">
@@ -153,13 +158,7 @@
   <div class="space-y-3">
     <h2 class="text-lg font-semibold">Existing Materials</h2>
 
-    {#if loading}
-      <div class="space-y-2 animate-pulse">
-        {#each Array(3) as _}
-          <div class="h-14 rounded-xl bg-muted/30"></div>
-        {/each}
-      </div>
-    {:else if materials.length === 0}
+    {#if materials.length === 0}
       <p class="text-sm text-muted-foreground">No materials yet.</p>
     {:else}
       {#each materials as m (m.slug)}
@@ -179,7 +178,7 @@
                 variant="destructive"
                 size="sm"
                 disabled={deletingSlug === m.slug}
-                onclick={() => handleDelete(m.slug, m.title)}
+                onclick={() => handleDelete(m)}
               >
                 <TrashIcon /> {deletingSlug === m.slug ? 'Deleting…' : 'Delete'}
               </Button>
@@ -190,3 +189,27 @@
     {/if}
   </div>
 </div>
+
+<!-- Delete material confirmation dialog -->
+<Dialog bind:open={showDeleteModal}>
+  {#if materialToDelete}
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Delete material</DialogTitle>
+        <DialogDescription>
+          Delete "{materialToDelete.title}"? This cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onclick={() => {
+            materialToDelete = null;
+            showDeleteModal = false;
+          }}>Cancel</Button
+        >
+        <Button variant="destructive" onclick={confirmDelete}><TrashIcon /> Delete</Button>
+      </DialogFooter>
+    </DialogContent>
+  {/if}
+</Dialog>

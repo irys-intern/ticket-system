@@ -1,49 +1,36 @@
 <title>Training Material</title>
 
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent } from '$lib/components/ui/card';
   import BackLink from '$lib/components/BackLink.svelte';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import type { PageData } from './$types';
 
-  let content = $state('');
+  let { data }: { data: PageData } = $props();
+
+  let userRole = $derived(data.userRole);
+  let slug = $derived(data.slug);
+  let errorMsg = $derived(data.errorMsg);
   let renderedHtml = $state('');
   let loading = $state(true);
-  let errorMsg = $state('');
-  let userRole = $state('');
-  let slug = $derived(page.params.slug);
 
-  onMount(async () => {
-    const [meRes, matRes] = await Promise.all([
-      fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' }),
-      fetch(PUBLIC_BACKEND_URL + `/training/${slug}`, { credentials: 'include' }),
-    ]);
-
-    if (meRes.ok) {
-      const me = await meRes.json();
-      userRole = me.session.role ?? '';
-    }
-
-    if (!matRes.ok) {
-      errorMsg = matRes.status === 404 ? 'Material not found.' : 'Failed to load material.';
+  $effect(() => {
+    if (!data.content) {
       loading = false;
       return;
     }
-
-    const data = await matRes.json();
-    content = data.content ?? '';
-    renderedHtml = DOMPurify.sanitize(await marked.parse(content));
-    loading = false;
+    (async () => {
+      renderedHtml = DOMPurify.sanitize(await marked.parse(data.content));
+      loading = false;
+    })();
   });
 </script>
 
-<div class="space-y-6">
+<div class="space-y-4">
   <div class="flex items-center justify-between">
     <BackLink href={resolve('/training')} label="Back to training materials" />
 
