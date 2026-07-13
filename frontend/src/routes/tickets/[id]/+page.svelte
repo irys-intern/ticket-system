@@ -1,23 +1,28 @@
-<title>Ticket</title>
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import type { AuditEvent } from '../../../types/index.ts';
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import BackLink from '$lib/components/BackLink.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Button } from '$lib/components/ui/button';
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+  } from '$lib/components/ui/dialog';
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
-  import BackLink from '$lib/components/BackLink.svelte';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
-  import { toast, queueToast } from '$lib/toast';
+  import { queueToast, toast } from '$lib/toast';
   import ChatCircleIcon from 'phosphor-svelte/lib/ChatCircleIcon';
   import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
   import HandPalmIcon from 'phosphor-svelte/lib/HandPalmIcon';
-  import XCircleIcon from 'phosphor-svelte/lib/XCircleIcon';
   import UserSwitchIcon from 'phosphor-svelte/lib/UserSwitchIcon';
   import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+  import XCircleIcon from 'phosphor-svelte/lib/XCircleIcon';
+  import type { AuditEvent } from '../../../types/index.ts';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -48,27 +53,34 @@
     if (!ticket || !selectedAgentId) return;
     if (ticket.assignedTo === selectedAgentId) return;
     const action = parseInt(selectedAgentId) === -1 ? 'unassign' : 'assign';
-    const body = action === 'unassign'
-      ? { ticketId: ticket.id, action }
-      : { agent: selectedAgentId, ticketId: ticket.id, action };
-    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const body =
+      action === 'unassign'
+        ? { ticketId: ticket.id, action }
+        : { agent: selectedAgentId, ticketId: ticket.id, action };
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      credentials: 'include'
+      credentials: 'include',
     });
-    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Assignment updated.' : 'Failed to update assignment.');
+    queueToast(
+      res.ok ? 'success' : 'error',
+      res.ok ? 'Assignment updated.' : 'Failed to update assignment.'
+    );
     window.location.reload();
   }
 
   async function claimTicket() {
-    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'claim' }),
     });
-    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket claimed.' : 'Failed to claim ticket.');
+    queueToast(
+      res.ok ? 'success' : 'error',
+      res.ok ? 'Ticket claimed.' : 'Failed to claim ticket.'
+    );
     window.location.reload();
   }
 
@@ -78,43 +90,62 @@
     const newStatus = statuses[statuses.indexOf(ticket.status) + 1];
     if (!newStatus?.trim()) return;
     if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
-    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_status', status: newStatus.trim() }),
+      body: JSON.stringify({
+        agent: user?.userId,
+        ticketId: ticket.id,
+        action: 'update_status',
+        status: newStatus.trim(),
+      }),
     });
-    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Status updated.' : 'Failed to update status.');
+    queueToast(
+      res.ok ? 'success' : 'error',
+      res.ok ? 'Status updated.' : 'Failed to update status.'
+    );
     window.location.reload();
   }
 
   async function updateStatusBack() {
     if (!ticket) return;
     if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
-    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_status', status: 'in_progress' }),
+      body: JSON.stringify({
+        agent: user?.userId,
+        ticketId: ticket.id,
+        action: 'update_status',
+        status: 'in_progress',
+      }),
     });
-    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Status updated.' : 'Failed to update status.');
+    queueToast(
+      res.ok ? 'success' : 'error',
+      res.ok ? 'Status updated.' : 'Failed to update status.'
+    );
     window.location.reload();
   }
 
   async function forfeitTicket() {
-    const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'forfeit' }),
     });
-    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket forfeited.' : 'Failed to forfeit ticket.');
+    queueToast(
+      res.ok ? 'success' : 'error',
+      res.ok ? 'Ticket forfeited.' : 'Failed to forfeit ticket.'
+    );
     window.location.reload();
   }
 
   async function closeTicketUser() {
     if (confirm('Are you sure you want to close this ticket?')) {
-      const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+      const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -133,13 +164,13 @@
     if (confirm('Are you sure you want to close this ticket?')) {
       const reason = prompt('Please provide a closing message.');
       if (!reason || reason === '') return;
-      await fetch(PUBLIC_BACKEND_URL+window.location.pathname + '/comments', {
+      await fetch(PUBLIC_BACKEND_URL + window.location.pathname + '/comments', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, content: `Ticket closed: ${reason}` }),
       });
-      const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+      const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -158,13 +189,13 @@
     if (confirm('Are you sure you want to close this ticket?')) {
       const reason = prompt('Please provide a closing message.');
       if (!reason || reason === '') return;
-      await fetch(PUBLIC_BACKEND_URL+window.location.pathname + '/comments', {
+      await fetch(PUBLIC_BACKEND_URL + window.location.pathname + '/comments', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticket?.id, content: `Ticket closed: ${reason}` }),
       });
-      const res = await fetch(PUBLIC_BACKEND_URL+window.location.pathname, {
+      const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -191,19 +222,26 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: user?.userId, ticketId: ticket.id, action: 'update_metadata', [field]: value }),
+      body: JSON.stringify({
+        agent: user?.userId,
+        ticketId: ticket.id,
+        action: 'update_metadata',
+        [field]: value,
+      }),
     });
-    queueToast(res.ok ? 'success' : 'error', res.ok ? 'Ticket updated.' : 'Failed to update ticket.');
+    queueToast(
+      res.ok ? 'success' : 'error',
+      res.ok ? 'Ticket updated.' : 'Failed to update ticket.'
+    );
     window.location.reload();
   }
 </script>
 
+<title>Ticket</title>
+
 <div class="space-y-4">
   <div class="flex items-center gap-4 text-sm">
     <BackLink href={resolve('/tickets')} label="Back to tickets" />
-    {#if user.role === 'agent' || user.role === 'admin'}
-      <a href={resolve('/tickets/open')} class="text-muted-foreground hover:text-foreground">Open tickets</a>
-    {/if}
   </div>
 
   {#if error}
@@ -211,53 +249,78 @@
   {:else if ticket}
     <Card>
       <CardHeader>
-        <div class="flex items-start justify-between gap-2 flex-wrap">
+        <div class="flex flex-wrap items-start justify-between gap-2">
           <CardTitle>Ticket #{ticket.id}: {ticket.title}</CardTitle>
-          <div class="flex gap-1.5 flex-wrap">
+          <div class="flex flex-wrap gap-1.5">
             <PriorityBadge priority={ticket.priority} />
             <Badge variant={statusVariant(ticket.status)}>{ticket.status.replace(/_/g, ' ')}</Badge>
             <Badge variant="outline">{ticket.category.replace(/_/g, ' ')}</Badge>
           </div>
         </div>
         <p class="text-xs text-muted-foreground">
-          Created {formatDateTime(ticket.createdAt)} &middot; Updated {formatDateTime(ticket.updatedAt)}
+          Created {formatDateTime(ticket.createdAt)} &middot; Updated {formatDateTime(
+            ticket.updatedAt
+          )}
         </p>
       </CardHeader>
       <CardContent class="space-y-3">
         <p class="text-sm text-muted-foreground">{ticket.description}</p>
 
         {#if ticket.assignedTo && assignmentStringState}
-          <p class="text-sm"><span class="font-medium">Assigned to:</span> {assignmentStringState}</p>
+          <p class="text-sm">
+            <span class="font-medium">Assigned to:</span>
+            {assignmentStringState}
+          </p>
         {/if}
 
         <Separator />
 
         {#if user.role === 'user' && ticket.status === 'waiting_for_response'}
-          <div class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
-            <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400" />
+          <div
+            class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm"
+          >
+            <WarningIcon
+              class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400"
+            />
             <div>
-              <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
-              <p class="text-muted-foreground mt-0.5">Reply in the comments to resume work on this ticket.</p>
+              <p class="font-medium text-yellow-700 dark:text-yellow-400">
+                The agent is waiting for your response.
+              </p>
+              <p class="mt-0.5 text-muted-foreground">
+                Reply in the comments to resume work on this ticket.
+              </p>
             </div>
           </div>
         {/if}
 
         <div class="flex flex-wrap gap-2">
-          <Button class="cursor-pointer" size="sm" onclick={() => (window.location.href = window.location.href + '/comments')}>
+          <Button
+            class="cursor-pointer"
+            size="sm"
+            onclick={() => (window.location.href = window.location.href + '/comments')}
+          >
             <ChatCircleIcon /> Comments
           </Button>
 
           {#if user.role === 'agent'}
             {#if ticket.assignedTo && user.userId === ticket.assignedTo}
               {#if ticket.status !== 'resolved' && ticket.status !== 'closed'}
-                <Button size="sm" variant="secondary" onclick={updateStatus}><CheckIcon /> Update Status</Button>
+                <Button size="sm" variant="secondary" onclick={updateStatus}
+                  ><CheckIcon /> Update Status</Button
+                >
                 {#if ticket.status === 'waiting_for_response'}
-                  <Button size="sm" variant="secondary" onclick={updateStatusBack}>Mark In Progress</Button>
+                  <Button size="sm" variant="secondary" onclick={updateStatusBack}
+                    >Mark In Progress</Button
+                  >
                 {/if}
-                <Button size="sm" variant="outline" onclick={forfeitTicket}><HandPalmIcon /> Forfeit</Button>
+                <Button size="sm" variant="outline" onclick={forfeitTicket}
+                  ><HandPalmIcon /> Forfeit</Button
+                >
               {/if}
               {#if ticket.status !== 'closed'}
-                <Button size="sm" variant="destructive" onclick={closeTicketAgent}><XCircleIcon /> Close Ticket</Button>
+                <Button size="sm" variant="destructive" onclick={closeTicketAgent}
+                  ><XCircleIcon /> Close Ticket</Button
+                >
               {/if}
             {:else if (!ticket.assignedTo || ticket.assignedTo === '') && ticket.status !== 'closed'}
               <Button size="sm" onclick={claimTicket}>Claim Ticket</Button>
@@ -267,8 +330,9 @@
               <div class="ml-auto flex gap-2">
                 <select
                   value={ticket.priority}
-                  onchange={(e) => updateMetadata('priority', (e.target as HTMLSelectElement).value)}
-                  class="h-8 w-32 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+                  onchange={(e) =>
+                    updateMetadata('priority', (e.target as HTMLSelectElement).value)}
+                  class="h-8 w-32 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -277,8 +341,9 @@
                 </select>
                 <select
                   value={ticket.category}
-                  onchange={(e) => updateMetadata('category', (e.target as HTMLSelectElement).value)}
-                  class="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+                  onchange={(e) =>
+                    updateMetadata('category', (e.target as HTMLSelectElement).value)}
+                  class="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   <option value="bug">Bug</option>
                   <option value="feature_request">Feature Request</option>
@@ -287,38 +352,44 @@
                 </select>
               </div>
             {/if}
-
           {:else if user.role === 'user'}
             {#if ticket.status !== 'closed'}
-              <Button size="sm" variant="destructive" onclick={closeTicketUser}><XCircleIcon /> Close Ticket</Button>
+              <Button size="sm" variant="destructive" onclick={closeTicketUser}
+                ><XCircleIcon /> Close Ticket</Button
+              >
             {/if}
-
           {:else if user.role === 'admin'}
             {#if ticket.status !== 'closed'}
-            <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}><UserSwitchIcon /> Assign Agent</Button>
-            <Button size="sm" variant="destructive" onclick={closeTicketAdmin}><XCircleIcon /> Close Ticket</Button>
-            <div class="ml-auto flex gap-2">
-              <select
-                value={ticket.priority}
-                onchange={(e) => updateMetadata('priority', (e.target as HTMLSelectElement).value)}
-                class="h-8 w-32 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+              <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}
+                ><UserSwitchIcon /> Assign Agent</Button
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
-              <select
-                value={ticket.category}
-                onchange={(e) => updateMetadata('category', (e.target as HTMLSelectElement).value)}
-                class="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+              <Button size="sm" variant="destructive" onclick={closeTicketAdmin}
+                ><XCircleIcon /> Close Ticket</Button
               >
-                <option value="bug">Bug</option>
-                <option value="feature_request">Feature Request</option>
-                <option value="support">Support</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+              <div class="ml-auto flex gap-2">
+                <select
+                  value={ticket.priority}
+                  onchange={(e) =>
+                    updateMetadata('priority', (e.target as HTMLSelectElement).value)}
+                  class="h-8 w-32 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+                <select
+                  value={ticket.category}
+                  onchange={(e) =>
+                    updateMetadata('category', (e.target as HTMLSelectElement).value)}
+                  class="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <option value="bug">Bug</option>
+                  <option value="feature_request">Feature Request</option>
+                  <option value="support">Support</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             {/if}
           {/if}
         </div>
@@ -334,8 +405,11 @@
         {#if agents.length > 0}
           <div class="space-y-2 py-2">
             <Label for="agent-select">Select agent</Label>
-            <select id="agent-select" bind:value={selectedAgentId}
-              class="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring">
+            <select
+              id="agent-select"
+              bind:value={selectedAgentId}
+              class="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
               <option value="-1">Unassign</option>
               {#each agents as agent (agent.id)}
                 <option value={agent.id}>{agent.name} ({agent.id})</option>
@@ -343,7 +417,7 @@
             </select>
           </div>
         {:else}
-          <p class="text-muted-foreground text-sm py-2">No agents available.</p>
+          <p class="py-2 text-sm text-muted-foreground">No agents available.</p>
         {/if}
         <DialogFooter>
           <Button variant="outline" onclick={() => (showAssignModal = false)}>Cancel</Button>
@@ -361,7 +435,7 @@
           <CardTitle class="text-base">Audit Trail</CardTitle>
         </CardHeader>
         <CardContent>
-          <div class="space-y-3 animate-pulse">
+          <div class="animate-pulse space-y-3">
             <div class="h-12 rounded-md bg-muted/40"></div>
             <div class="h-12 rounded-md bg-muted/40"></div>
             <div class="h-12 rounded-md bg-muted/40"></div>
@@ -377,7 +451,7 @@
           <div class="max-h-64 overflow-auto pr-2">
             <ul class="space-y-3">
               {#each auditTrail as audit, i (audit.id ?? i)}
-                <li class="text-sm border-l-2 border-border pl-3">
+                <li class="border-l-2 border-border pl-3 text-sm">
                   <p class="font-medium">{audit.action ?? 'Audit entry'}</p>
                   <p class="text-xs text-muted-foreground">
                     {audit.createdAt ? formatDateTime(audit.createdAt) : 'Unknown time'}
@@ -390,7 +464,7 @@
         </CardContent>
       </Card>
     {:else}
-      <p class="text-muted-foreground text-sm">No audit history available.</p>
+      <p class="text-sm text-muted-foreground">No audit history available.</p>
     {/if}
   {:else}
     <p class="text-muted-foreground">Ticket not found.</p>
