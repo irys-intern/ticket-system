@@ -6,6 +6,14 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+  } from '$lib/components/ui/dialog';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
@@ -27,6 +35,8 @@
   let newContent = $state('');
   let creating = $state(false);
   let deletingSlug = $state('');
+  let showDeleteModal = $state(false);
+  let materialToDelete: Material | null = $state(null);
 
   onMount(async () => {
     await loadMaterials();
@@ -73,8 +83,16 @@
     await loadMaterials();
   }
 
-  async function handleDelete(slug: string, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  function handleDelete(material: Material) {
+    materialToDelete = material;
+    showDeleteModal = true;
+  }
+
+  async function confirmDelete() {
+    if (!materialToDelete) return;
+    const { slug, title } = materialToDelete;
+    showDeleteModal = false;
+    materialToDelete = null;
     deletingSlug = slug;
     errorMsg = '';
     successMsg = '';
@@ -182,7 +200,7 @@
                 variant="destructive"
                 size="sm"
                 disabled={deletingSlug === m.slug}
-                onclick={() => handleDelete(m.slug, m.title)}
+                onclick={() => handleDelete(m)}
               >
                 <TrashIcon /> {deletingSlug === m.slug ? 'Deleting…' : 'Delete'}
               </Button>
@@ -193,3 +211,27 @@
     {/if}
   </div>
 </div>
+
+<!-- Delete material confirmation dialog -->
+<Dialog bind:open={showDeleteModal}>
+  {#if materialToDelete}
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Delete material</DialogTitle>
+        <DialogDescription>
+          Delete "{materialToDelete.title}"? This cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onclick={() => {
+            materialToDelete = null;
+            showDeleteModal = false;
+          }}>Cancel</Button
+        >
+        <Button variant="destructive" onclick={confirmDelete}><TrashIcon /> Delete</Button>
+      </DialogFooter>
+    </DialogContent>
+  {/if}
+</Dialog>

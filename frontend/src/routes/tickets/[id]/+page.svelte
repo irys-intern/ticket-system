@@ -9,12 +9,14 @@
   import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
   } from '$lib/components/ui/dialog';
   import { Label } from '$lib/components/ui/label';
   import { Separator } from '$lib/components/ui/separator';
+  import { Textarea } from '$lib/components/ui/textarea';
   import { queueToast, toast } from '$lib/toast';
   import ChatCircleIcon from 'phosphor-svelte/lib/ChatCircleIcon';
   import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
@@ -36,6 +38,11 @@
   let showAssignModal = $state(false);
   let auditTrail: AuditEvent[] = $state([]);
   let loadingAuditTrail = $state(true);
+  let showStatusDialog = $state(false);
+  let pendingStatus = $state('');
+  let showCloseDialog = $state(false);
+  let closeMode: 'user' | 'agent' | 'admin' = $state('user');
+  let closeReason = $state('');
 
   $effect(() => {
     if (agents.length > 0 && !selectedAgentId) selectedAgentId = agents[0].id;
@@ -84,33 +91,24 @@
     window.location.reload();
   }
 
-  async function updateStatus() {
+  function requestStatusUpdate() {
     if (!ticket) return;
     const statuses = ['open', 'in_progress', 'waiting_for_response', 'resolved'];
     const newStatus = statuses[statuses.indexOf(ticket.status) + 1];
     if (!newStatus?.trim()) return;
-    if (!confirm(`Update this ticket's status to "${newStatus}"?`)) return;
-    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        agent: user?.userId,
-        ticketId: ticket.id,
-        action: 'update_status',
-        status: newStatus.trim(),
-      }),
-    });
-    queueToast(
-      res.ok ? 'success' : 'error',
-      res.ok ? 'Status updated.' : 'Failed to update status.'
-    );
-    window.location.reload();
+    pendingStatus = newStatus.trim();
+    showStatusDialog = true;
   }
 
-  async function updateStatusBack() {
+  function requestStatusUpdateBack() {
     if (!ticket) return;
-    if (!confirm(`Update this ticket's status to "in_progress"?`)) return;
+    pendingStatus = 'in_progress';
+    showStatusDialog = true;
+  }
+
+  async function submitStatusUpdate() {
+    showStatusDialog = false;
+    if (!ticket || !pendingStatus) return;
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
       credentials: 'include',
@@ -119,7 +117,7 @@
         agent: user?.userId,
         ticketId: ticket.id,
         action: 'update_status',
-        status: 'in_progress',
+        status: pendingStatus,
       }),
     });
     queueToast(
@@ -143,70 +141,43 @@
     window.location.reload();
   }
 
-  async function closeTicketUser() {
-    if (confirm('Are you sure you want to close this ticket?')) {
-      const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
-      });
-      if (res.ok) {
-        queueToast('success', 'Ticket closed.');
-        window.location.reload();
-      } else {
-        toast.error('Failed to close ticket.');
-      }
-    }
+  function requestClose(mode: 'user' | 'agent' | 'admin') {
+    closeMode = mode;
+    closeReason = '';
+    showCloseDialog = true;
   }
 
-  async function closeTicketAgent() {
-    if (confirm('Are you sure you want to close this ticket?')) {
-      const reason = prompt('Please provide a closing message.');
-      if (!reason || reason === '') return;
+  async function submitClose() {
+    if (closeMode !== 'user' && !closeReason.trim()) return;
+    showCloseDialog = false;
+
+    if (closeMode !== 'user') {
       await fetch(PUBLIC_BACKEND_URL + window.location.pathname + '/comments', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket?.id, content: `Ticket closed: ${reason}` }),
+        body: JSON.stringify({
+          ticketId: ticket?.id,
+          content: `Ticket closed: ${closeReason.trim()}`,
+        }),
       });
-      const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'close' }),
-      });
-      if (res.ok) {
-        queueToast('success', 'Ticket closed.');
-        window.location.reload();
-      } else {
-        toast.error('Failed to close ticket.');
-      }
     }
-  }
 
-  async function closeTicketAdmin() {
-    if (confirm('Are you sure you want to close this ticket?')) {
-      const reason = prompt('Please provide a closing message.');
-      if (!reason || reason === '') return;
-      await fetch(PUBLIC_BACKEND_URL + window.location.pathname + '/comments', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket?.id, content: `Ticket closed: ${reason}` }),
-      });
-      const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket?.id, action: 'close' }),
-      });
-      if (res.ok) {
-        queueToast('success', 'Ticket closed.');
-        window.location.reload();
-      } else {
-        toast.error('Failed to close ticket.');
-      }
+    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        closeMode === 'agent'
+          ? { agent: user?.userId, ticketId: ticket?.id, action: 'close' }
+          : { ticketId: ticket?.id, action: 'close' }
+      ),
+    });
+    if (res.ok) {
+      queueToast('success', 'Ticket closed.');
+      window.location.reload();
+    } else {
+      toast.error('Failed to close ticket.');
     }
   }
 
@@ -305,11 +276,11 @@
           {#if user.role === 'agent'}
             {#if ticket.assignedTo && user.userId === ticket.assignedTo}
               {#if ticket.status !== 'resolved' && ticket.status !== 'closed'}
-                <Button size="sm" variant="secondary" onclick={updateStatus}
+                <Button size="sm" variant="secondary" onclick={requestStatusUpdate}
                   ><CheckIcon /> Update Status</Button
                 >
                 {#if ticket.status === 'waiting_for_response'}
-                  <Button size="sm" variant="secondary" onclick={updateStatusBack}
+                  <Button size="sm" variant="secondary" onclick={requestStatusUpdateBack}
                     >Mark In Progress</Button
                   >
                 {/if}
@@ -318,7 +289,7 @@
                 >
               {/if}
               {#if ticket.status !== 'closed'}
-                <Button size="sm" variant="destructive" onclick={closeTicketAgent}
+                <Button size="sm" variant="destructive" onclick={() => requestClose('agent')}
                   ><XCircleIcon /> Close Ticket</Button
                 >
               {/if}
@@ -354,7 +325,7 @@
             {/if}
           {:else if user.role === 'user'}
             {#if ticket.status !== 'closed'}
-              <Button size="sm" variant="destructive" onclick={closeTicketUser}
+              <Button size="sm" variant="destructive" onclick={() => requestClose('user')}
                 ><XCircleIcon /> Close Ticket</Button
               >
             {/if}
@@ -363,7 +334,7 @@
               <Button size="sm" variant="secondary" onclick={() => (showAssignModal = true)}
                 ><UserSwitchIcon /> Assign Agent</Button
               >
-              <Button size="sm" variant="destructive" onclick={closeTicketAdmin}
+              <Button size="sm" variant="destructive" onclick={() => requestClose('admin')}
                 ><XCircleIcon /> Close Ticket</Button
               >
               <div class="ml-auto flex gap-2">
@@ -424,6 +395,52 @@
           {#if agents.length > 0}
             <Button onclick={assignSelectedAgent}>Assign</Button>
           {/if}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Status update confirmation dialog -->
+    <Dialog bind:open={showStatusDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update status</DialogTitle>
+          <DialogDescription>
+            Update this ticket's status to "{pendingStatus}"?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onclick={() => (showStatusDialog = false)}>Cancel</Button>
+          <Button onclick={submitStatusUpdate}>Update</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Close ticket confirmation dialog -->
+    <Dialog bind:open={showCloseDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Close ticket</DialogTitle>
+          <DialogDescription>Are you sure you want to close this ticket?</DialogDescription>
+        </DialogHeader>
+        {#if closeMode !== 'user'}
+          <div class="space-y-1.5 py-2">
+            <Label for="close-reason">Closing message</Label>
+            <Textarea
+              id="close-reason"
+              bind:value={closeReason}
+              placeholder="Explain why this ticket is being closed…"
+              rows={3}
+            />
+          </div>
+        {/if}
+        <DialogFooter>
+          <Button variant="outline" onclick={() => (showCloseDialog = false)}>Cancel</Button>
+          <Button
+            variant="destructive"
+            disabled={closeMode !== 'user' && !closeReason.trim()}
+            onclick={submitClose}
+            ><XCircleIcon /> Close Ticket</Button
+          >
         </DialogFooter>
       </DialogContent>
     </Dialog>

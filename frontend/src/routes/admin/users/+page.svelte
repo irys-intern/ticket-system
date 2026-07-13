@@ -8,6 +8,7 @@
   import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -39,6 +40,8 @@
   let sortBy: keyof (typeof users)[0] = $state('id');
   let showEditModal = $state(false);
   let currentUserId: string | null = $state(null);
+  let showDeleteModal = $state(false);
+  let userToDelete: (typeof users)[0] | null = $state(null);
 
   let sortedUsers = $derived.by(() => {
     return [...users].sort((a, b) =>
@@ -77,8 +80,16 @@
     showEditModal = true;
   }
 
-  async function handleDelete(user: (typeof users)[0]) {
-    if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
+  function handleDelete(user: (typeof users)[0]) {
+    userToDelete = user;
+    showDeleteModal = true;
+  }
+
+  async function confirmDelete() {
+    if (!userToDelete) return;
+    const user = userToDelete;
+    showDeleteModal = false;
+    userToDelete = null;
     const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -266,6 +277,30 @@
           }}>Cancel</Button
         >
         <Button onclick={handleSave}><FloppyDiskIcon /> Save</Button>
+      </DialogFooter>
+    </DialogContent>
+  {/if}
+</Dialog>
+
+<!-- Delete user confirmation dialog -->
+<Dialog bind:open={showDeleteModal}>
+  {#if userToDelete}
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Delete user</DialogTitle>
+        <DialogDescription>
+          Delete user "{userToDelete.name}"? This cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onclick={() => {
+            userToDelete = null;
+            showDeleteModal = false;
+          }}>Cancel</Button
+        >
+        <Button variant="destructive" onclick={confirmDelete}><TrashIcon /> Delete</Button>
       </DialogFooter>
     </DialogContent>
   {/if}

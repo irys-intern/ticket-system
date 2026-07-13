@@ -240,7 +240,7 @@
         <DialogTitle>Log out</DialogTitle>
       </DialogHeader>
       <p class="text-sm text-muted-foreground">Are you sure you want to log out?</p>
-      <DialogFooter class="border-t-0 bg-transparent">
+      <DialogFooter>
         <Button variant="outline" onclick={() => (showLogoutDialog = false)}>Cancel</Button>
         <Button variant="destructive" onclick={handleLogout}><SignOutIcon /> Log Out</Button>
       </DialogFooter>
