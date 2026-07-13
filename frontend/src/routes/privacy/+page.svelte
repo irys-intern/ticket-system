@@ -74,6 +74,13 @@
     </section>
 
     <section>
+      <h2 class="text-foreground font-semibold">Credits</h2>
+      <p class="text-muted-foreground">
+        Built by Eli Friedman under supervision of Joshua Duque of Irys Technologies.
+      </p>
+    </section>
+
+    <section>
       <h2 class="text-foreground font-semibold">Contact Us</h2>
       <p class="text-muted-foreground">
         If you have questions about this Privacy Policy, please contact us at
