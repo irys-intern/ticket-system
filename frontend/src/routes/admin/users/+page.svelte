@@ -175,11 +175,11 @@
     <Table class="table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead class="w-48">ID</TableHead>
-          <TableHead>Name</TableHead>
+          <TableHead class="w-32">ID</TableHead>
+          <TableHead class="w-40">Name</TableHead>
           <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead class="w-24">Role</TableHead>
+          <TableHead class="w-40">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -198,7 +198,7 @@
                 <span class="font-medium">{user.name}</span>
               </div>
             </TableCell>
-            <TableCell class="text-muted-foreground">{user.email}</TableCell>
+            <TableCell class="truncate text-muted-foreground" title={user.email}>{user.email}</TableCell>
             <TableCell><Badge variant={roleVariant(user.role)}>{user.role}</Badge></TableCell>
             <TableCell class="space-x-1.5">
               {#if user.id === currentUserId}
