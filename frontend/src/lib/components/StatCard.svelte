@@ -10,19 +10,24 @@
     value,
     tooltip,
     loading = false,
+    color,
+    suffix,
   }: {
     icon: Component<{ class?: string }>;
     label: string;
     value?: string | number;
     tooltip?: string;
     loading?: boolean;
+    color?: string;
+    suffix?: string;
   } = $props();
 </script>
 
 <Card>
   <CardContent class="flex items-start gap-3">
     <div
-      class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+      class="flex size-9 shrink-0 items-center justify-center rounded-lg {color ? '' : 'bg-primary/10 text-primary'}"
+      style={color ? `background-color: ${color}1a; color: ${color}` : ''}
     >
       {#if icon}
         {@const Icon = icon}
@@ -33,7 +38,9 @@
       {#if loading}
         <span class="inline-block h-9 w-10 animate-pulse rounded bg-muted align-middle"></span>
       {:else}
-        <p class="text-3xl font-bold" in:fly|global={{ y: 10 }}>{value}</p>
+        <p class="text-3xl font-bold" in:fly|global={{ y: 10 }}>
+          {value}{#if suffix}<span class="text-base font-normal text-muted-foreground ml-1">{suffix}</span>{/if}
+        </p>
       {/if}
       <p class="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
