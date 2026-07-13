@@ -1,22 +1,23 @@
 <title>Open Tickets</title>
 <script lang="ts">
-  import { onMount } from 'svelte';
   import type { Ticket } from '../../../types/index.ts';
   import { resolve } from '$app/paths';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
   import TicketCard from '$lib/components/TicketCard.svelte';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   const severities = ['all', 'low', 'medium', 'high', 'critical'];
   const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
   let severityFilter = $state('all');
   let searchQuery = $state('');
   let sortBy = $state('priority');
-  let errors: string[] = $state([]);
-  let tickets: Ticket[] = $state([]);
+  let errors = $derived(data.errors);
+  let tickets = $derived(data.tickets);
   let filteredTickets: Ticket[] = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
     const result = tickets.filter((t: Ticket) => {
@@ -27,16 +28,6 @@
     if (sortBy === 'oldest') return [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     if (sortBy === 'newest') return [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return [...result].sort((a, b) => (PRIORITY_RANK[b.priority] ?? 0) - (PRIORITY_RANK[a.priority] ?? 0));
-  });
-
-  onMount(async () => {
-    const response = await fetch(PUBLIC_BACKEND_URL+'/tickets/open', {credentials: 'include'});
-    const result = await response.json();
-    if (!response.ok) {
-      errors = result.errors ?? [result.message ?? 'Unable to fetch tickets'];
-      return;
-    }
-    tickets = result.tickets ?? [];
   });
 </script>
 
