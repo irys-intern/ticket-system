@@ -133,10 +133,25 @@
     {/await}
     <Card>
       <CardHeader><CardTitle>Agent Tools</CardTitle></CardHeader>
-      <CardContent class="flex flex-wrap gap-2">
-        <Button href="/tickets"><TicketIcon /> View My Tickets</Button>
-        <Button href="/tickets/open" variant="secondary"><TrayIcon /> View Open Tickets</Button>
-        <Button href="/training" variant="secondary"><BookOpenIcon /> View Training Materials</Button>
+      <CardContent class="grid gap-3 sm:grid-cols-2">
+        <ToolLinkCard
+          icon={TicketIcon}
+          label="View My Tickets"
+          description="See the status and history of tickets assigned to you."
+          href="/tickets"
+        />
+        <ToolLinkCard
+          icon={TrayIcon}
+          label="View Open Tickets"
+          description="Browse unassigned tickets available to pick up."
+          href="/tickets/open"
+        />
+        <ToolLinkCard
+          icon={BookOpenIcon}
+          label="View Training Materials"
+          description="Access reference guides and training content."
+          href="/training"
+        />
       </CardContent>
     </Card>
 
