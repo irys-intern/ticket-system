@@ -23,6 +23,9 @@
   import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
   import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
   import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
+  import { fade } from 'svelte/transition';
+  import { flip } from 'svelte/animate';
+  import { untrack } from 'svelte';
   import type { PageData } from './$types';
 
   type Material = { slug: string; title: string };
@@ -30,7 +33,7 @@
   let { data }: { data: PageData } = $props();
 
   let materials = $derived(data.materials);
-  let errorMsg = $state(data.errorMsg);
+  let errorMsg = $state(untrack(() => data.errorMsg));
   let successMsg = $state('');
 
   let newTitle = $state('');
@@ -162,29 +165,31 @@
       <p class="text-sm text-muted-foreground">No materials yet.</p>
     {:else}
       {#each materials as m (m.slug)}
-        <Card>
-          <CardContent class="flex items-center justify-between py-4">
-            <a
-              href={resolve(`/training/${m.slug}`)}
-              class="font-medium hover:underline underline-offset-4"
-            >{m.title}</a>
-            <div class="flex items-center gap-2">
-              <Button
-                href={resolve(`/admin/training/${m.slug}/edit`)}
-                variant="outline"
-                size="sm"
-              ><PencilSimpleIcon /> Edit</Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={deletingSlug === m.slug}
-                onclick={() => handleDelete(m)}
-              >
-                <TrashIcon /> {deletingSlug === m.slug ? 'Deleting…' : 'Delete'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div animate:flip={{ duration: 200 }} transition:fade={{ duration: 150 }}>
+          <Card>
+            <CardContent class="flex items-center justify-between py-4">
+              <a
+                href={resolve(`/training/${m.slug}`)}
+                class="font-medium hover:underline underline-offset-4"
+              >{m.title}</a>
+              <div class="flex items-center gap-2">
+                <Button
+                  href={resolve(`/admin/training/${m.slug}/edit`)}
+                  variant="outline"
+                  size="sm"
+                ><PencilSimpleIcon /> Edit</Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={deletingSlug === m.slug}
+                  onclick={() => handleDelete(m)}
+                >
+                  <TrashIcon /> {deletingSlug === m.slug ? 'Deleting…' : 'Delete'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       {/each}
     {/if}
   </div>

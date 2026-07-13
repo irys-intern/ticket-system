@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { resolve } from '$app/paths';
+  import { page } from '$app/state';
+  import { fade } from 'svelte/transition';
   import { ModeWatcher } from 'mode-watcher';
   import { Toaster } from '$lib/components/ui/sonner';
   import { TooltipProvider } from '$lib/components/ui/tooltip';
@@ -27,7 +29,7 @@
           </div>
           <div>
             <p class="text-base font-semibold leading-tight">Ticket System</p>
-            <p class="text-xs text-muted-foreground">Eli Friedman & Irys Technologies</p>
+            <!-- <p class="text-xs text-muted-foreground">Eli Friedman & Irys Technologies</p> -->
           </div>
         </a>
         <ThemeToggle />
@@ -36,7 +38,11 @@
 
     <main class="flex-1 flex flex-col">
       <div class="mx-auto w-full max-w-4xl px-4 py-10 flex-1 flex flex-col">
-        {@render children()}
+        {#key page.url.pathname}
+          <div class="flex flex-1 flex-col" in:fade={{ duration: 150, delay: 100 }} out:fade={{ duration: 100 }}>
+            {@render children()}
+          </div>
+        {/key}
       </div>
     </main>
 

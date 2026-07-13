@@ -5,6 +5,9 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+  import { fade } from 'svelte/transition';
+  import { flip } from 'svelte/animate';
+  import { untrack } from 'svelte';
   import type { Ticket } from '../../types/index.ts';
   import type { PageData } from './$types';
 
@@ -18,7 +21,7 @@
   let userRole = $derived(data.userRole);
   let agentNames = $derived(data.agentNames);
 
-  let statusFilter = $state(data.userRole === 'agent' ? 'in_progress' : 'all');
+  let statusFilter = $state(untrack(() => (data.userRole === 'agent' ? 'in_progress' : 'all')));
   let searchQuery = $state('');
   let sortBy = $state('newest');
 
@@ -113,7 +116,9 @@
     <div class="relative">
       <div class="-mt-1 -mr-1 -ml-1 max-h-[65vh] space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1">
         {#each filteredTickets as ticket (ticket.id)}
-          <TicketCard {ticket} {userRole} {agentNames} />
+          <div animate:flip={{ duration: 200 }} transition:fade={{ duration: 150 }}>
+            <TicketCard {ticket} {userRole} {agentNames} />
+          </div>
         {/each}
       </div>
       <div

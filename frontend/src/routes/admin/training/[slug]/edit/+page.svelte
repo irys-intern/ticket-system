@@ -14,16 +14,17 @@
   import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
+  import { untrack } from 'svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
   let slug = $derived(data.slug);
-  let content = $state(data.content);
+  let content = $state(untrack(() => data.content));
   let preview = $state('');
   let showPreview = $state(false);
   let saving = $state(false);
-  let errorMsg = $state(data.errorMsg);
+  let errorMsg = $state(untrack(() => data.errorMsg));
   let successMsg = $state('');
 
   async function togglePreview() {

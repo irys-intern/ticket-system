@@ -7,6 +7,8 @@
   import BackLink from '$lib/components/BackLink.svelte';
   import TicketCard from '$lib/components/TicketCard.svelte';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+  import { fade } from 'svelte/transition';
+  import { flip } from 'svelte/animate';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -84,7 +86,9 @@
 
   <div class="space-y-3">
     {#each filteredTickets as ticket (ticket.id)}
-      <TicketCard {ticket} />
+      <div animate:flip={{ duration: 200 }} transition:fade={{ duration: 150 }}>
+        <TicketCard {ticket} />
+      </div>
     {/each}
   </div>
 </div>

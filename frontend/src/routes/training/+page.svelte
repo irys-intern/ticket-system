@@ -5,6 +5,7 @@
   import { Card, CardHeader, CardTitle } from '$lib/components/ui/card';
   import BookOpenIcon from 'phosphor-svelte/lib/BookOpenIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import { fade } from 'svelte/transition';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -45,8 +46,8 @@
     <p class="text-sm text-muted-foreground">No training materials available yet.</p>
   {:else if materials.length > 0}
     <div class="space-y-4">
-      {#each materials as m (m.slug)}
-        <a href={resolve(`/training/${m.slug}`)} class="block">
+      {#each materials as m, i (m.slug)}
+        <a href={resolve(`/training/${m.slug}`)} class="block" in:fade={{ duration: 200, delay: i * 40 }}>
           <Card class="cursor-pointer transition-colors hover:bg-muted/30">
             <CardHeader class="py-4">
               <CardTitle class="flex items-center gap-2 text-base">

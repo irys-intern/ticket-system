@@ -29,19 +29,20 @@
   import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
   import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
+  import { untrack } from 'svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
   let users: { id: string; name: string; email: string; role: string; status: string }[] = $state(
-    data.users
+    untrack(() => data.users)
   );
   let searchQuery = $state('');
   let selectedUser: (typeof users)[0] | null = $state(null);
-  let errors: string[] = $state(data.errors);
+  let errors: string[] = $state(untrack(() => data.errors));
   let sortBy: keyof (typeof users)[0] = $state('id');
   let showEditModal = $state(false);
-  let currentUserId: string | null = data.currentUserId;
+  let currentUserId: string | null = untrack(() => data.currentUserId);
   let showDeleteModal = $state(false);
   let userToDelete: (typeof users)[0] | null = $state(null);
 
