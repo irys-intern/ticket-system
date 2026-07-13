@@ -1,6 +1,5 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import BackLink from '$lib/components/BackLink.svelte';
   import { Badge } from '$lib/components/ui/badge';
   import { Input } from '$lib/components/ui/input';
@@ -15,16 +14,18 @@
   } from '$lib/components/ui/table';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
-  import { onMount } from 'svelte';
-  import type { AuditEvent, User } from '../../../types/index.ts';
+  import type { AuditEvent } from '../../../types/index.ts';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   const selectClass =
     'h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring';
 
   let query = $state('');
   let actionFilter = $state('all');
-  let events: AuditEvent[] = $state([]);
-  let users: User[] = $state([]);
+  let events = $derived(data.events);
+  let users = $derived(data.users);
 
   let actionOptions = $derived([...new Set(events.map((e) => e.action))].sort());
 
@@ -41,15 +42,6 @@
     const user = users.find((u) => u.id === userId);
     return user ? `${user.name} (${user.id})` : `User ${userId}`;
   }
-
-  onMount(async () => {
-    const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
-      credentials: 'include',
-    });
-    const resp = await res.json();
-    events = resp.events.sort((a: { id: any }, b: { id: any }) => Number(b.id) - Number(a.id));
-    users = resp.users;
-  });
 </script>
 
 <title>Audit Log</title>
@@ -94,11 +86,11 @@
       <Table class="table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead>When</TableHead>
+            <TableHead class="w-16">ID</TableHead>
+            <TableHead class="w-20">Ticket</TableHead>
             <TableHead>User</TableHead>
+            <TableHead>When</TableHead>
             <TableHead>Action</TableHead>
-            <TableHead>Ticket</TableHead>
-            <TableHead class="text-right">ID</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -111,13 +103,7 @@
           {:else}
             {#each filtered as e (e)}
               <TableRow>
-                <TableCell class="text-sm whitespace-nowrap text-muted-foreground"
-                  >{new Date(e.createdAt).toLocaleString()}</TableCell
-                >
-                <TableCell class="truncate text-sm font-medium" title={getUserString(e.userId)}
-                  >{getUserString(e.userId)}</TableCell
-                >
-                <TableCell class="text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
+                <TableCell class="text-sm text-muted-foreground">#{e.id}</TableCell>
                 <TableCell class="text-sm">
                   <a
                     href={resolve(`/tickets/${e.ticketId}`)}
@@ -126,7 +112,13 @@
                     <TicketIcon class="size-3.5" /> #{e.ticketId}
                   </a>
                 </TableCell>
-                <TableCell class="text-right text-sm text-muted-foreground">#{e.id}</TableCell>
+                <TableCell class="truncate text-sm font-medium" title={getUserString(e.userId)}
+                  >{getUserString(e.userId)}</TableCell
+                >
+                <TableCell class="text-sm whitespace-nowrap text-muted-foreground"
+                  >{new Date(e.createdAt).toLocaleString()}</TableCell
+                >
+                <TableCell class="text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
               </TableRow>
             {/each}
           {/if}

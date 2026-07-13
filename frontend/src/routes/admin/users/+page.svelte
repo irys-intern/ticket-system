@@ -29,17 +29,19 @@
   import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
   import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
-  import { onMount } from 'svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   let users: { id: string; name: string; email: string; role: string; status: string }[] = $state(
-    []
+    data.users
   );
   let searchQuery = $state('');
   let selectedUser: (typeof users)[0] | null = $state(null);
-  let errors: string[] = $state([]);
+  let errors: string[] = $state(data.errors);
   let sortBy: keyof (typeof users)[0] = $state('id');
   let showEditModal = $state(false);
-  let currentUserId: string | null = $state(null);
+  let currentUserId: string | null = data.currentUserId;
   let showDeleteModal = $state(false);
   let userToDelete: (typeof users)[0] | null = $state(null);
 
@@ -58,22 +60,6 @@
         u.email.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
-
-  onMount(async () => {
-    const meRes = await fetch(PUBLIC_BACKEND_URL + '/auth/me', { credentials: 'include' });
-    if (meRes.ok) {
-      const meData = await meRes.json();
-      currentUserId = meData.session?.userId ?? null;
-    }
-
-    const response = await fetch(PUBLIC_BACKEND_URL + '/admin/users', { credentials: 'include' });
-    const result = await response.json();
-    if (!response.ok) {
-      errors = result.errors ?? [result.message ?? 'Unable to fetch users'];
-      return;
-    }
-    users = result.users;
-  });
 
   function handleEdit(user: (typeof users)[0]) {
     selectedUser = { ...user };
@@ -188,7 +174,7 @@
     <Table class="table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead class="w-56">ID</TableHead>
+          <TableHead class="w-48">ID</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>

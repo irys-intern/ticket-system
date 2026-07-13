@@ -1,25 +1,27 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import BackLink from '$lib/components/BackLink.svelte';
   import TicketCard from '$lib/components/TicketCard.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
-  import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
   import { Label } from '$lib/components/ui/label';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
-  import { onMount } from 'svelte';
   import type { Ticket } from '../../types/index.ts';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   const statuses = ['all', 'open', 'in_progress', 'waiting_for_response', 'closed'];
   const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
-  let statusFilter = $state('all');
+
+  let errors = $derived(data.errors);
+  let tickets = $derived(data.tickets);
+  let userRole = $derived(data.userRole);
+  let agentNames = $derived(data.agentNames);
+
+  let statusFilter = $state(data.userRole === 'agent' ? 'in_progress' : 'all');
   let searchQuery = $state('');
   let sortBy = $state('newest');
-  let errors: string[] = $state([]);
-  let tickets: Ticket[] = $state([]);
-  let isLoading = $state(true);
-  let userRole = $state('guest');
-  let agentNames: Record<string, string> = $state({});
+
   let filteredTickets: Ticket[] = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
     const result = tickets.filter((t: Ticket) => {
@@ -42,33 +44,6 @@
     return [...result].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  });
-
-  onMount(async () => {
-    const response = await fetch(PUBLIC_BACKEND_URL + '/tickets', { credentials: 'include' });
-    const result = await response.json();
-    if (!response.ok) {
-      errors = result.errors ?? [result.message ?? 'Unable to fetch tickets'];
-      isLoading = false;
-      return;
-    }
-    tickets = result.tickets ?? [];
-    userRole = result.userRole || 'guest';
-    if (userRole === 'agent') {
-      statusFilter = 'in_progress';
-    }
-    if (userRole === 'admin') {
-      const usersResponse = await fetch(PUBLIC_BACKEND_URL + '/admin/users', {
-        credentials: 'include',
-      });
-      const usersResult = await usersResponse.json();
-      if (usersResponse.ok) {
-        agentNames = Object.fromEntries(
-          (usersResult.users ?? []).map((u: { id: string; name: string }) => [u.id, u.name])
-        );
-      }
-    }
-    isLoading = false;
   });
 </script>
 
@@ -132,40 +107,8 @@
     </Alert>
   {/if}
 
-  {#if filteredTickets.length === 0 && !errors.length && !isLoading}
+  {#if filteredTickets.length === 0 && !errors.length}
     <p class="shrink-0 text-sm text-muted-foreground">No tickets found.</p>
-  {/if}
-
-  {#if isLoading}
-    <div
-      class="skeleton-fade-in -mt-1 -mr-1 -ml-1 max-h-[65vh] space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1"
-    >
-      {#each Array(3).keys() as index (index)}
-        <Card>
-          <CardHeader class="pb-2">
-            <div class="flex animate-pulse items-center justify-between gap-2">
-              <div class="h-3 w-10 rounded bg-muted/40"></div>
-              <div class="h-3 w-14 rounded bg-muted/40"></div>
-            </div>
-            <div class="flex animate-pulse items-start justify-between gap-2">
-              <div class="h-5 w-2/3 rounded bg-muted/40"></div>
-              <div class="h-4 w-4 rounded bg-muted/40"></div>
-            </div>
-            <div class="mt-1 flex animate-pulse flex-wrap items-center gap-1.5">
-              <div class="h-5 w-14 rounded-full bg-muted/40"></div>
-              <div class="h-5 w-14 rounded-full bg-muted/40"></div>
-              <div class="h-5 w-10 rounded-full bg-muted/40"></div>
-            </div>
-          </CardHeader>
-          <CardContent class="pt-0 pb-3">
-            <div class="animate-pulse space-y-1">
-              <div class="h-3 w-full rounded bg-muted/40"></div>
-              <div class="h-3 w-3/4 rounded bg-muted/40"></div>
-            </div>
-          </CardContent>
-        </Card>
-      {/each}
-    </div>
   {:else}
     <div class="relative">
       <div class="-mt-1 -mr-1 -ml-1 max-h-[65vh] space-y-3 overflow-y-auto pt-1 pr-1 pb-4 pl-1">
@@ -179,20 +122,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  @keyframes skeleton-fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .skeleton-fade-in {
-    opacity: 0;
-    animation: skeleton-fade-in 150ms ease-in forwards;
-    animation-delay: 100ms;
-  }
-</style>

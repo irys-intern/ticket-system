@@ -39,6 +39,7 @@ async function fetchAuditTrail(id: string, cookies: Cookies): Promise<AuditEvent
     const res = await fetch(`${backendUrl()}/admin/audit`, { headers: backendHeaders(cookies, { 'X-Ticket-Id': id }) });
     if (!res.ok) return [];
     const auditTrail: AuditEvent[] = (await res.json()).audits || [];
+    auditTrail.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     for (const entry of auditTrail) {
       if (entry?.userId) {
         try {
