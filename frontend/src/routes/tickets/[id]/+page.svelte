@@ -33,6 +33,8 @@
   let ticket = $derived(data.ticket);
   let error = $derived(data.error);
   let assignmentStringState = $derived(data.assignmentString);
+  let authorString = $derived(data.authorString);
+  let createdByLabel = $derived(authorString ? ` by ${authorString}` : '');
   let agents = $derived(data.agents);
   let selectedAgentId = $state('');
   let showAssignModal = $state(false);
@@ -229,9 +231,8 @@
           </div>
         </div>
         <p class="text-xs text-muted-foreground">
-          Created {formatDateTime(ticket.createdAt)} &middot; Updated {formatDateTime(
-            ticket.updatedAt
-          )}
+          Created {formatDateTime(ticket.createdAt)}{createdByLabel}
+          &middot; Updated {formatDateTime(ticket.updatedAt)}
         </p>
       </CardHeader>
       <CardContent class="space-y-3">

@@ -77,6 +77,7 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   }
 
   const assignmentString = ticket?.assignedTo ? await fetchAssignmentString(ticket.assignedTo, cookies) : '';
+  const authorString = ticket?.createdBy ? await fetchAssignmentString(ticket.createdBy, cookies) : '';
   const agents = locals.user.role === 'admin' ? await fetchAgents(cookies) : [];
 
   return {
@@ -84,6 +85,7 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     ticket,
     error,
     assignmentString,
+    authorString,
     agents,
     auditTrail: fetchAuditTrail(id, cookies)
   };
