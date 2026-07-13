@@ -240,14 +240,18 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
         return json({success: false, body: 'Invalid action'})
     } else if (user.role === 'user') {
         if (data.action === 'close') {
-            const ticketToClose = await db.select().from(ticketsTable).where(eq(ticketsTable.id, parseInt(params.id))).limit(1)
+            const ticketToClose = await db.select().from(ticketsTable)
+                .where(and(eq(ticketsTable.id, parseInt(params.id)), eq(ticketsTable.createdBy, user.userId)))
+                .limit(1)
             if (ticketToClose.length === 0 || ticketToClose[0].status === 'closed') return json({ok: false, success: false})
             await fetch('/admin/audit', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({action: "status changed", ticketId: params.id})
             })
-            await db.update(ticketsTable).set({status: 'closed'}).where(eq(ticketsTable.id, parseInt(params.id)))
+            await db.update(ticketsTable)
+                .set({status: 'closed'})
+                .where(and(eq(ticketsTable.id, parseInt(params.id)), eq(ticketsTable.createdBy, user.userId)))
             return json({ok: true, success: true})
         } else {
             return json({ok:false, success:false})

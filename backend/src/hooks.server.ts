@@ -4,6 +4,7 @@ import { userTable } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
 import { redis } from './lib/redis.ts';
 import { checkRateLimit } from './lib/rateLimit.ts';
+import { env } from './config/env.ts';
 
 await initializeDatabase();
 
@@ -13,14 +14,22 @@ const RATE_LIMIT_RULES: { pattern: RegExp; limit: number; windowSeconds: number 
     { pattern: /^\/create_ticket$/, limit: 30, windowSeconds: 60 },
 ];
 
+// Only the configured frontend is allowed to make credentialed requests; reflecting
+// arbitrary Origin headers here would let any site read authenticated responses.
+const ALLOWED_ORIGINS = new Set([env.frontend.url]);
+
 export async function handle({ event, resolve }) {
-    const origin = event.request.headers.get('origin') ?? '*';
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': origin,
+    const origin = event.request.headers.get('origin');
+    const allowedOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : null;
+    const corsHeaders: Record<string, string> = {
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Ticket-Id',
         'Access-Control-Allow-Credentials': 'true',
+        'Vary': 'Origin',
     };
+    if (allowedOrigin) {
+        corsHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
+    }
 
     if (event.request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders });
