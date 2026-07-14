@@ -54,3 +54,4 @@ nlp_service/local_model/
 *.safetensors
 backend/.svelte-kit/**
 frontend/.svelte-kit/**
+script.txt

@@ -2,6 +2,7 @@ import subprocess
 import os
 import shutil
 
+print("\n\n\n\n\n\nMake sure you start PostgreSQL!!\n\n\n\n\n")
 
 def check_for_npm():
     return shutil.which('npm') is not None
