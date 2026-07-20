@@ -16,7 +16,7 @@
   });
 </script>
 
-<ModeWatcher defaultMode="dark" />
+<ModeWatcher defaultMode="system" />
 <Toaster />
 
 <TooltipProvider>
