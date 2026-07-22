@@ -528,7 +528,11 @@ The `local_model/` directory must be present on the server. Either commit the we
 <!-- CONTACT -->
 ## Contact
 
-Eli Friedman - elimfriedman22@gmail.com
+Eli Friedman (elimfriedman22@gmail.com)<br>
+[![Connect with me on LinkedIn][LinkedIn-badge]][LinkedIn-url]
+[![Email Me][Gmail-badge]][Gmail-url]
+[![View my GitHub][Github-badge]][Github-url]
+[![View my Instagram][Insta-badge]][Insta-url]
 
 Project Link: [https://github.com/irys-intern/ticket-system](https://github.com/irys-intern/ticket-system)
 
@@ -555,3 +559,11 @@ Project Link: [https://github.com/irys-intern/ticket-system](https://github.com/
 [FastAPI-url]: https://fastapi.tiangolo.com/
 [HuggingFace-badge]: https://img.shields.io/badge/%F0%9F%A4%97%20Transformers-FFD21E?style=for-the-badge
 [HuggingFace-url]: https://huggingface.co/docs/transformers
+[LinkedIn-badge]: https://img.shields.io/badge/-LinkedIn-blue?logo=Linkedin&logoColor=white&link=eli-friedman-a5923a33a
+[LinkedIn-url]: https://www.linkedin.com/in/eli-friedman-a5923a33a
+[Gmail-badge]: https://img.shields.io/badge/Gmail-D14836?logo=gmail&logoColor=white
+[Gmail-url]: mailto:elimfriedman22@gmail.com
+[Github-badge]: https://img.shields.io/badge/GitHub-%23121011.svg?logo=github&logoColor=white
+[Github-url]: https://github.com/wrentmc
+[Insta-badge]: https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white
+[Insta-url]: https://www.instagram.com/eli.friedman2
