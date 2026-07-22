@@ -241,7 +241,6 @@ ticket-system/
 │       │   ├── auth/                # register, login, logout, me
 │       │   ├── tickets/             # ticket CRUD and actions
 │       │   ├── create_ticket/       # ticket creation endpoint
-│       │   ├── create_admin/        # bootstrap first admin account
 │       │   ├── training/            # training material listing and content
 │       │   └── admin/               # user management, audit log, and stats
 │       └── types/                   # Shared TypeScript types
@@ -346,7 +345,6 @@ All endpoints live in `backend/src/routes/` as `+server.ts` files. Responses are
 | `POST` | `/auth/login` | Login; sets `sessionId` cookie | No |
 | `POST` | `/auth/logout` | Clear session cookie | Yes |
 | `GET` | `/auth/me` | Return the current user's session info | Yes |
-| `POST` | `/create_admin` | Create an admin account (requires `SUPERUSER_PASSWORD` in body) | No |
 
 ### Tickets
 
