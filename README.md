@@ -86,6 +86,7 @@ The project is split into three independent services:
 ### Built With
 
 * [![SvelteKit][SvelteKit-badge]][SvelteKit-url]
+* [![TypeScript][TypeScript-badge]][TypeScript-url]
 * [![Tailwind CSS][Tailwind-badge]][Tailwind-url]
 * [![PostgreSQL][Postgres-badge]][Postgres-url]
 * [![Redis][Redis-badge]][Redis-url]
