@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fly } from 'svelte/transition';
+  import { goto } from '$app/navigation';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import BellIcon from 'phosphor-svelte/lib/BellIcon';
   import BellSlashIcon from 'phosphor-svelte/lib/BellSlashIcon';
   import { Badge } from '$lib/components/ui/badge';
@@ -30,14 +32,16 @@
   }
 
   async function fetchUnreadCount() {
-    const res = await fetch('/notifications/unread-count');
+    const res = await fetch(PUBLIC_BACKEND_URL + '/notifications/unread-count', {
+      credentials: 'include',
+    });
     if (!res.ok) return;
     const data = await res.json();
     unreadCount = data.count ?? 0;
   }
 
   async function fetchNotifications() {
-    const res = await fetch('/notifications');
+    const res = await fetch(PUBLIC_BACKEND_URL + '/notifications', { credentials: 'include' });
     if (!res.ok) return;
     const data = await res.json();
     notifications = data.notifications ?? [];
@@ -51,16 +55,28 @@
   }
 
   async function markRead(notification: Notification) {
-    if (notification.read) return;
-    const res = await fetch(`/notifications/${notification.id}/read`, { method: 'POST' });
-    if (!res.ok) return;
-    notification.read = true;
-    unreadCount = Math.max(0, unreadCount - 1);
+    if (!notification.read) {
+      const res = await fetch(PUBLIC_BACKEND_URL + `/notifications/${notification.id}/read`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        notification.read = true;
+        unreadCount = Math.max(0, unreadCount - 1);
+      }
+    }
+    if (notification.link) {
+      open = false;
+      await goto(notification.link);
+    }
   }
 
   async function markAllRead() {
     if (unreadCount === 0) return;
-    const res = await fetch('/notifications/read-all', { method: 'POST' });
+    const res = await fetch(PUBLIC_BACKEND_URL + '/notifications/read-all', {
+      method: 'POST',
+      credentials: 'include',
+    });
     if (!res.ok) return;
     notifications = notifications.map((n) => ({ ...n, read: true }));
     unreadCount = 0;

@@ -134,6 +134,19 @@ export const auditEventsTable = pgTable('audit_events', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const notificationsTable = pgTable(
+  'notifications',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id').references(() => userTable.id).notNull(),
+    message: text('message').notNull(),
+    link: text('link'),
+    read: boolean('read').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('notifications_userId_idx').on(table.userId)],
+);
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   createdTickets: many(ticketsTable, { relationName: 'createdBy' }),
@@ -143,6 +156,7 @@ export const userRelations = relations(userTable, ({ many }) => ({
   assignments: many(assignmentsTable),
   sessions: many(sessionTable),
   accounts: many(accountTable),
+  notifications: many(notificationsTable),
 }));
 
 export const sessionRelations = relations(sessionTable, ({ one }) => ({
@@ -182,6 +196,10 @@ export const auditEventsRelations = relations(auditEventsTable, ({ one }) => ({
 export const assignmentsRelations = relations(assignmentsTable, ({ one }) => ({
   ticket: one(ticketsTable, { fields: [assignmentsTable.ticketId], references: [ticketsTable.id] }),
   user: one(userTable, { fields: [assignmentsTable.userId], references: [userTable.id] }),
+}));
+
+export const notificationsRelations = relations(notificationsTable, ({ one }) => ({
+  user: one(userTable, { fields: [notificationsTable.userId], references: [userTable.id] }),
 }));
 
 // Keep usersTable as an alias for backwards compat within this file

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
-import { auditEventsTable, userTable } from "../../../db/schema.ts";
+import { auditEventsTable, notificationsTable, ticketsTable, userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import type { Ticket } from "../../../types/index.ts";
 import { redis } from "../../../lib/redis.ts";
@@ -64,8 +64,44 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     try {
         await db.insert(auditEventsTable).values({ticketId, userId, action})
         await invalidateCache(redis, DASHBOARD_AUDIT_CACHE_KEY, DASHBOARD_TICKETS_CACHE_KEY)
+        await notifyForAuditEvent(action, ticketId, userId)
         return json({ok: true})
     } catch (err) {
         return json({error: err})
     }
+}
+
+// The rest of the app funnels every ticket mutation through this endpoint to log
+// an audit event, so it's also the single choke point for deciding who to notify.
+async function notifyForAuditEvent(action: string, ticketId: number, actingUserId: string) {
+    const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId)).limit(1)
+    if (!ticket) return
+
+    let message: string | null = null
+    const recipients = new Set<string>()
+
+    if (action === 'ticket assigned' && ticket.assignedTo) {
+        message = `You were assigned to ticket #${ticketId}: ${ticket.title}`
+        recipients.add(ticket.assignedTo)
+    } else if (action === 'status changed') {
+        message = `Ticket #${ticketId} status changed to ${ticket.status}`
+        if (ticket.createdBy !== actingUserId) recipients.add(ticket.createdBy)
+    } else if (action === 'comment added') {
+        message = `New comment on ticket #${ticketId}: ${ticket.title}`
+        const other = actingUserId === ticket.createdBy ? ticket.assignedTo : ticket.createdBy
+        if (other && other !== actingUserId) recipients.add(other)
+    } else if (action === 'ticket updated') {
+        message = `Ticket #${ticketId} was updated: ${ticket.title}`
+        const other = actingUserId === ticket.createdBy ? ticket.assignedTo : ticket.createdBy
+        if (other && other !== actingUserId) recipients.add(other)
+    }
+
+    if (!message || recipients.size === 0) return
+    await db.insert(notificationsTable).values(
+        Array.from(recipients).map((recipientId) => ({
+            userId: recipientId,
+            message: message as string,
+            link: `/tickets/${ticketId}`,
+        })),
+    )
 }

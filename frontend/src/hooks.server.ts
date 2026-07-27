@@ -1,6 +1,7 @@
 import { validateSession } from './middleware/sessionValidator.ts';
+import type { Handle } from '@sveltejs/kit';
 
-export async function handle({ event, resolve }) {
+export const handle: Handle = async ({ event, resolve }) => {
     const session = await validateSession(event);
     event.locals.session = session;
     event.locals.user = session ? {
