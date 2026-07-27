@@ -1,5 +1,8 @@
 node_modules
 
+# VS Code
+.vscode/
+
 # Output
 backend/.output
 backend/.vercel
@@ -46,6 +49,7 @@ frontend/.svelte-kit/ambient.d.ts
 frontend/.svelte-kit/generated/server/internal.js
 nlp_service/__pycache__
 nlp_service/venv
+nlp_service/.venv
 **/__pycache__
 __pycache__
 *.pyc
