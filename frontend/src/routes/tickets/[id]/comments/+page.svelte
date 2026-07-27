@@ -9,6 +9,7 @@
   import { PUBLIC_BACKEND_URL } from '$env/static/public'
   import { toast } from '$lib/toast';
   import BackLink from '$lib/components/BackLink.svelte';
+  import RelativeTime from '$lib/components/RelativeTime.svelte';
   import PaperPlaneTiltIcon from 'phosphor-svelte/lib/PaperPlaneTiltIcon';
   import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
   import RobotIcon from 'phosphor-svelte/lib/RobotIcon';
@@ -110,14 +111,14 @@
                 <RobotIcon class="size-3.5 shrink-0" />
                 <span>{comment.content}</span>
                 <span aria-hidden="true">·</span>
-                <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                <RelativeTime date={comment.createdAt} />
               </div>
             {:else}
               <Card class="py-3">
                 <CardHeader class="px-3">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-semibold">{comment.userName}</span>
-                    <span class="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
+                    <RelativeTime date={comment.createdAt} class="text-xs text-muted-foreground" />
                   </div>
                 </CardHeader>
                 <CardContent class="px-3 pt-0">
