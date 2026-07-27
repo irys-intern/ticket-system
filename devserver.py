@@ -27,7 +27,8 @@ def stream_output(name, proc):
 
 def start(name, cmd, cwd):
     proc = subprocess.Popen(
-        cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
+        cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, encoding="utf-8", errors="replace", bufsize=1,
     )
     threading.Thread(target=stream_output, args=(name, proc), daemon=True).start()
     return proc
