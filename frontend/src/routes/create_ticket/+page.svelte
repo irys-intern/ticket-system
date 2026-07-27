@@ -13,6 +13,9 @@
   import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import { onMount } from 'svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   let title = $state('');
   let description = $state('');
@@ -37,7 +40,7 @@
     clearTimeout(debounceTimer);
     suggestedPriority = '';
     if (description.length < 20) return;
-    debounceTimer = setTimeout(fetchSuggestion, 600);
+    debounceTimer = setTimeout(fetchSuggestion, data.nlpDebounceMs);
   }
 
   async function fetchSuggestion() {

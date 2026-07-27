@@ -5,7 +5,7 @@ import { eq, and, not, or } from 'drizzle-orm';
 import { redis } from '../lib/redis.ts';
 import { getOrSetCache } from '../lib/cache.ts';
 import {
-  DASHBOARD_CACHE_TTL_SECONDS,
+  getDashboardCacheTtlSeconds,
   DASHBOARD_HOME_ADMIN_CACHE_KEY,
   dashboardHomeAgentCacheKey,
   dashboardHomeUserCacheKey,
@@ -13,6 +13,7 @@ import {
 
 export async function GET({ locals }: RequestEvent) {
   const user = locals.user;
+  const cacheTtl = await getDashboardCacheTtlSeconds();
   let openUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   let resolvedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   let progressUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
@@ -22,7 +23,7 @@ export async function GET({ locals }: RequestEvent) {
     ({ openUserTickets, progressUserTickets, resolvedUserTickets, closedUserTickets } = await getOrSetCache(
       redis,
       dashboardHomeUserCacheKey(userId),
-      DASHBOARD_CACHE_TTL_SECONDS,
+      cacheTtl,
       async () => ({
         openUserTickets: await db.select()
                       .from(ticketsTable)
@@ -65,7 +66,7 @@ export async function GET({ locals }: RequestEvent) {
     assignedAgentTickets = await getOrSetCache(
       redis,
       dashboardHomeAgentCacheKey(userId),
-      DASHBOARD_CACHE_TTL_SECONDS,
+      cacheTtl,
       () => db.select()
         .from(ticketsTable)
         .where(
@@ -83,7 +84,7 @@ export async function GET({ locals }: RequestEvent) {
     ({ adminTotal, adminOpen, adminUsers } = await getOrSetCache(
       redis,
       DASHBOARD_HOME_ADMIN_CACHE_KEY,
-      DASHBOARD_CACHE_TTL_SECONDS,
+      cacheTtl,
       async () => ({
         adminTotal: await db.select().from(ticketsTable),
         adminOpen: await db.select()

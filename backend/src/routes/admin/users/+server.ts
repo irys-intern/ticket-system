@@ -4,7 +4,7 @@ import { userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import { redis } from "../../../lib/redis.ts";
 import { getOrSetCache, invalidateCache } from "../../../lib/cache.ts";
-import { DASHBOARD_CACHE_TTL_SECONDS, DASHBOARD_USERS_CACHE_KEY } from "../../../lib/dashboardCache.ts";
+import { getDashboardCacheTtlSeconds, DASHBOARD_USERS_CACHE_KEY } from "../../../lib/dashboardCache.ts";
 
 export const GET: RequestHandler = async ({ locals }) => {
     if (locals.user?.role !== 'admin') {
@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     const dbHits = await getOrSetCache(
         redis,
         DASHBOARD_USERS_CACHE_KEY,
-        DASHBOARD_CACHE_TTL_SECONDS,
+        await getDashboardCacheTtlSeconds(),
         () => db.select().from(userTable),
     );
     return json({users: dbHits});

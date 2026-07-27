@@ -27,7 +27,7 @@
       <div class="mx-auto flex max-w-4xl items-center justify-between px-4">
         <a href={resolve('/')} class="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div class="h-10 w-10 flex items-center justify-center">
-            <img src="/favicon.svg" alt="logo" />
+            <img src={data.siteIconUrl} alt="logo" />
           </div>
           <div>
             <p class="text-base font-semibold leading-tight">Ticket System</p>

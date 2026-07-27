@@ -7,7 +7,7 @@ import { redis } from "../../../lib/redis.ts";
 import { getOrSetCache, invalidateCache } from "../../../lib/cache.ts";
 import {
     DASHBOARD_AUDIT_CACHE_KEY,
-    DASHBOARD_CACHE_TTL_SECONDS,
+    getDashboardCacheTtlSeconds,
     DASHBOARD_HOME_ADMIN_CACHE_KEY,
     DASHBOARD_TICKETS_CACHE_KEY,
     dashboardHomeAgentCacheKey,
@@ -37,7 +37,7 @@ export const GET: RequestHandler = async ({ locals, request, fetch }) => {
         const { audit_events, users } = await getOrSetCache(
             redis,
             DASHBOARD_AUDIT_CACHE_KEY,
-            DASHBOARD_CACHE_TTL_SECONDS,
+            await getDashboardCacheTtlSeconds(),
             async () => ({
                 audit_events: await db.select().from(auditEventsTable),
                 users: await db.select().from(userTable),

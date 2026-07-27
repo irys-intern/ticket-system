@@ -4,7 +4,7 @@ import { ticketsTable } from "../../db/schema.ts";
 import { and, eq, ne } from "drizzle-orm";
 import { redis } from "../../lib/redis.ts";
 import { getOrSetCache } from "../../lib/cache.ts";
-import { DASHBOARD_CACHE_TTL_SECONDS, DASHBOARD_TICKETS_CACHE_KEY } from "../../lib/dashboardCache.ts";
+import { getDashboardCacheTtlSeconds, DASHBOARD_TICKETS_CACHE_KEY } from "../../lib/dashboardCache.ts";
 
 export const GET: RequestHandler = async ({locals}) => {
     const userRole = locals.user?.role;
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({locals}) => {
         const dbHits = await getOrSetCache(
             redis,
             DASHBOARD_TICKETS_CACHE_KEY,
-            DASHBOARD_CACHE_TTL_SECONDS,
+            await getDashboardCacheTtlSeconds(),
             () => db.select().from(ticketsTable),
         );
         return json({ tickets: dbHits, userRole })

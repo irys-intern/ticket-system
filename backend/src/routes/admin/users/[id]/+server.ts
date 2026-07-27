@@ -1,7 +1,18 @@
 import { db } from "../../../../db/index.ts";
-import { userTable } from "../../../../db/schema.ts";
-import { eq } from "drizzle-orm";
+import { assignmentsTable, auditEventsTable, commentsTable, notificationsTable, ticketsTable, userTable } from "../../../../db/schema.ts";
+import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { type RequestHandler, error, json } from "@sveltejs/kit";
+import { DELETED_USER_ID, ensureDeletedUserExists } from "../../../../lib/deletedUser.ts";
+import { redis } from "../../../../lib/redis.ts";
+import { invalidateCache } from "../../../../lib/cache.ts";
+import {
+    DASHBOARD_AUDIT_CACHE_KEY,
+    DASHBOARD_HOME_ADMIN_CACHE_KEY,
+    DASHBOARD_TICKETS_CACHE_KEY,
+    DASHBOARD_USERS_CACHE_KEY,
+    dashboardHomeAgentCacheKey,
+    dashboardHomeUserCacheKey,
+} from "../../../../lib/dashboardCache.ts";
 
 const FOREIGN_KEY_VIOLATION = '23503';
 
@@ -45,7 +56,10 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
         }
         return json({ ok: true })
     } catch (err) {
-        if (err && typeof err === 'object' && 'code' in err && err.code === FOREIGN_KEY_VIOLATION) {
+        // drizzle-orm wraps driver errors in a DrizzleQueryError, nesting the real
+        // PostgresError (with the SQLSTATE `code`) at `.cause` rather than on `err` itself.
+        const cause = err && typeof err === 'object' && 'cause' in err ? err.cause : err
+        if (cause && typeof cause === 'object' && 'code' in cause && cause.code === FOREIGN_KEY_VIOLATION) {
             throw error(409, "Cannot delete a user with existing tickets, comments, or assignments")
         }
         throw err

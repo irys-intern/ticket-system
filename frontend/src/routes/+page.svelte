@@ -28,6 +28,7 @@
   import SignInIcon from 'phosphor-svelte/lib/SignInIcon';
   import UserPlusIcon from 'phosphor-svelte/lib/UserPlusIcon';
   import SignOutIcon from 'phosphor-svelte/lib/SignOutIcon';
+  import GearSixIcon from 'phosphor-svelte/lib/GearSixIcon';
 
   let { data }: { data: PageData } = $props();
 
@@ -117,6 +118,12 @@
           label="View Statistics"
           description="See ticket volume, resolution trends, and metrics."
           href="/admin/stats"
+        />
+        <ToolLinkCard
+          icon={GearSixIcon}
+          label="App Settings"
+          description="Tune the site icon, NLP debounce, and dashboard cache TTL."
+          href="/admin/settings"
         />
       </CardContent>
     </Card>
