@@ -2,6 +2,14 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '../db/index.ts';
 import { ticketsTable, userTable } from '../db/schema.ts';
 import { eq, and, not, or } from 'drizzle-orm';
+import { redis } from '../lib/redis.ts';
+import { getOrSetCache } from '../lib/cache.ts';
+import {
+  DASHBOARD_CACHE_TTL_SECONDS,
+  DASHBOARD_HOME_ADMIN_CACHE_KEY,
+  dashboardHomeAgentCacheKey,
+  dashboardHomeUserCacheKey,
+} from '../lib/dashboardCache.ts';
 
 export async function GET({ locals }: RequestEvent) {
   const user = locals.user;
@@ -10,63 +18,80 @@ export async function GET({ locals }: RequestEvent) {
   let progressUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   let closedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   if ((user?.role || 'guest') === 'user' && user?.userId) {
-    openUserTickets = await db.select()
-                  .from(ticketsTable)
-                  .where(
-                    and(
-                      eq(ticketsTable.createdBy, user.userId),
-                      (eq(ticketsTable.status, 'open'))
-                    )
-                  )
-    progressUserTickets = await db.select()
-                  .from(ticketsTable)
-                  .where(
-                    and(
-                      eq(ticketsTable.createdBy, user.userId),
-                      (or(eq(ticketsTable.status, 'in_progress'), eq(ticketsTable.status, 'waiting_for_response')))
-                    )
-                  )
-    resolvedUserTickets = await db.select()
-                  .from(ticketsTable)
-                  .where(
-                    and(
-                      eq(ticketsTable.createdBy, user.userId),
-                      eq(ticketsTable.status, 'resolved')
-                    )
-                  )
-    closedUserTickets = await db.select()
-                  .from(ticketsTable)
-                  .where(
-                    and(
-                      eq(ticketsTable.createdBy, user.userId),
-                      eq(ticketsTable.status, 'closed')
-                    )
-                  )
+    const userId = user.userId;
+    ({ openUserTickets, progressUserTickets, resolvedUserTickets, closedUserTickets } = await getOrSetCache(
+      redis,
+      dashboardHomeUserCacheKey(userId),
+      DASHBOARD_CACHE_TTL_SECONDS,
+      async () => ({
+        openUserTickets: await db.select()
+                      .from(ticketsTable)
+                      .where(
+                        and(
+                          eq(ticketsTable.createdBy, userId),
+                          (eq(ticketsTable.status, 'open'))
+                        )
+                      ),
+        progressUserTickets: await db.select()
+                      .from(ticketsTable)
+                      .where(
+                        and(
+                          eq(ticketsTable.createdBy, userId),
+                          (or(eq(ticketsTable.status, 'in_progress'), eq(ticketsTable.status, 'waiting_for_response')))
+                        )
+                      ),
+        resolvedUserTickets: await db.select()
+                      .from(ticketsTable)
+                      .where(
+                        and(
+                          eq(ticketsTable.createdBy, userId),
+                          eq(ticketsTable.status, 'resolved')
+                        )
+                      ),
+        closedUserTickets: await db.select()
+                      .from(ticketsTable)
+                      .where(
+                        and(
+                          eq(ticketsTable.createdBy, userId),
+                          eq(ticketsTable.status, 'closed')
+                        )
+                      ),
+      }),
+    ));
   }
   let assignedAgentTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   if ((user?.role || 'guest') === 'agent' && user?.userId) {
-    assignedAgentTickets = await db.select()
-    .from(ticketsTable)
-    .where(
-      and(
-        eq(ticketsTable.assignedTo, user.userId),
-        not(or(eq(ticketsTable.status, 'resolved'), eq(ticketsTable.status, 'closed'))!)
-      )
-    )
+    const userId = user.userId;
+    assignedAgentTickets = await getOrSetCache(
+      redis,
+      dashboardHomeAgentCacheKey(userId),
+      DASHBOARD_CACHE_TTL_SECONDS,
+      () => db.select()
+        .from(ticketsTable)
+        .where(
+          and(
+            eq(ticketsTable.assignedTo, userId),
+            not(or(eq(ticketsTable.status, 'resolved'), eq(ticketsTable.status, 'closed'))!)
+          )
+        ),
+    );
   }
   let adminTotal = []
-  if ((user?.role || 'guest') === 'admin') {
-    adminTotal = await db.select().from(ticketsTable)
-  }
   let adminOpen = []
-  if ((user?.role || 'guest') === 'admin') {
-    adminOpen = await db.select()
-                         .from(ticketsTable)
-                         .where(eq(ticketsTable.status, 'open'))
-  }
   let adminUsers = []
   if ((user?.role || 'guest') === 'admin') {
-    adminUsers = await db.select().from(userTable)
+    ({ adminTotal, adminOpen, adminUsers } = await getOrSetCache(
+      redis,
+      DASHBOARD_HOME_ADMIN_CACHE_KEY,
+      DASHBOARD_CACHE_TTL_SECONDS,
+      async () => ({
+        adminTotal: await db.select().from(ticketsTable),
+        adminOpen: await db.select()
+                             .from(ticketsTable)
+                             .where(eq(ticketsTable.status, 'open')),
+        adminUsers: await db.select().from(userTable),
+      }),
+    ));
   }
   return new Response(JSON.stringify({
     userRole: user?.role || 'guest',

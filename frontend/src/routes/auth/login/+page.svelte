@@ -41,7 +41,7 @@
       } else {
         email = '';
         password = '';
-        await goto(resolve('/'), { replaceState: true });
+        await goto(resolve('/'), { replaceState: true, invalidateAll: true });
       }
     } catch (error) {
       errors = ['Unable to reach the login service. Please try again later.'];
