@@ -45,6 +45,11 @@ class SuggestRequest(BaseModel):
     text: str
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/suggest")
 def suggest(req: SuggestRequest):
     if not req.text.strip():

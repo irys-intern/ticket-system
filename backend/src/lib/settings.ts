@@ -5,7 +5,7 @@ import { redis } from './redis.ts';
 import { getOrSetCache, invalidateCache } from './cache.ts';
 
 const SETTINGS_ROW_ID = 1;
-const SETTINGS_CACHE_KEY = 'app:settings';
+export const SETTINGS_CACHE_KEY = 'app:settings';
 const SETTINGS_CACHE_TTL_SECONDS = 30;
 
 export const DEFAULT_SETTINGS = {

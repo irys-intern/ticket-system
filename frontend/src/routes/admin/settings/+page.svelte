@@ -8,6 +8,7 @@
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
+  import SystemHealthWidget from '$lib/components/SystemHealthWidget.svelte';
   import { toast } from '$lib/toast';
   import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
@@ -61,6 +62,15 @@
       <AlertDescription>{data.error}</AlertDescription>
     </Alert>
   {/if}
+
+  <Card>
+    <CardHeader>
+      <CardTitle>System Health</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <SystemHealthWidget />
+    </CardContent>
+  </Card>
 
   <Card>
     <CardHeader>

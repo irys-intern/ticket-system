@@ -248,6 +248,15 @@ Runtime-configurable behavior (site icon, NLP suggestion debounce, dashboard cac
 
 The admin UI for this lives at `/admin/settings` in the frontend.
 
+### System Health
+
+`/admin/settings` also surfaces a live health widget, backed by `backend/src/lib/health.ts`, which checks Postgres (`SELECT 1`), Redis (`PING`), and the NLP service (`GET /health`, added to `nlp_service/main.py`) in parallel and reports per-service status/latency. It polls every 30s and can be refreshed manually.
+
+| Method   | Path            | Description                                                                                    | Auth required |
+| -------- | --------------- | ------------------------------------------------------------------------------------------------ | -------------- |
+| `GET`    | `/admin/health` | Returns `{ checks: [{ service, status, latencyMs?, message? }] }` for `database`, `redis`, `nlp_service` | Admin          |
+| `DELETE` | `/admin/cache`  | Flushes every cache key this app writes (dashboard stats, settings, per-user home stats via a `dashboard:home:*` scan) and returns `{ cleared: number }` | Admin          |
+
 ### Notifications
 
 Per-user notifications are created as a side effect of `POST /admin/audit` (see [Admin](#admin)) for actions relevant to a specific user: `ticket assigned` notifies the new assignee, `status changed` notifies the ticket creator, and `comment added`/`ticket updated` notify whichever of creator/assignee isn't the one who acted.

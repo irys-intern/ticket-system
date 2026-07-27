@@ -15,6 +15,10 @@ export const env = {
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
   },
+
+  nlp: {
+    url: process.env.NLP_SERVER_URL || 'http://localhost:8000',
+  },
   
   auth: {
     secret: process.env.BETTER_AUTH_SECRET || 'dev-secret-key',
