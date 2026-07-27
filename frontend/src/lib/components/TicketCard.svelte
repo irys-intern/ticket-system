@@ -51,6 +51,7 @@
         <PriorityBadge priority={ticket.priority} />
         <Badge variant="ghost">{ticket.category.replace(/_/g, ' ')}</Badge>
         {#if userRole === 'admin'}
+          <Badge variant="outline">{agentNames[ticket.createdBy] ?? 'Unknown user'}</Badge>
           <Badge variant="outline">{ticket.assignedTo ? (agentNames[ticket.assignedTo] ?? 'Unknown agent') : 'Unassigned'}</Badge>
         {/if}
       </div>

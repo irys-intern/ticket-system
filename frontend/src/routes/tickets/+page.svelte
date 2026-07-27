@@ -30,7 +30,13 @@
     const result = tickets.filter((t: Ticket) => {
       if (statusFilter !== 'all' && t.status !== statusFilter) return false;
       if (!q) return true;
-      return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+      if (t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) return true;
+      if (userRole === 'admin') {
+        const reporter = agentNames[t.createdBy]?.toLowerCase() ?? '';
+        const assignee = agentNames[t.assignedTo ?? '']?.toLowerCase() ?? '';
+        if (reporter.includes(q) || assignee.includes(q)) return true;
+      }
+      return false;
     });
     if (sortBy === 'oldest')
       return [...result].sort(
@@ -43,6 +49,10 @@
     if (sortBy === 'agent')
       return [...result].sort((a, b) =>
         (agentNames[a.assignedTo ?? ''] ?? '').localeCompare(agentNames[b.assignedTo ?? ''] ?? '')
+      );
+    if (sortBy === 'user')
+      return [...result].sort((a, b) =>
+        (agentNames[a.createdBy] ?? '').localeCompare(agentNames[b.createdBy] ?? '')
       );
     return [...result].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -70,7 +80,7 @@
         <input
           type="search"
           bind:value={searchQuery}
-          placeholder="Search tickets…"
+          placeholder={userRole === 'admin' ? 'Search tickets or user…' : 'Search tickets…'}
           class="h-8 w-48 rounded-lg border border-input bg-transparent py-1 pr-2.5 pl-7 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
         />
       </div>
@@ -95,6 +105,7 @@
         <option value="priority">Priority</option>
         {#if userRole === 'admin'}
           <option value="agent">Agent</option>
+          <option value="user">Reporter</option>
         {/if}
       </select>
     </div>
