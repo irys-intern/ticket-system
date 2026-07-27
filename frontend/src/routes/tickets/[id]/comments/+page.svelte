@@ -20,6 +20,7 @@
   let comments = $derived(data.comments);
   let error = $derived(data.error);
   let awaitingResponse = $derived(data.awaitingResponse);
+  let isClosed = $derived(data.isClosed);
   let ticketUrl = $derived(resolve('/tickets/[id]', { id: data.ticketId }));
 
   let newComment = $state('');
@@ -76,18 +77,23 @@
       </div>
     </div>
   {/if}
-
-  <div class="shrink-0 space-y-2">
-    <Textarea
-      bind:value={newComment}
-      placeholder="Write a comment…"
-      rows={4}
-      disabled={posting}
-    />
-    <Button class="cursor-pointer" onclick={postComment} disabled={!newComment.trim() || posting}>
-      <PaperPlaneTiltIcon /> Post Comment
-    </Button>
-  </div>
+  {#if !isClosed}
+    <div class="shrink-0 space-y-2">
+      <Textarea
+        bind:value={newComment}
+        placeholder="Write a comment…"
+        rows={4}
+        disabled={posting}
+      />
+      <Button class="cursor-pointer" onclick={postComment} disabled={!newComment.trim() || posting}>
+        <PaperPlaneTiltIcon /> Post Comment
+      </Button>
+    </div>
+  {:else}
+    <Alert class="shrink-0">
+      <AlertDescription>This ticket is closed. No new comments can be posted.</AlertDescription>
+    </Alert>
+  {/if}
 
   <Separator class="shrink-0" />
 

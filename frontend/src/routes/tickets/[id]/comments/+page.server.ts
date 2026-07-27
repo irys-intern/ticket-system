@@ -25,11 +25,13 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   }
 
   let awaitingResponse = false;
+  let isClosed = false;
   try {
     const res = await fetch(`${backendUrl()}/tickets/${id}`, { headers });
     if (res.ok) {
       const ticket = await res.json();
       awaitingResponse = locals.user.role === 'user' && ticket.status === 'waiting_for_response';
+      isClosed = ticket.status === 'closed';
     }
   } catch {
     awaitingResponse = false;
@@ -39,6 +41,7 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     ticketId: id,
     comments,
     error,
-    awaitingResponse
+    awaitingResponse,
+    isClosed
   };
 };
