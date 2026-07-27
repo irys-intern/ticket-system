@@ -50,7 +50,7 @@ export async function GET({ locals }: RequestEvent) {
     .where(
       and(
         eq(ticketsTable.assignedTo, user.userId),
-        not(or(eq(ticketsTable.status, 'resolved'), eq(ticketsTable.status, 'closed')))
+        not(or(eq(ticketsTable.status, 'resolved'), eq(ticketsTable.status, 'closed'))!)
       )
     )
   }

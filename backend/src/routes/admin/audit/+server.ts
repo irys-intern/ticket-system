@@ -3,6 +3,9 @@ import { db } from "../../../db/index.ts";
 import { auditEventsTable, userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import type { Ticket } from "../../../types/index.ts";
+import { redis } from "../../../lib/redis.ts";
+import { getOrSetCache, invalidateCache } from "../../../lib/cache.ts";
+import { DASHBOARD_AUDIT_CACHE_KEY, DASHBOARD_CACHE_TTL_SECONDS, DASHBOARD_TICKETS_CACHE_KEY } from "../../../lib/dashboardCache.ts";
 
 export const GET: RequestHandler = async ({ locals, request, fetch }) => {
     const user = locals.user
@@ -24,8 +27,15 @@ export const GET: RequestHandler = async ({ locals, request, fetch }) => {
         throw error(403, "Forbidden")
     }
     try {
-        const audit_events = await db.select().from(auditEventsTable);
-        const users = await db.select().from(userTable);
+        const { audit_events, users } = await getOrSetCache(
+            redis,
+            DASHBOARD_AUDIT_CACHE_KEY,
+            DASHBOARD_CACHE_TTL_SECONDS,
+            async () => ({
+                audit_events: await db.select().from(auditEventsTable),
+                users: await db.select().from(userTable),
+            }),
+        );
         return json({events: audit_events, users: users})
     } catch (err) {
         return json({error: err})
@@ -53,6 +63,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
     try {
         await db.insert(auditEventsTable).values({ticketId, userId, action})
+        await invalidateCache(redis, DASHBOARD_AUDIT_CACHE_KEY, DASHBOARD_TICKETS_CACHE_KEY)
         return json({ok: true})
     } catch (err) {
         return json({error: err})

@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { redis } from './lib/redis.ts';
 import { checkRateLimit } from './lib/rateLimit.ts';
 import { env } from './config/env.ts';
+import type { Handle } from '@sveltejs/kit';
 
 await initializeDatabase();
 
@@ -18,7 +19,7 @@ const RATE_LIMIT_RULES: { pattern: RegExp; limit: number; windowSeconds: number 
 // arbitrary Origin headers here would let any site read authenticated responses.
 const ALLOWED_ORIGINS = new Set([env.frontend.url]);
 
-export async function handle({ event, resolve }) {
+export const handle: Handle = async ({ event, resolve }) => {
     const origin = event.request.headers.get('origin');
     const allowedOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : null;
     const corsHeaders: Record<string, string> = {

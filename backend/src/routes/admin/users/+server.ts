@@ -2,12 +2,20 @@ import { eq } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
 import { userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
+import { redis } from "../../../lib/redis.ts";
+import { getOrSetCache, invalidateCache } from "../../../lib/cache.ts";
+import { DASHBOARD_CACHE_TTL_SECONDS, DASHBOARD_USERS_CACHE_KEY } from "../../../lib/dashboardCache.ts";
 
 export const GET: RequestHandler = async ({ locals }) => {
     if (locals.user?.role !== 'admin') {
         throw error(401, "Unauthenticated")
     }
-    const dbHits = await db.select().from(userTable)
+    const dbHits = await getOrSetCache(
+        redis,
+        DASHBOARD_USERS_CACHE_KEY,
+        DASHBOARD_CACHE_TTL_SECONDS,
+        () => db.select().from(userTable),
+    );
     return json({users: dbHits});
 }
 
@@ -28,6 +36,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
     if ((modification === 'user' || modification === 'agent' || modification === 'admin') && manageUserId) {
         updatedUser = await db.update(userTable).set({role: modification}).where(eq(userTable.id, manageUserId)).returning()
+        await invalidateCache(redis, DASHBOARD_USERS_CACHE_KEY);
     }
     return json({success: !!updatedUser})
 }
