@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { fade } from 'svelte/transition';
@@ -7,9 +7,11 @@
   import { Toaster } from '$lib/components/ui/sonner';
   import { TooltipProvider } from '$lib/components/ui/tooltip';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+  import NotificationBell from '$lib/components/NotificationBell.svelte';
   import { flushQueuedToast } from '$lib/toast';
   import './layout.css';
-  let { children } = $props();
+  import type { LayoutData } from './$types';
+  let { children, data }: {children: Snippet; data: LayoutData} = $props();
 
   onMount(() => {
     flushQueuedToast();
@@ -32,7 +34,12 @@
             <!-- <p class="text-xs text-muted-foreground">Eli Friedman & Irys Technologies</p> -->
           </div>
         </a>
-        <ThemeToggle />
+        <div class="flex items-center gap-1">
+          {#if data.user}
+            <NotificationBell />
+          {/if}
+          <ThemeToggle />
+        </div>
       </div>
     </header>
 
