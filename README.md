@@ -68,8 +68,10 @@ Ticket System is a help desk for teams that need a simple way to handle incoming
         <li><a href=".assets/ARCHITECTURE.md#stack">Stack</a></li>
         <li><a href=".assets/ARCHITECTURE.md#directory-structure">Directory Structure</a></li>
         <li><a href=".assets/ARCHITECTURE.md#database-schema">Database Schema</a></li>
+        <li><a href=".assets/ARCHITECTURE.md#database-permissions">Database Permissions</a></li>
         <li><a href=".assets/ARCHITECTURE.md#auth-flow">Auth Flow</a></li>
         <li><a href=".assets/ARCHITECTURE.md#rate-limiting">Rate Limiting</a></li>
+        <li><a href=".assets/ARCHITECTURE.md#dashboard-caching">Dashboard Caching</a></li>
         <li><a href=".assets/ARCHITECTURE.md#api-reference">API Reference</a></li>
         <li><a href=".assets/ARCHITECTURE.md#workflow">Workflow</a></li>
         <li><a href=".assets/ARCHITECTURE.md#nlp-service">NLP Service</a></li>
@@ -91,7 +93,7 @@ Make sure you have the following installed and available before setting up the p
 | ---------------------- | ----------------------------------------- | -------------------------------- |
 | Node.js 20+            | https://nodejs.org/                       | Running the frontend and backend |
 | PostgreSQL 16          | https://www.postgresql.org/               | Primary database                 |
-| Redis 7                | https://redis.io/                         | Session cache                    |
+| Redis 7                | https://redis.io/                         | Session, rate-limit, and dashboard/settings cache |
 | Python 3.10+           | https://www.python.org/                   | Running the NLP service          |
 | Better Auth secret key | https://better-auth.com/docs/installation | Signing auth session tokens      |
 
@@ -126,6 +128,8 @@ Once the backend's `.env` is configured, apply the schema to your Postgres datab
 ```bash
 python3 migratedb.py
 ```
+
+For local development this works fine against the same `DATABASE_URL` the app uses at runtime. If you've locked that role down to row-level access only (recommended for production &mdash; see [Database Permissions](.assets/ARCHITECTURE.md#database-permissions)), point this at a privileged connection instead.
 
 ### Start Development Servers
 
