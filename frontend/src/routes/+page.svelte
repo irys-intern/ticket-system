@@ -122,7 +122,7 @@
         <ToolLinkCard
           icon={GearSixIcon}
           label="App Settings"
-          description="Tune the site icon, NLP debounce, and dashboard cache TTL."
+          description="Tune site options quickly."
           href="/admin/settings"
         />
       </CardContent>
