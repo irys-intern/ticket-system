@@ -67,10 +67,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     if (session) {
         const [dbUser] = await db
-            .select({ role: userTable.role })
+            .select({ role: userTable.role, active: userTable.active })
             .from(userTable)
             .where(eq(userTable.id, session.user.id));
-        event.locals.session = {
+        // A deactivated account keeps its session row, but is treated as logged out on
+        // every subsequent request rather than having its session forcibly revoked.
+        event.locals.session = dbUser && !dbUser.active ? null : {
             userId: session.user.id,
             email: session.user.email,
             name: session.user.name,

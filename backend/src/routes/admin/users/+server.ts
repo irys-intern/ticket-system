@@ -1,10 +1,11 @@
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
 import { userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import { redis } from "../../../lib/redis.ts";
 import { getOrSetCache, invalidateCache } from "../../../lib/cache.ts";
 import { getDashboardCacheTtlSeconds, DASHBOARD_USERS_CACHE_KEY } from "../../../lib/dashboardCache.ts";
+import { DELETED_USER_ID } from "../../../lib/deletedUser.ts";
 
 export const GET: RequestHandler = async ({ locals }) => {
     if (locals.user?.role !== 'admin') {
@@ -14,7 +15,7 @@ export const GET: RequestHandler = async ({ locals }) => {
         redis,
         DASHBOARD_USERS_CACHE_KEY,
         await getDashboardCacheTtlSeconds(),
-        () => db.select().from(userTable),
+        () => db.select().from(userTable).where(ne(userTable.id, DELETED_USER_ID)),
     );
     return json({users: dbHits});
 }

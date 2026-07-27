@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
   const sessionId = cookies.get('sessionId');
   const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
 
-  let users: { id: string; name: string; email: string; role: string; status: string }[] = [];
+  let users: { id: string; name: string; email: string; role: string; active: boolean }[] = [];
   let errors: string[] = [];
   try {
     const res = await fetch(`${backendUrl()}/admin/users`, { headers });

@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '../db/index.ts';
 import { ticketsTable, userTable } from '../db/schema.ts';
-import { eq, and, not, or } from 'drizzle-orm';
+import { eq, and, ne, not, or } from 'drizzle-orm';
 import { redis } from '../lib/redis.ts';
 import { getOrSetCache } from '../lib/cache.ts';
 import {
@@ -10,6 +10,7 @@ import {
   dashboardHomeAgentCacheKey,
   dashboardHomeUserCacheKey,
 } from '../lib/dashboardCache.ts';
+import { DELETED_USER_ID } from '../lib/deletedUser.ts';
 
 export async function GET({ locals }: RequestEvent) {
   const user = locals.user;
@@ -90,7 +91,7 @@ export async function GET({ locals }: RequestEvent) {
         adminOpen: await db.select()
                              .from(ticketsTable)
                              .where(eq(ticketsTable.status, 'open')),
-        adminUsers: await db.select().from(userTable),
+        adminUsers: await db.select().from(userTable).where(ne(userTable.id, DELETED_USER_ID)),
       }),
     ));
   }
