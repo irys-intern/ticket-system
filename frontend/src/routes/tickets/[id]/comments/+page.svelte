@@ -11,6 +11,7 @@
   import BackLink from '$lib/components/BackLink.svelte';
   import PaperPlaneTiltIcon from 'phosphor-svelte/lib/PaperPlaneTiltIcon';
   import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+  import RobotIcon from 'phosphor-svelte/lib/RobotIcon';
   import { fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import type { PageData } from './$types';
@@ -104,17 +105,26 @@
       <div class="-mt-1 -mr-1 -ml-1 max-h-[50vh] space-y-2 overflow-y-auto pt-1 pr-1 pb-4 pl-1">
         {#each reversedComments as comment (comment.id)}
           <div animate:flip={{ duration: 200 }} transition:fly={{ y: -8, duration: 200 }}>
-            <Card class="py-3">
-              <CardHeader class="px-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm font-semibold">{comment.userName}</span>
-                  <span class="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
-                </div>
-              </CardHeader>
-              <CardContent class="px-3 pt-0">
-                <p class="text-sm">{comment.content}</p>
-              </CardContent>
-            </Card>
+            {#if comment.isAutomated}
+              <div class="flex items-center justify-center gap-1.5 py-1 text-xs text-muted-foreground">
+                <RobotIcon class="size-3.5 shrink-0" />
+                <span>{comment.content}</span>
+                <span aria-hidden="true">·</span>
+                <span>{new Date(comment.createdAt).toLocaleString()}</span>
+              </div>
+            {:else}
+              <Card class="py-3">
+                <CardHeader class="px-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold">{comment.userName}</span>
+                    <span class="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
+                  </div>
+                </CardHeader>
+                <CardContent class="px-3 pt-0">
+                  <p class="text-sm">{comment.content}</p>
+                </CardContent>
+              </Card>
+            {/if}
           </div>
         {/each}
       </div>

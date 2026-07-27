@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   const sessionId = cookies.get('sessionId');
   const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
 
-  let comments: { id: string; userName: string; createdAt: string; content: string }[] = [];
+  let comments: { id: string; userName: string; createdAt: string; content: string; isAutomated: boolean }[] = [];
   let error: string | null = null;
   try {
     const res = await fetch(`${backendUrl()}/tickets/${id}/comments`, { headers });

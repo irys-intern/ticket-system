@@ -43,6 +43,7 @@ export const assignTicketSchema = z.object({
 // Comment schemas
 export const createCommentSchema = z.object({
   content: z.string().min(1, 'Comment content is required').max(5000),
+  automated: z.boolean().optional(),
 });
 
 // Types

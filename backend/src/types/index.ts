@@ -53,6 +53,7 @@ export interface Comment {
   ticketId: string;
   userId: string;
   content: string;
+  isAutomated: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -31,6 +31,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
         .select({
             id: commentsTable.id,
             content: commentsTable.content,
+            isAutomated: commentsTable.isAutomated,
             createdAt: commentsTable.createdAt,
             updatedAt: commentsTable.updatedAt,
             userId: commentsTable.userId,
@@ -65,6 +66,7 @@ export const POST: RequestHandler = async ({ locals, params, request, fetch }) =
         ticketId,
         userId: user.userId,
         content: parsed.data.content,
+        isAutomated: parsed.data.automated ?? false,
     }).returning();
 
     await fetch('/admin/audit', {

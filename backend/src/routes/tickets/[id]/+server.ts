@@ -67,7 +67,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket claimed`})
+                body: JSON.stringify({ ticketId: params.id, content: `Ticket claimed`, automated: true })
             })
             return json({success: true, ticket: ret})
         } else if (data.action === 'forfeit') {
@@ -89,7 +89,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket forfeited`})
+                body: JSON.stringify({ ticketId: params.id, content: `Ticket forfeited`, automated: true })
             })
             return json({success: true})
         } else if (data.action === 'close') {
@@ -120,7 +120,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket status updated to ${data.status}`})
+                body: JSON.stringify({ ticketId: params.id, content: `Ticket status updated to ${data.status}`, automated: true })
             })
             return json({ok: true, success: true})
         } else if (data.action === 'update_metadata') {
@@ -148,11 +148,11 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket ${message}`})
+                body: JSON.stringify({ ticketId: params.id, content: `Ticket ${message}`, automated: true })
             })
             return json({ok: true, success: true})
         }
-        
+
         return json({success: false, body: 'Invalid action'})
     } else if (user.role === 'admin') {
         if (data.action === 'assign') {
@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) An agent has been assigned to this ticket.`})
+                body: JSON.stringify({ ticketId: params.id, content: `An agent has been assigned to this ticket.`, automated: true })
             })
             return json({success: true, ticket: ret})
         } else if (data.action === 'unassign') {
@@ -190,7 +190,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) This ticket's agent has been unassigned`})
+                body: JSON.stringify({ ticketId: params.id, content: `This ticket's agent has been unassigned`, automated: true })
             })
             return json({success: true})
         } else if (data.action === 'close') {
@@ -205,7 +205,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket closed`})
+                body: JSON.stringify({ ticketId: params.id, content: `Ticket closed`, automated: true })
             })
             return json({ok: true, success: true})
         } else if (data.action === 'update_metadata') {
@@ -232,7 +232,7 @@ export const POST: RequestHandler = async ({ params, request, locals, fetch }) =
             await fetch(`/tickets/${params.id}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ticketId: params.id, content: `(Automated message) Ticket ${message}`})
+                body: JSON.stringify({ ticketId: params.id, content: `Ticket ${message}`, automated: true })
             })
             return json({ok: true, success: true})
         }

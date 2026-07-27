@@ -115,6 +115,7 @@ export const commentsTable = pgTable('comments', {
   ticketId: integer('ticket_id').references(() => ticketsTable.id).notNull(),
   userId: text('user_id').references(() => userTable.id).notNull(),
   content: text('content').notNull(),
+  isAutomated: boolean('is_automated').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
