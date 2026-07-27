@@ -148,6 +148,16 @@ export const notificationsTable = pgTable(
   (table) => [index('notifications_userId_idx').on(table.userId)],
 );
 
+// Singleton row (id always 1) holding admin-configurable runtime settings.
+export const appSettingsTable = pgTable('app_settings', {
+  id: integer('id').primaryKey(),
+  siteIconUrl: text('site_icon_url').notNull().default('/favicon.svg'),
+  nlpDebounceMs: integer('nlp_debounce_ms').notNull().default(600),
+  dashboardCacheTtlSeconds: integer('dashboard_cache_ttl_seconds').notNull().default(60),
+  updatedBy: text('updated_by').references(() => userTable.id),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Relations
 export const userRelations = relations(userTable, ({ many }) => ({
   createdTickets: many(ticketsTable, { relationName: 'createdBy' }),
