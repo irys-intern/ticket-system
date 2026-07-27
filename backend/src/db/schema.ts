@@ -213,5 +213,9 @@ export const notificationsRelations = relations(notificationsTable, ({ one }) =>
   user: one(userTable, { fields: [notificationsTable.userId], references: [userTable.id] }),
 }));
 
+export const appSettingsRelations = relations(appSettingsTable, ({ one }) => ({
+  updatedByUser: one(userTable, { fields: [appSettingsTable.updatedBy], references: [userTable.id] }),
+}));
+
 // Keep usersTable as an alias for backwards compat within this file
 export const usersTable = userTable;

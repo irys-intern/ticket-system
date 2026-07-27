@@ -46,6 +46,13 @@ export const createCommentSchema = z.object({
   automated: z.boolean().optional(),
 });
 
+// Settings schemas
+export const updateSettingsSchema = z.object({
+  siteIconUrl: z.string().min(1, 'Icon URL is required').max(500),
+  nlpDebounceMs: z.number().int().min(0, 'Debounce must be at least 0ms').max(10_000, 'Debounce must be at most 10,000ms'),
+  dashboardCacheTtlSeconds: z.number().int().min(1, 'Cache TTL must be at least 1 second').max(3600, 'Cache TTL must be at most 3600 seconds'),
+}).partial();
+
 // Types
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

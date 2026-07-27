@@ -1,4 +1,6 @@
-export const DASHBOARD_CACHE_TTL_SECONDS = 60;
+import { getSettings } from './settings.ts';
+
+export const getDashboardCacheTtlSeconds = async () => (await getSettings()).dashboardCacheTtlSeconds;
 
 export const DASHBOARD_TICKETS_CACHE_KEY = 'dashboard:tickets:admin';
 export const DASHBOARD_USERS_CACHE_KEY = 'dashboard:users';
