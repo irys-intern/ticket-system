@@ -1,16 +1,10 @@
 <title>Homepage</title>
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { resolve } from '$app/paths';
-  import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Separator } from '$lib/components/ui/separator';
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '$lib/components/ui/dialog';
   import StatCard from '$lib/components/StatCard.svelte';
   import ToolLinkCard from '$lib/components/ToolLinkCard.svelte';
-  import { PUBLIC_BACKEND_URL } from '$env/static/public';
-  import { toast } from '$lib/toast';
   import type { PageData } from './$types';
 
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
@@ -27,33 +21,15 @@
   import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
   import SignInIcon from 'phosphor-svelte/lib/SignInIcon';
   import UserPlusIcon from 'phosphor-svelte/lib/UserPlusIcon';
-  import SignOutIcon from 'phosphor-svelte/lib/SignOutIcon';
   import GearSixIcon from 'phosphor-svelte/lib/GearSixIcon';
 
   let { data }: { data: PageData } = $props();
-
-  let showLogoutDialog = $state(false);
 
   function withMinDelay<T>(promise: Promise<T>, ms: number): Promise<T> {
     return Promise.all([promise, new Promise((resolve) => setTimeout(resolve, ms))]).then(([result]) => result);
   }
 
   let stats = $derived(withMinDelay(data.stats, 600));
-
-  async function handleLogout() {
-    const response = await fetch(`${PUBLIC_BACKEND_URL}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    showLogoutDialog = false;
-    if (response.ok) {
-      toast.success('Signed out.');
-      await goto(resolve('/'), { replaceState: true, invalidateAll: true });
-    } else {
-      toast.error('Unable to log out. Please try again later.');
-    }
-  }
 </script>
 
 <div class="space-y-4">
@@ -64,9 +40,6 @@
     </div>
     <div class="flex items-center gap-3">
       <Badge variant="secondary" class="capitalize">{data.userRole}</Badge>
-      {#if data.userRole !== 'guest'}
-        <Button variant="outline" size="sm" onclick={() => (showLogoutDialog = true)}>Logout</Button>
-      {/if}
     </div>
   </div>
 
@@ -255,17 +228,4 @@
       </CardContent>
     </Card>
   {/if}
-
-  <Dialog bind:open={showLogoutDialog}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Log out</DialogTitle>
-      </DialogHeader>
-      <p class="text-sm text-muted-foreground">Are you sure you want to log out?</p>
-      <DialogFooter>
-        <Button variant="outline" onclick={() => (showLogoutDialog = false)}>Cancel</Button>
-        <Button variant="destructive" onclick={handleLogout}><SignOutIcon /> Log Out</Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
 </div>

@@ -9,6 +9,7 @@
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import NotificationBell from '$lib/components/NotificationBell.svelte';
   import NavigationProgress from '$lib/components/NavigationProgress.svelte';
+  import ProfileMenu from '$lib/components/ProfileMenu.svelte';
   import { flushQueuedToast } from '$lib/toast';
   import './layout.css';
   import type { LayoutData } from './$types';
@@ -41,6 +42,9 @@
             <NotificationBell />
           {/if}
           <ThemeToggle />
+          {#if data.user}
+            <ProfileMenu user={data.user} />
+          {/if}
         </div>
       </div>
     </header>
