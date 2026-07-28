@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fly } from 'svelte/transition';
+  import { scale } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
   import { goto } from '$app/navigation';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import BellIcon from 'phosphor-svelte/lib/BellIcon';
   import BellSlashIcon from 'phosphor-svelte/lib/BellSlashIcon';
+  import CheckCheckIcon from 'phosphor-svelte/lib/ChecksIcon';
   import { Badge } from '$lib/components/ui/badge';
 
   type Notification = {
@@ -89,6 +91,10 @@
     }
   }
 
+  function handleKeydown(event: KeyboardEvent) {
+    if (open && event.key === 'Escape') open = false;
+  }
+
   // Fired by pages that mark notifications read as a side effect of being
   // visited (e.g. opening a ticket clears its notifications) so the badge
   // count doesn't wait for the next 30s poll.
@@ -101,10 +107,12 @@
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30_000);
     window.addEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleKeydown);
     window.addEventListener('notifications:refresh', handleExternalRefresh);
     return () => {
       clearInterval(interval);
       window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('notifications:refresh', handleExternalRefresh);
     };
   });
@@ -115,9 +123,10 @@
     type="button"
     onclick={toggleOpen}
     aria-label="Notifications"
+    aria-expanded={open}
     class="relative inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
   >
-    <BellIcon class="size-4" />
+    <BellIcon class="size-4" weight={unreadCount > 0 ? 'fill' : 'regular'} />
     {#if unreadCount > 0}
       <Badge
         variant="destructive"
@@ -130,24 +139,32 @@
 
   {#if open}
     <div
-      transition:fly={{ y: -4, duration: 120 }}
-      class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border bg-card shadow-lg ring-1 ring-black/5 dark:ring-white/10"
+      transition:scale={{ start: 0.96, duration: 140, easing: quintOut }}
+      class="absolute right-0 z-50 mt-2 w-84 origin-top-right overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5 dark:ring-white/10"
     >
-      <div class="flex items-center justify-between border-b px-3.5 py-2.5">
-        <span class="text-sm font-semibold">Notifications</span>
+      <div class="flex items-center justify-between px-4 py-3">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-semibold">Notifications</span>
+          {#if unreadCount > 0}
+            <Badge variant="secondary" class="h-4.5 px-1.5 text-[10px]">{unreadCount} new</Badge>
+          {/if}
+        </div>
         {#if unreadCount > 0}
           <button
             type="button"
             onclick={markAllRead}
-            class="text-xs font-medium text-primary hover:underline"
+            class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
           >
-            Mark all as read
+            <CheckCheckIcon class="size-3.5" /> Mark all read
           </button>
         {/if}
       </div>
-      <div class="max-h-80 divide-y overflow-y-auto">
+
+      <div class="border-t"></div>
+
+      <div class="max-h-80 overflow-y-auto p-1.5">
         {#if notifications.length === 0}
-          <div class="flex flex-col items-center gap-2 px-3 py-8 text-center">
+          <div class="flex flex-col items-center gap-2 px-3 py-10 text-center">
             <BellSlashIcon class="size-6 text-muted-foreground/50" />
             <p class="text-sm text-muted-foreground">You're all caught up.</p>
           </div>
@@ -156,7 +173,9 @@
             <button
               type="button"
               onclick={() => markRead(notification)}
-              class="flex w-full items-start gap-2.5 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-muted/60"
+              class="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors hover:bg-accent {notification.read
+                ? ''
+                : 'bg-primary/5'}"
             >
               <span
                 class="mt-1.5 size-1.5 shrink-0 rounded-full {notification.read

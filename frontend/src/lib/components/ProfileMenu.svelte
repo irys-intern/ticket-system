@@ -15,7 +15,8 @@
   import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
   import SignOutIcon from 'phosphor-svelte/lib/SignOutIcon';
   import { onMount } from 'svelte';
-  import { fly } from 'svelte/transition';
+  import { scale } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
 
   let { user }: { user: { userId: string; email: string; name: string; role: string } } = $props();
 
@@ -32,6 +33,10 @@
     if (open && container && !container.contains(event.target as Node)) {
       open = false;
     }
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (open && event.key === 'Escape') open = false;
   }
 
   async function handleLogout() {
@@ -51,7 +56,11 @@
 
   onMount(() => {
     window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleKeydown);
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeydown);
+    };
   });
 </script>
 
@@ -60,36 +69,56 @@
     type="button"
     onclick={() => (open = !open)}
     aria-label="Profile menu"
-    class="flex items-center gap-1 rounded-lg py-1 pr-1 pl-1.5 text-sm transition-colors hover:bg-muted"
+    aria-expanded={open}
+    class="flex items-center gap-1 rounded-lg py-1 pr-1.5 pl-1 transition-colors hover:bg-muted"
   >
     <span
-      class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+      class="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/70 text-xs font-semibold text-primary-foreground ring-2 ring-transparent transition-shadow {open
+        ? 'ring-primary/30'
+        : ''}"
     >
       {initials(user.name)}
     </span>
-    <CaretDownIcon class="size-3.5 text-muted-foreground" />
+    <CaretDownIcon
+      class="size-3.5 text-muted-foreground transition-transform duration-150 {open ? 'rotate-180' : ''}"
+    />
   </button>
 
   {#if open}
     <div
-      transition:fly={{ y: -4, duration: 120 }}
-      class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border bg-card shadow-lg ring-1 ring-black/5 dark:ring-white/10"
+      transition:scale={{ start: 0.96, duration: 140, easing: quintOut }}
+      class="absolute right-0 z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5 dark:ring-white/10"
     >
-      <div class="border-b px-3.5 py-2.5">
-        <p class="truncate text-sm font-medium" title={user.name}>{user.name}</p>
-        <p class="truncate text-xs text-muted-foreground" title={user.email}>{user.email}</p>
-        <Badge variant="secondary" class="mt-1.5 capitalize">{user.role}</Badge>
+      <div class="flex items-center gap-3 px-4 py-3.5">
+        <span
+          class="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/70 text-sm font-semibold text-primary-foreground"
+        >
+          {initials(user.name)}
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-semibold" title={user.name}>{user.name}</p>
+          <p class="truncate text-xs text-muted-foreground" title={user.email}>{user.email}</p>
+        </div>
       </div>
-      <button
-        type="button"
-        onclick={() => {
-          open = false;
-          showLogoutDialog = true;
-        }}
-        class="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm text-destructive transition-colors hover:bg-muted/60"
-      >
-        <SignOutIcon class="size-4" /> Log Out
-      </button>
+
+      <div class="px-4 pb-3">
+        <Badge variant="secondary" class="capitalize">{user.role}</Badge>
+      </div>
+
+      <div class="border-t"></div>
+
+      <div class="p-1.5">
+        <button
+          type="button"
+          onclick={() => {
+            open = false;
+            showLogoutDialog = true;
+          }}
+          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+        >
+          <SignOutIcon class="size-4" /> Log Out
+        </button>
+      </div>
     </div>
   {/if}
 </div>
