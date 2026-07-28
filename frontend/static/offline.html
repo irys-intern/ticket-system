@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're offline — Ticket System</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #fdfcff;
+      --foreground: #211b2b;
+      --card: #ffffff;
+      --muted: #6b6478;
+      --primary: #b0207e;
+      --border: rgba(0, 0, 0, 0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #16131d;
+        --foreground: #e9e6ee;
+        --card: #211d2b;
+        --muted: #9891a3;
+        --primary: #d94aa8;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 1.5rem;
+    }
+    .card {
+      max-width: 26rem;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .icon {
+      width: 3rem;
+      height: 3rem;
+      margin: 0 auto 1rem;
+      color: var(--primary);
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+    }
+    p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0 0 1.5rem;
+    }
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 0.5rem;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <svg class="icon" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M85 106a68 68 0 0 1 86-8M53 74a112 112 0 0 1 96-27M24 44a152 152 0 0 1 128-33" stroke="currentColor" stroke-width="14" stroke-linecap="round" opacity="0.35"/>
+      <circle cx="128" cy="192" r="14" fill="currentColor"/>
+      <line x1="32" y1="32" x2="224" y2="224" stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
+    </svg>
+    <h1>You're offline</h1>
+    <p>Ticket System can't reach the network right now. Check your connection and try again — anything you already had open will keep working once you're back online.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

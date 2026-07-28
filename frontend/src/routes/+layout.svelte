@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from 'svelte';
+  import { dev } from '$app/environment';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { fade } from 'svelte/transition';
@@ -9,6 +10,7 @@
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import NotificationBell from '$lib/components/NotificationBell.svelte';
   import NavigationProgress from '$lib/components/NavigationProgress.svelte';
+  import OfflineNotice from '$lib/components/OfflineNotice.svelte';
   import ProfileMenu from '$lib/components/ProfileMenu.svelte';
   import { flushQueuedToast } from '$lib/toast';
   import './layout.css';
@@ -17,12 +19,20 @@
 
   onMount(() => {
     flushQueuedToast();
+    if ('serviceWorker' in navigator) {
+      // Vite's dev server serves this file as an ES module (an `import` wrapper), which is
+      // a syntax error in a classic worker script -- only prod builds bundle it as classic.
+      navigator.serviceWorker
+        .register('/service-worker.js', { type: dev ? 'module' : 'classic' })
+        .catch((err) => console.error('Service worker registration failed:', err));
+    }
   });
 </script>
 
 <ModeWatcher defaultMode="system" />
 <Toaster />
 <NavigationProgress />
+<OfflineNotice />
 
 <TooltipProvider>
   <div class="min-h-screen bg-background text-foreground antialiased flex flex-col">
