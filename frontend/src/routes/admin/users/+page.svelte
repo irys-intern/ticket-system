@@ -27,6 +27,7 @@
     TableRow,
   } from '$lib/components/ui/table';
   import { toast } from '$lib/toast';
+  import DownloadSimpleIcon from 'phosphor-svelte/lib/DownloadSimpleIcon';
   import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
   import PencilSimpleIcon from 'phosphor-svelte/lib/PencilSimpleIcon';
@@ -160,6 +161,43 @@
 
   const roleVariant = (role: string) =>
     role === 'admin' ? 'destructive' : role === 'agent' ? 'default' : 'secondary';
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  let exportingAll = $state(false);
+  async function handleExportAll() {
+    exportingAll = true;
+    try {
+      const response = await fetch(PUBLIC_BACKEND_URL + '/admin/users/export', {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        toast.error('Unable to export users');
+        return;
+      }
+      downloadBlob(await response.blob(), 'users-export.csv');
+    } finally {
+      exportingAll = false;
+    }
+  }
+
+  async function handleExportUser(user: (typeof users)[0]) {
+    const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}/export`, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      toast.error(`Unable to export data for "${user.name}"`);
+      return;
+    }
+    downloadBlob(await response.blob(), `user-${user.id}-export.json`);
+  }
 </script>
 
 <title>User Management</title>
@@ -169,12 +207,17 @@
     <BackLink href={resolve('/')} />
   </div>
 
-  <div>
-    <div class="flex items-center gap-2.5">
-      <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
-      <Badge variant="secondary">{data.total} users</Badge>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
+        <Badge variant="secondary">{data.total} users</Badge>
+      </div>
+      <p class="text-sm text-muted-foreground">View and manage user accounts and roles.</p>
     </div>
-    <p class="text-sm text-muted-foreground">View and manage user accounts and roles.</p>
+    <Button size="sm" variant="outline" onclick={handleExportAll} disabled={exportingAll}>
+      <DownloadSimpleIcon /> {exportingAll ? 'Exporting…' : 'Export All (CSV)'}
+    </Button>
   </div>
 
   {#if errors.length}
@@ -219,11 +262,11 @@
       <TableHeader>
         <TableRow>
           <TableHead class="w-16">ID</TableHead>
-          <TableHead class="w-36">Name</TableHead>
+          <TableHead class="w-32">Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead class="w-20">Role</TableHead>
           <TableHead class="w-20">Status</TableHead>
-          <TableHead class="w-72">Actions</TableHead>
+          <TableHead class="w-88">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -267,6 +310,14 @@
                   ><TrashIcon /> Delete</Button
                 >
               {/if}
+              <Button
+                size="sm"
+                variant="outline"
+                title="Download this user's data"
+                onclick={() => handleExportUser(user)}
+              >
+                <DownloadSimpleIcon />
+              </Button>
             </TableCell>
           </TableRow>
         {/each}
