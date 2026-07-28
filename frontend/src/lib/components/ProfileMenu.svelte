@@ -73,7 +73,7 @@
     class="flex items-center gap-1 rounded-lg py-1 pr-1.5 pl-1 transition-colors hover:bg-muted"
   >
     <span
-      class="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/70 text-xs font-semibold text-primary-foreground ring-2 ring-transparent transition-shadow {open
+      class="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/70 text-[10px] font-semibold text-primary-foreground ring-2 ring-transparent transition-shadow {open
         ? 'ring-primary/30'
         : ''}"
     >
@@ -87,7 +87,7 @@
   {#if open}
     <div
       transition:scale={{ start: 0.96, duration: 140, easing: quintOut }}
-      class="absolute right-0 z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5 dark:ring-white/10"
+      class="absolute right-0 z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-xl bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10"
     >
       <div class="flex items-center gap-3 px-4 py-3.5">
         <span

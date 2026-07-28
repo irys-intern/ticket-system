@@ -145,7 +145,7 @@
   {#if open}
     <div
       transition:scale={{ start: 0.96, duration: 140, easing: quintOut }}
-      class="absolute right-0 z-50 mt-2 w-84 origin-top-right overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5 dark:ring-white/10"
+      class="absolute right-0 z-50 mt-2 w-84 origin-top-right overflow-hidden rounded-xl bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10"
     >
       <div class="flex items-center justify-between px-4 py-3">
         <div class="flex items-center gap-2">
@@ -154,15 +154,14 @@
             <Badge variant="secondary" class="h-4.5 px-1.5 text-[10px]">{unreadCount} new</Badge>
           {/if}
         </div>
-        {#if unreadCount > 0}
-          <button
-            type="button"
-            onclick={markAllRead}
-            class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
-          >
-            <CheckCheckIcon class="size-3.5" /> Mark all read
-          </button>
-        {/if}
+        <button
+          type="button"
+          onclick={markAllRead}
+          disabled={unreadCount === 0}
+          class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground/50 disabled:hover:text-muted-foreground/50"
+        >
+          <CheckCheckIcon class="size-3.5" /> Mark all read
+        </button>
       </div>
 
       <div class="border-t"></div>

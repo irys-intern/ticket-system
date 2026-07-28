@@ -11,6 +11,15 @@ html {
 	scrollbar-gutter: stable;
 }
 
+/* Safari's scrollbar-gutter support is inconsistent -- fall back to forcing
+   the scrollbar to always render, which reserves the same width without
+   depending on that property. */
+@supports not (scrollbar-gutter: stable) {
+	html {
+		overflow-y: scroll;
+	}
+}
+
 /* Phlox theme — vivid magenta-violet accent over a light or deep purple-black base */
 :root {
 	--background: oklch(0.99 0.006 295);
