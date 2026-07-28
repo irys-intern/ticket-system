@@ -123,8 +123,8 @@
             <TableHead class="w-16">ID</TableHead>
             <TableHead class="w-20">Ticket</TableHead>
             <TableHead>User</TableHead>
-            <TableHead>When</TableHead>
-            <TableHead>Action</TableHead>
+            <TableHead class="w-44">When</TableHead>
+            <TableHead class="w-32 text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -152,7 +152,7 @@
                 <TableCell class="text-sm whitespace-nowrap text-muted-foreground"
                   >{new Date(e.createdAt).toLocaleString()}</TableCell
                 >
-                <TableCell class="text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
+                <TableCell class="text-right text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
               </TableRow>
             {/each}
           {/if}
