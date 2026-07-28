@@ -50,6 +50,20 @@
     if (agents.length > 0 && !selectedAgentId) selectedAgentId = agents[0].id;
   });
 
+  // Visiting a ticket implicitly acknowledges any notifications about it --
+  // re-runs on `ticket.id` so client-side navigation between tickets (without
+  // a full reload) still clears the newly-visited ticket's notifications.
+  $effect(() => {
+    const id = ticket?.id;
+    if (id == null) return;
+    fetch(`${PUBLIC_BACKEND_URL}/notifications/read-by-ticket/${id}`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then(() => window.dispatchEvent(new CustomEvent('notifications:refresh')))
+      .catch(() => {});
+  });
+
   $effect(() => {
     loadingAuditTrail = true;
     data.auditTrail.then((trail) => {

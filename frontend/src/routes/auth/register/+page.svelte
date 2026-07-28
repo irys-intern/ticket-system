@@ -11,7 +11,6 @@
   import UserIcon from 'phosphor-svelte/lib/UserIcon';
   import EnvelopeSimpleIcon from 'phosphor-svelte/lib/EnvelopeSimpleIcon';
   import LockKeyIcon from 'phosphor-svelte/lib/LockKeyIcon';
-  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import CircleNotchIcon from 'phosphor-svelte/lib/CircleNotchIcon';
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
@@ -21,12 +20,10 @@
   let password = $state('');
   let confirmPassword = $state('');
   let submitting = $state(false);
-  let successMessage = $state('');
   let errors: string[] = $state([]);
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
-    successMessage = '';
     errors = [];
 
     if (password !== confirmPassword) {
@@ -49,12 +46,11 @@
         errors = result.errors ?? [result.message ?? 'Unable to register'];
         toast.error(errors[0]);
       } else {
-        successMessage = result.message ?? 'Registration successful. Redirecting to login…';
         name = '';
         email = '';
         password = '';
         confirmPassword = '';
-        queueToast('success', successMessage);
+        queueToast('success', result.message ?? 'Registration successful. Redirecting to login…');
         location.href = '/auth/login';
       }
     } catch (error) {
@@ -81,13 +77,6 @@
     </CardHeader>
 
     <CardContent>
-      {#if successMessage}
-        <Alert variant="success" class="mb-4">
-          <CheckCircleIcon />
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      {/if}
-
       {#if errors.length}
         <Alert variant="destructive" class="mb-4">
           <WarningCircleIcon />

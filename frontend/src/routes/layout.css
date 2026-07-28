@@ -4,6 +4,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Always reserve the scrollbar's width, even on pages short enough not to need
+   one, so navigating between a scrolling and non-scrolling page doesn't shift
+   the content width when the scrollbar pops in or out. */
+html {
+	scrollbar-gutter: stable;
+}
+
 /* Phlox theme — vivid magenta-violet accent over a light or deep purple-black base */
 :root {
 	--background: oklch(0.99 0.006 295);

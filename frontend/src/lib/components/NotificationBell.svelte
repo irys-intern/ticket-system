@@ -80,6 +80,7 @@
     if (!res.ok) return;
     notifications = notifications.map((n) => ({ ...n, read: true }));
     unreadCount = 0;
+    open = false;
   }
 
   function handleClickOutside(event: MouseEvent) {
@@ -88,13 +89,23 @@
     }
   }
 
+  // Fired by pages that mark notifications read as a side effect of being
+  // visited (e.g. opening a ticket clears its notifications) so the badge
+  // count doesn't wait for the next 30s poll.
+  function handleExternalRefresh() {
+    fetchUnreadCount();
+    if (open) fetchNotifications();
+  }
+
   onMount(() => {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30_000);
     window.addEventListener('click', handleClickOutside);
+    window.addEventListener('notifications:refresh', handleExternalRefresh);
     return () => {
       clearInterval(interval);
       window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('notifications:refresh', handleExternalRefresh);
     };
   });
 </script>

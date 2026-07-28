@@ -9,7 +9,6 @@
   import { Label } from '$lib/components/ui/label';
   import { Textarea } from '$lib/components/ui/textarea';
   import { queueToast, toast } from '$lib/toast';
-  import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
   import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import { onMount } from 'svelte';
@@ -21,7 +20,6 @@
   let description = $state('');
   let category = $state('bug');
   let priority = $state('low');
-  let successMessage = $state('');
   let errors: string[] = $state([]);
 
   let suggestedPriority = $state('');
@@ -81,12 +79,11 @@
     });
     const result = await response.json();
     if (response.ok) {
-      successMessage = 'Ticket created successfully!';
       title = '';
       description = '';
       category = 'bug';
       priority = 'low';
-      queueToast('success', successMessage);
+      queueToast('success', 'Ticket created successfully!');
       location.href = `/tickets/${result.ticketId}`;
     } else {
       errors = result.errors ?? [result.message ?? 'Failed to create ticket. Please try again.'];
@@ -109,13 +106,6 @@
 
   <Card>
     <CardContent class="space-y-4">
-      {#if successMessage}
-        <Alert variant="success">
-          <CheckCircleIcon />
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      {/if}
-
       {#if errors.length}
         <Alert variant="destructive">
           <WarningCircleIcon />
