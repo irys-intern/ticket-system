@@ -20,7 +20,7 @@
   let open = $state(false);
   let unreadCount = $state(0);
   let notifications = $state<Notification[]>([]);
-  let filter: 'all' | 'unread' = $state('all');
+  let filter = $state<'all' | 'unread'>('all');
   let container: HTMLDivElement | undefined = $state();
 
   let visibleNotifications = $derived(
