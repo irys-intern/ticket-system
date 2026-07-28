@@ -20,7 +20,12 @@
   let open = $state(false);
   let unreadCount = $state(0);
   let notifications = $state<Notification[]>([]);
+  let filter: 'all' | 'unread' = $state('all');
   let container: HTMLDivElement | undefined = $state();
+
+  let visibleNotifications = $derived(
+    filter === 'unread' ? notifications.filter((n) => !n.read) : notifications
+  );
 
   function formatRelativeTime(iso: string) {
     const deltaMs = Date.now() - new Date(iso).getTime();
@@ -162,14 +167,30 @@
 
       <div class="border-t"></div>
 
+      <div class="flex items-center gap-1 px-2.5 pt-2">
+        {#each [{ key: 'all', label: 'All' }, { key: 'unread', label: 'Unread' }] as tab (tab.key)}
+          <button
+            type="button"
+            onclick={() => (filter = tab.key as 'all' | 'unread')}
+            class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors {filter === tab.key
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:text-foreground'}"
+          >
+            {tab.label}
+          </button>
+        {/each}
+      </div>
+
       <div class="max-h-80 overflow-y-auto p-1.5">
-        {#if notifications.length === 0}
+        {#if visibleNotifications.length === 0}
           <div class="flex flex-col items-center gap-2 px-3 py-10 text-center">
             <BellSlashIcon class="size-6 text-muted-foreground/50" />
-            <p class="text-sm text-muted-foreground">You're all caught up.</p>
+            <p class="text-sm text-muted-foreground">
+              {filter === 'unread' ? "No unread notifications." : "You're all caught up."}
+            </p>
           </div>
         {:else}
-          {#each notifications as notification (notification.id)}
+          {#each visibleNotifications as notification (notification.id)}
             <button
               type="button"
               onclick={() => markRead(notification)}
