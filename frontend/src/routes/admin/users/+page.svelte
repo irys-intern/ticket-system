@@ -266,7 +266,8 @@
           <TableHead>Email</TableHead>
           <TableHead class="w-20">Role</TableHead>
           <TableHead class="w-20">Status</TableHead>
-          <TableHead class="w-88">Actions</TableHead>
+          <TableHead class="w-72">Actions</TableHead>
+          <TableHead class="w-14"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -299,7 +300,12 @@
                 <Button size="sm" variant="outline" onclick={() => handleEdit(user)}
                   ><PencilSimpleIcon /> Edit</Button
                 >
-                <Button size="sm" variant="outline" onclick={() => handleToggleActive(user)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  class="w-27 justify-center"
+                  onclick={() => handleToggleActive(user)}
+                >
                   {#if user.active}
                     <ProhibitIcon /> Deactivate
                   {:else}
@@ -310,6 +316,8 @@
                   ><TrashIcon /> Delete</Button
                 >
               {/if}
+            </TableCell>
+            <TableCell>
               <Button
                 size="sm"
                 variant="outline"
@@ -323,7 +331,7 @@
         {/each}
         {#if sortedUsers.length === 0}
           <TableRow>
-            <TableCell colspan={6} class="py-6 text-center text-muted-foreground"
+            <TableCell colspan={7} class="py-6 text-center text-muted-foreground"
               >No users found.</TableCell
             >
           </TableRow>
