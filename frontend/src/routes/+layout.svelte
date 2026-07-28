@@ -50,10 +50,9 @@
         <div class="flex items-center gap-1">
           {#if data.user}
             <NotificationBell />
-          {/if}
-          <ThemeToggle />
-          {#if data.user}
             <ProfileMenu user={data.user} />
+          {:else}
+            <ThemeToggle />
           {/if}
         </div>
       </div>

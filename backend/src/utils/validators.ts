@@ -5,7 +5,7 @@ import { TicketStatus, TicketPriority, TicketCategory } from '../types/index.ts'
 export const registerSchema = z.object({
   email: z.email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer'),
 });
 
 export const loginSchema = z.object({

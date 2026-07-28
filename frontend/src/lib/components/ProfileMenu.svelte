@@ -12,8 +12,11 @@
     DialogTitle,
   } from '$lib/components/ui/dialog';
   import { toast } from '$lib/toast';
+  import { mode, toggleMode } from 'mode-watcher';
   import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
   import SignOutIcon from 'phosphor-svelte/lib/SignOutIcon';
+  import SunIcon from 'phosphor-svelte/lib/SunIcon';
+  import MoonIcon from 'phosphor-svelte/lib/MoonIcon';
   import { onMount } from 'svelte';
   import { scale } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
@@ -96,18 +99,28 @@
           {initials(user.name)}
         </span>
         <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-semibold" title={user.name}>{user.name}</p>
+          <div class="flex items-center gap-1.5">
+            <p class="truncate text-sm font-semibold" title={user.name}>{user.name}</p>
+            <Badge variant="secondary" class="shrink-0 capitalize">{user.role}</Badge>
+          </div>
           <p class="truncate text-xs text-muted-foreground" title={user.email}>{user.email}</p>
         </div>
       </div>
 
-      <div class="px-4 pb-3">
-        <Badge variant="secondary" class="capitalize">{user.role}</Badge>
-      </div>
-
-      <div class="border-t"></div>
+      <div class="border-t border-border/40"></div>
 
       <div class="p-1.5">
+        <button
+          type="button"
+          onclick={toggleMode}
+          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
+        >
+          <span class="relative block size-4">
+            <SunIcon class="absolute inset-0 size-4 scale-100 transition-all dark:scale-0" />
+            <MoonIcon class="absolute inset-0 size-4 scale-0 transition-all dark:scale-100" />
+          </span>
+          {mode.current === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        </button>
         <button
           type="button"
           onclick={() => {

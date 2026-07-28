@@ -164,7 +164,7 @@
         </button>
       </div>
 
-      <div class="border-t"></div>
+      <div class="border-t border-border/40"></div>
 
       <div class="flex items-center gap-1 px-2.5 pt-2">
         {#each [{ key: 'all', label: 'All' }, { key: 'unread', label: 'Unread' }] as tab (tab.key)}

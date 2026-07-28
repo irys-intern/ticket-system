@@ -95,7 +95,7 @@
           <Label for="name">Name</Label>
           <div class="relative">
             <UserIcon class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="name" type="text" bind:value={name} required placeholder="Your name" class="pl-8" />
+            <Input id="name" type="text" bind:value={name} required maxlength={100} placeholder="Your name" class="pl-8" />
           </div>
         </div>
 
