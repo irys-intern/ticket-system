@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import { PUBLIC_BACKEND_URL, PUBLIC_NLP_SERVER_URL } from '$env/static/public';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import BackLink from '$lib/components/BackLink.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
@@ -46,8 +46,9 @@
   async function fetchSuggestion() {
     suggestionLoading = true;
     try {
-      const res = await fetch(`${PUBLIC_NLP_SERVER_URL}/suggest`, {
+      const res = await fetch(`${PUBLIC_BACKEND_URL}/nlp-suggest`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: [title, description].filter(Boolean).join(' — ') }),
       });

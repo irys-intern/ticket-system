@@ -13,6 +13,7 @@ await initializeDatabase();
 const RATE_LIMIT_RULES: { pattern: RegExp; limit: number; windowSeconds: number }[] = [
     { pattern: /^\/auth\/(login|register)$/, limit: 10, windowSeconds: 10 },
     { pattern: /^\/create_ticket$/, limit: 30, windowSeconds: 60 },
+    { pattern: /^\/nlp-suggest$/, limit: 20, windowSeconds: 60 },
 ];
 
 // Only the configured frontend is allowed to make credentialed requests; reflecting

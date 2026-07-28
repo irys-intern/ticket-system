@@ -6,10 +6,7 @@ import { DELETED_USER_ID, ensureDeletedUserExists } from "../../../../lib/delete
 import { redis } from "../../../../lib/redis.ts";
 import { invalidateCache } from "../../../../lib/cache.ts";
 import {
-    DASHBOARD_AUDIT_CACHE_KEY,
     DASHBOARD_HOME_ADMIN_CACHE_KEY,
-    DASHBOARD_TICKETS_CACHE_KEY,
-    DASHBOARD_USERS_CACHE_KEY,
     dashboardHomeAgentCacheKey,
     dashboardHomeUserCacheKey,
 } from "../../../../lib/dashboardCache.ts";
@@ -66,8 +63,6 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
         throw error(404, "Not found")
     }
 
-    await invalidateCache(redis, DASHBOARD_USERS_CACHE_KEY)
-
     return json({ ok: true, user: updated })
 }
 
@@ -120,9 +115,6 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 
         await invalidateCache(
             redis,
-            DASHBOARD_USERS_CACHE_KEY,
-            DASHBOARD_TICKETS_CACHE_KEY,
-            DASHBOARD_AUDIT_CACHE_KEY,
             DASHBOARD_HOME_ADMIN_CACHE_KEY,
             dashboardHomeUserCacheKey(targetId),
             dashboardHomeAgentCacheKey(targetId),

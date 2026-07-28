@@ -1,20 +1,18 @@
-import { eq } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "../../../db/index.ts";
 import { auditEventsTable, notificationsTable, ticketsTable, userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import type { Ticket } from "../../../types/index.ts";
 import { redis } from "../../../lib/redis.ts";
-import { getOrSetCache, invalidateCache } from "../../../lib/cache.ts";
+import { invalidateCache } from "../../../lib/cache.ts";
 import {
-    DASHBOARD_AUDIT_CACHE_KEY,
-    getDashboardCacheTtlSeconds,
     DASHBOARD_HOME_ADMIN_CACHE_KEY,
-    DASHBOARD_TICKETS_CACHE_KEY,
     dashboardHomeAgentCacheKey,
     dashboardHomeUserCacheKey,
 } from "../../../lib/dashboardCache.ts";
+import { AUDIT_ACTIONS, auditQuerySchema } from "../../../utils/validators.ts";
 
-export const GET: RequestHandler = async ({ locals, request, fetch }) => {
+export const GET: RequestHandler = async ({ locals, request, fetch, url }) => {
     const user = locals.user
     const ticket_id = request.headers.get("X-Ticket-Id")
     if (ticket_id) {
@@ -33,17 +31,43 @@ export const GET: RequestHandler = async ({ locals, request, fetch }) => {
     if (!user || !user.role || !user.userId || (user.role !== 'admin')) {
         throw error(403, "Forbidden")
     }
+
+    const parsed = auditQuerySchema.safeParse(Object.fromEntries(url.searchParams));
+    if (!parsed.success) {
+        throw error(400, "Invalid query parameters");
+    }
+    const { page, limit, q, action } = parsed.data;
+
+    const conditions = [];
+    if (action) conditions.push(eq(auditEventsTable.action, action));
+    if (q) {
+        const term = `%${q}%`;
+        const matchingUsers = await db.select({ id: userTable.id }).from(userTable)
+            .where(or(ilike(userTable.name, term), ilike(userTable.email, term)));
+        const orConditions = [ilike(auditEventsTable.action, term), sql`${auditEventsTable.ticketId}::text ILIKE ${term}`];
+        if (matchingUsers.length) orConditions.push(inArray(auditEventsTable.userId, matchingUsers.map((u) => u.id)));
+        conditions.push(or(...orConditions)!);
+    }
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
     try {
-        const { audit_events, users } = await getOrSetCache(
-            redis,
-            DASHBOARD_AUDIT_CACHE_KEY,
-            await getDashboardCacheTtlSeconds(),
-            async () => ({
-                audit_events: await db.select().from(auditEventsTable),
-                users: await db.select().from(userTable),
-            }),
-        );
-        return json({events: audit_events, users: users})
+        const [audit_events, [{ total }], users] = await Promise.all([
+            db.select().from(auditEventsTable)
+                .where(whereClause)
+                .orderBy(desc(auditEventsTable.id))
+                .limit(limit)
+                .offset((page - 1) * limit),
+            db.select({ total: count() }).from(auditEventsTable).where(whereClause),
+            db.select().from(userTable),
+        ]);
+        return json({
+            events: audit_events,
+            users,
+            page,
+            limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+        })
     } catch (err) {
         return json({error: err})
     }
@@ -56,8 +80,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
     const req = await request.json()
     const action = req.action
-    const allowedActions = ["ticket created", "ticket updated", "ticket assigned", "ticket reassigned", "status changed", "comment added"] as const
-    if (!allowedActions.includes(action)) {
+    if (!AUDIT_ACTIONS.includes(action)) {
         throw error(400, "Bad action")
     }
     const ticketId = Number(req.ticketId)
@@ -70,7 +93,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
     try {
         await db.insert(auditEventsTable).values({ticketId, userId, action})
-        await invalidateCache(redis, DASHBOARD_AUDIT_CACHE_KEY, DASHBOARD_TICKETS_CACHE_KEY)
         const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId)).limit(1)
         if (ticket) {
             const homeKeys = [DASHBOARD_HOME_ADMIN_CACHE_KEY, dashboardHomeUserCacheKey(ticket.createdBy)]

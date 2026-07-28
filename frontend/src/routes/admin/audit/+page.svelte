@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { page as pageStore } from '$app/state';
   import BackLink from '$lib/components/BackLink.svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
   import { Badge } from '$lib/components/ui/badge';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
@@ -14,7 +17,7 @@
   } from '$lib/components/ui/table';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
-  import type { AuditEvent } from '../../../types/index.ts';
+  import { untrack } from 'svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -22,25 +25,50 @@
   const selectClass =
     'h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring';
 
-  let query = $state('');
-  let actionFilter = $state('all');
+  // Kept in sync with backend/src/utils/validators.ts's AUDIT_ACTIONS -- the two
+  // apps don't share code, so this is the frontend's copy of that fixed action set.
+  const ACTION_OPTIONS = [
+    'ticket created',
+    'ticket updated',
+    'ticket assigned',
+    'ticket reassigned',
+    'status changed',
+    'comment added',
+  ];
+
+  let query = $state(untrack(() => data.q));
+  let actionFilter = $state(untrack(() => data.action || 'all'));
   let events = $derived(data.events);
   let users = $derived(data.users);
-
-  let actionOptions = $derived([...new Set(events.map((e) => e.action))].sort());
-
-  let filtered = $derived(
-    events.filter((e: AuditEvent) => {
-      if (actionFilter !== 'all' && e.action !== actionFilter) return false;
-      const target = typeof e.target === 'object' ? JSON.stringify(e.target) : String(e.target);
-      const s = `${getUserString(e.userId)} ${e.action} ${target} ${e.ticketId}`.toLowerCase();
-      return s.includes(query.trim().toLowerCase());
-    })
-  );
 
   function getUserString(userId: string) {
     const user = users.find((u) => u.id === userId);
     return user ? `${user.name} (${user.id})` : `User ${userId}`;
+  }
+
+  function navigate(params: { page?: number; q?: string; action?: string }) {
+    const next = new URLSearchParams(pageStore.url.searchParams);
+    if (params.q !== undefined) {
+      if (params.q) next.set('q', params.q);
+      else next.delete('q');
+      next.delete('page');
+    }
+    if (params.action !== undefined) {
+      if (params.action && params.action !== 'all') next.set('action', params.action);
+      else next.delete('action');
+      next.delete('page');
+    }
+    if (params.page !== undefined) {
+      if (params.page > 1) next.set('page', String(params.page));
+      else next.delete('page');
+    }
+    goto(`?${next}`, { keepFocus: true, noScroll: true });
+  }
+
+  let searchDebounce: ReturnType<typeof setTimeout>;
+  function onSearchInput() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => navigate({ q: query }), 300);
   }
 </script>
 
@@ -55,26 +83,32 @@
     <div>
       <div class="flex items-center gap-2.5">
         <h1 class="text-2xl font-bold tracking-tight">Audit Log</h1>
-        <Badge variant="secondary">{filtered.length} of {events.length} events</Badge>
+        <Badge variant="secondary">{data.total} events</Badge>
       </div>
       <p class="text-sm text-muted-foreground">Review a history of system and account actions.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <div class="relative">
+      <div class="relative shrink-0">
         <MagnifyingGlassIcon
           class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
         />
         <Input
           type="search"
           bind:value={query}
-          placeholder="Search user, action, ticket…"
-          class="max-w-xs pl-8"
+          oninput={onSearchInput}
+          placeholder="Search user, action, or ticket #…"
+          class="w-64 pl-8 sm:w-80"
         />
       </div>
       <Label for="action-filter" class="text-sm">Action</Label>
-      <select id="action-filter" bind:value={actionFilter} class="{selectClass} max-w-44">
+      <select
+        id="action-filter"
+        bind:value={actionFilter}
+        onchange={() => navigate({ action: actionFilter })}
+        class="{selectClass} max-w-44"
+      >
         <option value="all">All</option>
-        {#each actionOptions as action (action)}
+        {#each ACTION_OPTIONS as action (action)}
           <option value={action}>{action}</option>
         {/each}
       </select>
@@ -94,14 +128,14 @@
           </TableRow>
         </TableHeader>
         <TableBody>
-          {#if !filtered || filtered.length === 0}
+          {#if !events || events.length === 0}
             <TableRow>
               <TableCell colspan={5} class="py-6 text-center text-muted-foreground"
                 >No audit entries found.</TableCell
               >
             </TableRow>
           {:else}
-            {#each filtered as e (e)}
+            {#each events as e (e.id)}
               <TableRow>
                 <TableCell class="text-sm text-muted-foreground">#{e.id}</TableCell>
                 <TableCell class="text-sm">
@@ -126,4 +160,11 @@
       </Table>
     </div>
   </div>
+
+  <Pagination
+    page={data.page}
+    totalPages={data.totalPages}
+    total={data.total}
+    onPageChange={(p) => navigate({ page: p })}
+  />
 </div>

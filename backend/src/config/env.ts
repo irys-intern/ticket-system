@@ -18,6 +18,7 @@ export const env = {
 
   nlp: {
     url: process.env.NLP_SERVER_URL || 'http://localhost:8000',
+    apiKey: process.env.NLP_API_KEY,
   },
   
   auth: {

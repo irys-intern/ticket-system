@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { page as pageStore } from '$app/state';
   import BackLink from '$lib/components/BackLink.svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
   import TicketCard from '$lib/components/TicketCard.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Label } from '$lib/components/ui/label';
@@ -20,24 +23,58 @@
   let tickets = $derived(data.tickets);
   let userRole = $derived(data.userRole);
   let agentNames = $derived(data.agentNames);
+  let isAdmin = $derived(userRole === 'admin');
 
-  let statusFilter = $state(untrack(() => (data.userRole === 'agent' ? 'in_progress' : 'all')));
-  let searchQuery = $state('');
+  // For admins the list is already paginated/filtered server-side (see
+  // +page.server.ts), so status/search changes navigate instead of filtering
+  // in place; for user/agent the whole (small, self-scoped) set loads at once
+  // and is filtered/sorted client-side as before.
+  let statusFilter = $state(
+    untrack(() => data.status || (data.userRole === 'agent' ? 'in_progress' : 'all'))
+  );
+  let searchQuery = $state(untrack(() => data.q));
   let sortBy = $state('newest');
 
+  function navigate(params: { page?: number; q?: string; status?: string }) {
+    const next = new URLSearchParams(pageStore.url.searchParams);
+    if (params.q !== undefined) {
+      if (params.q) next.set('q', params.q);
+      else next.delete('q');
+      next.delete('page');
+    }
+    if (params.status !== undefined) {
+      if (params.status && params.status !== 'all') next.set('status', params.status);
+      else next.delete('status');
+      next.delete('page');
+    }
+    if (params.page !== undefined) {
+      if (params.page > 1) next.set('page', String(params.page));
+      else next.delete('page');
+    }
+    goto(`?${next}`, { keepFocus: true, noScroll: true });
+  }
+
+  let searchDebounce: ReturnType<typeof setTimeout>;
+  function onSearchInput() {
+    if (!isAdmin) return;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => navigate({ q: searchQuery }), 300);
+  }
+
+  function onStatusChange() {
+    if (isAdmin) navigate({ status: statusFilter });
+  }
+
   let filteredTickets: Ticket[] = $derived.by(() => {
-    const q = searchQuery.trim().toLowerCase();
-    const result = tickets.filter((t: Ticket) => {
-      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
-      if (!q) return true;
-      if (t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) return true;
-      if (userRole === 'admin') {
-        const reporter = agentNames[t.createdBy]?.toLowerCase() ?? '';
-        const assignee = agentNames[t.assignedTo ?? '']?.toLowerCase() ?? '';
-        if (reporter.includes(q) || assignee.includes(q)) return true;
-      }
-      return false;
-    });
+    let result = tickets;
+    if (!isAdmin) {
+      const q = searchQuery.trim().toLowerCase();
+      result = tickets.filter((t: Ticket) => {
+        if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+        if (!q) return true;
+        return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+      });
+    }
     if (sortBy === 'oldest')
       return [...result].sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -54,9 +91,11 @@
       return [...result].sort((a, b) =>
         (agentNames[a.createdBy] ?? '').localeCompare(agentNames[b.createdBy] ?? '')
       );
-    return [...result].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return isAdmin
+      ? result
+      : [...result].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
   });
 </script>
 
@@ -80,7 +119,8 @@
         <input
           type="search"
           bind:value={searchQuery}
-          placeholder={userRole === 'admin' ? 'Search tickets or user…' : 'Search tickets…'}
+          oninput={onSearchInput}
+          placeholder="Search tickets…"
           class="h-8 w-48 rounded-lg border border-input bg-transparent py-1 pr-2.5 pl-7 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
         />
       </div>
@@ -88,6 +128,7 @@
       <select
         id="status-filter"
         bind:value={statusFilter}
+        onchange={onStatusChange}
         class="h-8 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         {#each statuses as status (status)}
@@ -136,5 +177,14 @@
         class="pointer-events-none absolute right-3 bottom-0 left-0 h-8 bg-linear-to-t from-background to-transparent"
       ></div>
     </div>
+  {/if}
+
+  {#if isAdmin}
+    <Pagination
+      page={data.page}
+      totalPages={data.totalPages}
+      total={data.total}
+      onPageChange={(p) => navigate({ page: p })}
+    />
   {/if}
 </div>

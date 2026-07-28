@@ -1,7 +1,10 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { page as pageStore } from '$app/state';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import BackLink from '$lib/components/BackLink.svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
@@ -39,7 +42,7 @@
   let users: { id: string; name: string; email: string; role: string; active: boolean }[] = $state(
     untrack(() => data.users)
   );
-  let searchQuery = $state('');
+  let searchQuery = $state(untrack(() => data.q));
   let selectedUser: (typeof users)[0] | null = $state(null);
   let errors: string[] = $state(untrack(() => data.errors));
   let sortBy: keyof (typeof users)[0] = $state('id');
@@ -47,6 +50,14 @@
   let currentUserId: string | null = untrack(() => data.currentUserId);
   let showDeleteModal = $state(false);
   let userToDelete: (typeof users)[0] | null = $state(null);
+
+  // The server already applied search + pagination; sort here just reorders
+  // the current page, since re-sorting across pages would require server-side
+  // ORDER BY for every column.
+  $effect(() => {
+    users = data.users;
+    errors = data.errors;
+  });
 
   let sortedUsers = $derived.by(() => {
     return [...users].sort((a, b) =>
@@ -56,13 +67,25 @@
     );
   });
 
-  let filteredUsers = $derived(
-    sortedUsers.filter(
-      (u) =>
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  function navigate(params: { page?: number; q?: string }) {
+    const next = new URLSearchParams(pageStore.url.searchParams);
+    if (params.q !== undefined) {
+      if (params.q) next.set('q', params.q);
+      else next.delete('q');
+      next.delete('page');
+    }
+    if (params.page !== undefined) {
+      if (params.page > 1) next.set('page', String(params.page));
+      else next.delete('page');
+    }
+    goto(`?${next}`, { keepFocus: true, noScroll: true });
+  }
+
+  let searchDebounce: ReturnType<typeof setTimeout>;
+  function onSearchInput() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => navigate({ q: searchQuery }), 300);
+  }
 
   function handleEdit(user: (typeof users)[0]) {
     selectedUser = { ...user };
@@ -149,7 +172,7 @@
   <div>
     <div class="flex items-center gap-2.5">
       <h1 class="text-2xl font-bold tracking-tight">User Management</h1>
-      <Badge variant="secondary">{users.length} users</Badge>
+      <Badge variant="secondary">{data.total} users</Badge>
     </div>
     <p class="text-sm text-muted-foreground">View and manage user accounts and roles.</p>
   </div>
@@ -172,6 +195,7 @@
         type="text"
         placeholder="Search users…"
         bind:value={searchQuery}
+        oninput={onSearchInput}
         class="max-w-xs pl-8"
       />
     </div>
@@ -203,7 +227,7 @@
         </TableRow>
       </TableHeader>
       <TableBody>
-        {#each filteredUsers as user (user.id)}
+        {#each sortedUsers as user (user.id)}
           <TableRow>
             <TableCell class="truncate font-mono text-xs text-muted-foreground" title={user.id}
               >{user.id}</TableCell
@@ -246,7 +270,7 @@
             </TableCell>
           </TableRow>
         {/each}
-        {#if filteredUsers.length === 0}
+        {#if sortedUsers.length === 0}
           <TableRow>
             <TableCell colspan={6} class="py-6 text-center text-muted-foreground"
               >No users found.</TableCell
@@ -256,6 +280,13 @@
       </TableBody>
     </Table>
   </div>
+
+  <Pagination
+    page={data.page}
+    totalPages={data.totalPages}
+    total={data.total}
+    onPageChange={(p) => navigate({ page: p })}
+  />
 </div>
 
 <!-- Edit user dialog -->

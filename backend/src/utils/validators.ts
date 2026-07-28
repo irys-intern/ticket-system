@@ -53,6 +53,42 @@ export const updateSettingsSchema = z.object({
   dashboardCacheTtlSeconds: z.number().int().min(1, 'Cache TTL must be at least 1 second').max(3600, 'Cache TTL must be at most 3600 seconds'),
 }).partial();
 
+// Pagination & list query schemas -- every GET handler that lists a growable table
+// parses its `URLSearchParams` through one of these instead of trusting raw input.
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(100_000).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const ticketsQuerySchema = paginationQuerySchema.extend({
+  q: z.string().trim().max(200).optional(),
+  status: z.enum([
+    TicketStatus.OPEN,
+    TicketStatus.IN_PROGRESS,
+    TicketStatus.RESOLVED,
+    TicketStatus.CLOSED,
+    TicketStatus.WAITING_FOR_RESPONSE,
+  ]).optional(),
+});
+
+export const usersQuerySchema = paginationQuerySchema.extend({
+  q: z.string().trim().max(200).optional(),
+});
+
+export const AUDIT_ACTIONS = [
+  'ticket created',
+  'ticket updated',
+  'ticket assigned',
+  'ticket reassigned',
+  'status changed',
+  'comment added',
+] as const;
+
+export const auditQuerySchema = paginationQuerySchema.extend({
+  q: z.string().trim().max(200).optional(),
+  action: z.enum(AUDIT_ACTIONS).optional(),
+});
+
 // Types
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

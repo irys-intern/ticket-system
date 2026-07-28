@@ -118,7 +118,7 @@ def main():
 
     print()
     print("== NLP service ==")
-    # No .env file for this service -- config lives directly in nlp_service/main.py.
+    setup_env(nlp_dir)
     pip = setup_venv(nlp_dir)
     run([str(pip), "install", "-r", "requirements.txt"], cwd=nlp_dir)
 

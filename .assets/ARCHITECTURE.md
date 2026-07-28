@@ -158,19 +158,37 @@ The backend's global SvelteKit hook (`hooks.server.ts`) applies a Redis-backed f
 | ----------------------------------------- | ----------------- |
 | `POST /auth/login`, `POST /auth/register` | 10 requests / 10s |
 | `POST /create_ticket`                     | 30 requests / 60s |
+| `POST /nlp-suggest`                       | 20 requests / 60s |
 
 Requests over the limit receive a `429` response with a `Retry-After` header indicating how many seconds until the window resets. The limiter logic lives in `backend/src/lib/rateLimit.ts` and is unit tested independently of Redis via an in-memory fake store.
+
+The NLP service itself also rate limits `POST /suggest` (20/minute) and `GET /health` (60/minute) per IP via `slowapi`, independent of the backend's limit &mdash; see [NLP Service](#nlp-service).
 
 <!-- DASHBOARD CACHING -->
 
 ## Dashboard Caching
 
-The endpoints backing every dashboard-style view &mdash; `GET /` (homepage stats), `GET /tickets` (admin branch), `GET /admin/users`, and `GET /admin/audit` &mdash; are cached in Redis via `getOrSetCache`/`invalidateCache` (`backend/src/lib/cache.ts`) instead of hitting Postgres on every request.
+`GET /` (homepage "at a glance" stats) is cached in Redis via `getOrSetCache`/`invalidateCache` (`backend/src/lib/cache.ts`) instead of hitting Postgres on every request.
 
 - **Fail-open**: if Redis is unreachable, cache reads/writes fail silently and the handler falls straight through to the database rather than 500ing.
 - **TTL is admin-configurable**: the cache duration isn't a hardcoded constant &mdash; `getDashboardCacheTtlSeconds()` (`backend/src/lib/dashboardCache.ts`) reads it from [`appSettingsTable`](#database-schema) (via the same Redis-cached settings layer, see [Settings](#settings)) on every call, so changing it in the admin UI takes effect within one cache cycle with no redeploy.
-- **Cache keys** are scoped per role/user where the underlying data differs by caller (e.g. `dashboard:home:user:<userId>`, `dashboard:home:agent:<userId>`), and shared where it doesn't (e.g. `dashboard:tickets:admin`, `dashboard:users`, `dashboard:audit`).
-- **Invalidation** is centralized at the choke points every mutation already flows through: `POST /admin/audit` (which nearly every ticket mutation calls internally to log an event) invalidates the relevant ticket/audit/home caches for the affected users, and `admin/users` routes invalidate the users cache on role changes, deactivation, or deletion.
+- **Cache keys** are scoped per role/user (e.g. `dashboard:home:user:<userId>`, `dashboard:home:agent:<userId>`, `dashboard:home:admin`).
+- **Invalidation** is centralized at the choke points every mutation already flows through: `POST /admin/audit` (which nearly every ticket mutation calls internally to log an event) invalidates the relevant home caches for the affected users.
+
+The three paginated admin list endpoints (`GET /tickets` admin branch, `GET /admin/users`, `GET /admin/audit`) are **not** cached &mdash; see [Pagination](#pagination) for why.
+
+<!-- PAGINATION -->
+
+## Pagination
+
+The three admin list endpoints that grow unboundedly &mdash; the admin branch of `GET /tickets`, `GET /admin/users`, and `GET /admin/audit` &mdash; are paginated server-side rather than returning every row.
+
+- **Query params are validated, not trusted**: each route parses `URLSearchParams` through a zod schema (`paginationQuerySchema` and its per-route extensions in `backend/src/utils/validators.ts`) before touching the database. `page`/`limit` are coerced to integers and bounded (`limit` capped at 100); free-text `q` is length-capped; `status`/`action` must match a known enum. A malformed or out-of-range value is rejected with `400`, not silently clamped or ignored.
+- **Filtering happens in SQL**: `q` matches via `ilike` against the relevant text columns (ticket title/description; user name/email for the users list; action, ticket id, *and* acting user's name/email for the audit log, via a small user-id lookup joined into the `WHERE` clause), and `status`/`action` are exact-match `WHERE` clauses &mdash; the database does the filtering, not the app after loading everything into memory.
+- **Response shape**: every paginated endpoint returns `{ ...items, page, limit, total, totalPages }` so the frontend never has to infer paging state from a bare array.
+- **Not cached**: these endpoints query Postgres directly on every request instead of going through the Redis cache. Once page/limit/search params are in play, the cache key space is unbounded and user-controlled (an attacker could stuff Redis with a unique entry per query string), while a single indexed `LIMIT`/`OFFSET` query is already cheap. Home-page aggregate stats still use the bounded cache described in [Dashboard Caching](#dashboard-caching).
+- **Frontend**: `frontend/src/lib/components/Pagination.svelte` is the shared control (Prev/Next, First/Last, and a jump-to-page input) used by the tickets, users, and audit pages. Page/search/filter state lives in the URL's query string (via `goto('?...')`), not component state, so pagination is server-driven &mdash; a `+page.server.ts` load function re-fetches from the backend on every navigation rather than a client-side array being sliced in the browser. The `admin/tickets` view additionally moves its status/search filters server-side for the same reason; user/agent ticket views stay entirely client-side since they're already scoped to a small, personal ticket set.
+- **`/admin/stats` is the one page that legitimately needs everything**: its charts (volume, distribution, timeline, resolution time, agent comparison) are computed client-side over the full ticket/user/audit history, not one page at a time. Rather than giving the backend an unbounded "give me everything" mode, `frontend/src/routes/admin/stats/+page.server.ts` loops the paginated endpoints server-to-server at the max page size (100) until `page > totalPages`, then hands the assembled arrays to the page. This keeps every backend response bounded while still letting this one admin-only aggregation view see the whole dataset.
 
 <!-- API REFERENCE -->
 
@@ -197,7 +215,7 @@ All endpoints live in `backend/src/routes/` as `+server.ts` files. Responses are
 
 | Method | Path                     | Description                                   | Auth required |
 | ------ | ------------------------ | --------------------------------------------- | ------------- |
-| `GET`  | `/tickets`               | List tickets (scoped by role)                 | Yes           |
+| `GET`  | `/tickets`               | List tickets (scoped by role). Admin branch is [paginated/searchable](#pagination) via `?page`/`?limit`/`?q`/`?status` | Yes           |
 | `POST` | `/create_ticket`         | Create a new ticket                           | Yes (user+)   |
 | `GET`  | `/tickets/[id]`          | Get a single ticket                           | Yes           |
 | `POST` | `/tickets/[id]`          | Update ticket status, assignment, or metadata | Yes (agent+)  |
@@ -224,12 +242,12 @@ The body must include an `action` field:
 
 | Method   | Path                | Description                                                                                                | Auth required |
 | -------- | ------------------- | ------------------------------------------------------------------------------------------------------------- | -------------- |
-| `GET`    | `/admin/users`      | List all users (excludes the `[deleted user]` placeholder)                                                  | Admin          |
+| `GET`    | `/admin/users`      | List all users (excludes the `[deleted user]` placeholder). [Paginated/searchable](#pagination) via `?page`/`?limit`/`?q`     | Admin          |
 | `POST`   | `/admin/users`      | Change a user's role                                                                                         | Admin          |
 | `GET`    | `/admin/users/[id]` | Get a user by id (name only for non-admins; full record for admins)                                         | Yes            |
 | `PATCH`  | `/admin/users/[id]` | Set `{ active: boolean }` to activate/deactivate a user (cannot target self or the placeholder)              | Admin          |
 | `DELETE` | `/admin/users/[id]` | Delete a user (cannot delete self or the placeholder). Reassigns their tickets/comments/audit events to the `[deleted user]` placeholder, closes any of their tickets not already closed, and drops their notifications, so deletion always succeeds instead of being blocked by foreign-key references | Admin          |
-| `GET`    | `/admin/audit`      | Get audit events (filterable by ticket)                                                                     | Admin          |
+| `GET`    | `/admin/audit`      | Get audit events. Single-ticket lookup via `X-Ticket-Id` header, or [paginated/searchable](#pagination) admin listing via `?page`/`?limit`/`?q`/`?action` | Admin (or ticket owner via header) |
 | `POST`   | `/admin/audit`      | Log an audit event. This is the choke point nearly every ticket mutation flows through, so it also invalidates the relevant [dashboard caches](#dashboard-caching) and creates [notifications](#notifications) for affected users | Admin          |
 
 Aggregate ticket and user statistics are returned by `GET /` (see [Dashboard](#dashboard)) rather than a dedicated `/admin/stats` endpoint.
@@ -389,11 +407,21 @@ The NLP service exposes a single endpoint used by the ticket creation form to su
 
 ### How It Works
 
-1. As the user types in the description field (after 20+ characters), the frontend waits for a debounce period (default 600 ms, admin-configurable via [Settings](#settings) as `nlpDebounceMs`) then sends the title and description to `POST http://localhost:8000/suggest`.
-2. The service runs zero-shot classification against four natural-language label descriptions (one per priority level) using `facebook/bart-large-mnli`.
-3. The top-scoring label is returned as a priority string (`low` / `medium` / `high` / `critical`) along with a confidence score. If `critical` is the top label but its score is below `0.5`, it's discarded in favor of the second-highest label, so a low-confidence "critical" never reaches the user.
-4. The priority dropdown is pre-filled with the suggestion and a confidence note is shown. The user can override it freely before submitting.
-5. If the service is unreachable, the form falls back silently and the user just picks priority manually.
+1. As the user types in the description field (after 20+ characters), the frontend waits for a debounce period (default 600 ms, admin-configurable via [Settings](#settings) as `nlpDebounceMs`) then sends the title and description to `POST /nlp-suggest` on the **backend**, not the NLP service directly (see [Hardening](#hardening) below).
+2. The backend proxies the request to `POST http://localhost:8000/suggest` on the NLP service, attaching a shared-secret header the browser never sees.
+3. The service runs zero-shot classification against four natural-language label descriptions (one per priority level) using `facebook/bart-large-mnli`.
+4. The top-scoring label is returned as a priority string (`low` / `medium` / `high` / `critical`) along with a confidence score. If `critical` is the top label but its score is below `0.5`, it's discarded in favor of the second-highest label, so a low-confidence "critical" never reaches the user.
+5. The priority dropdown is pre-filled with the suggestion and a confidence note is shown. The user can override it freely before submitting.
+6. If the service is unreachable, the form falls back silently and the user just picks priority manually.
+
+### Hardening
+
+`/suggest` used to be called directly from the browser via a public env var, which meant anyone could hit the NLP service from outside the app (no auth, no rate limit beyond the frontend's own debounce) and any shared secret placed in frontend code would've been visible to the browser anyway. It's now locked down in two layers:
+
+- **Backend proxy** (`backend/src/routes/nlp-suggest/+server.ts`): requires an authenticated session (`locals.user`), truncates input to 4,000 characters, and is covered by the [rate limiter](#rate-limiting) (20 req/60s per IP). It's the only caller that knows the shared secret, kept server-side in `NLP_API_KEY` (`backend/.env`).
+- **NLP service itself** (`nlp_service/main.py`): `POST /suggest` requires the `X-NLP-Api-Key` header to match `NLP_API_KEY` (`nlp_service/.env`) &mdash; fails closed with a 401 if the key is missing, wrong, or unconfigured. Both `/suggest` (20/min) and `GET /health` (60/min) are rate limited per IP via `slowapi`, independent of the backend's own limit, so the service can't be hammered even by a caller that has the key.
+
+Generate a shared key with `openssl rand -hex 32` (or equivalent) and put the same value in both `backend/.env` (`NLP_API_KEY`) and `nlp_service/.env` (`NLP_API_KEY`); `dependencies.py` now creates the latter from `nlp_service/.env.example` like the other two services.
 
 ### Model Setup
 

@@ -5,7 +5,12 @@ import { env } from '$env/dynamic/private';
 
 const backendUrl = () => env.BACKEND_URL ?? 'http://localhost:5172';
 
-export const load: PageServerLoad = async ({ locals, cookies }) => {
+const sanitizePage = (raw: string | null) => {
+  const page = Number.parseInt(raw ?? '', 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+};
+
+export const load: PageServerLoad = async ({ locals, cookies, url }) => {
   if (!locals.user || locals.user.role !== 'admin') {
     redirect(307, '/auth/login');
   }
@@ -13,14 +18,27 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
   const sessionId = cookies.get('sessionId');
   const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
 
+  const page = sanitizePage(url.searchParams.get('page'));
+  const q = (url.searchParams.get('q') ?? '').slice(0, 200);
+  const action = url.searchParams.get('action') ?? '';
+  const limit = 25;
+
+  const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (q) query.set('q', q);
+  if (action) query.set('action', action);
+
   let events: AuditEvent[] = [];
   let users: User[] = [];
+  let total = 0;
+  let totalPages = 1;
   try {
-    const res = await fetch(`${backendUrl()}/admin/audit`, { headers });
+    const res = await fetch(`${backendUrl()}/admin/audit?${query}`, { headers });
     const data = await res.json();
     if (res.ok) {
-      events = (data.events ?? []).sort((a: { id: string }, b: { id: string }) => Number(b.id) - Number(a.id));
+      events = data.events ?? [];
       users = data.users ?? [];
+      total = data.total ?? events.length;
+      totalPages = data.totalPages ?? 1;
     }
   } catch {
     events = [];
@@ -29,6 +47,12 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
   return {
     events,
-    users
+    users,
+    page,
+    limit,
+    total,
+    totalPages,
+    q,
+    action
   };
 };

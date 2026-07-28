@@ -24,7 +24,7 @@ async function fetchAssignmentString(userId: string, cookies: Cookies) {
 
 async function fetchAgents(cookies: Cookies) {
   try {
-    const res = await fetch(`${backendUrl()}/admin/users`, { headers: backendHeaders(cookies) });
+    const res = await fetch(`${backendUrl()}/admin/users?limit=100`, { headers: backendHeaders(cookies) });
     if (!res.ok) return [];
     const allUsers = await res.json();
     const users = allUsers.users ?? [];

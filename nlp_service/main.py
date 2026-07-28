@@ -1,8 +1,16 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from transformers import pipeline
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
+
+API_KEY = os.environ.get("NLP_API_KEY")
 
 MODEL_PATH = "./local_model"
 MODEL_NAME = "facebook/bart-large-mnli"
@@ -31,27 +39,39 @@ LABEL_TO_PRIORITY = {
 }
 LABELS = list(LABEL_TO_PRIORITY.keys())
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:4173"],
     allow_methods=["POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-NLP-Api-Key"],
 )
 
 
 class SuggestRequest(BaseModel):
-    text: str
+    text: str = Field(max_length=4000)
+
+
+def verify_api_key(x_nlp_api_key: str | None = Header(default=None)):
+    # Fail closed: an unconfigured secret should block requests, not silently accept them.
+    if not API_KEY or x_nlp_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
 @app.get("/health")
-def health():
+@limiter.limit("60/minute")
+def health(request: Request):
     return {"status": "ok"}
 
 
-@app.post("/suggest")
-def suggest(req: SuggestRequest):
+@app.post("/suggest", dependencies=[Depends(verify_api_key)])
+@limiter.limit("20/minute")
+def suggest(request: Request, req: SuggestRequest):
     if not req.text.strip():
         return {"priority": None, "score": 0.0}
     result = classifier(req.text, candidate_labels=LABELS)
