@@ -8,6 +8,7 @@
   import { TooltipProvider } from '$lib/components/ui/tooltip';
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import NotificationBell from '$lib/components/NotificationBell.svelte';
+  import NavigationProgress from '$lib/components/NavigationProgress.svelte';
   import { flushQueuedToast } from '$lib/toast';
   import './layout.css';
   import type { LayoutData } from './$types';
@@ -20,6 +21,7 @@
 
 <ModeWatcher defaultMode="system" />
 <Toaster />
+<NavigationProgress />
 
 <TooltipProvider>
   <div class="min-h-screen bg-background text-foreground antialiased flex flex-col">
