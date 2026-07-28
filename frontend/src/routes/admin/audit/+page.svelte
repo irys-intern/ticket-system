@@ -115,50 +115,48 @@
     </div>
   </div>
 
-  <div class="overflow-hidden rounded-lg border border-input">
-    <div class="max-h-[60vh] overflow-y-auto">
-      <Table class="table-fixed">
-        <TableHeader>
+  <div class="max-h-[60vh] overflow-y-auto rounded-lg">
+    <Table class="table-fixed">
+      <TableHeader>
+        <TableRow>
+          <TableHead class="w-16">ID</TableHead>
+          <TableHead class="w-20">Ticket</TableHead>
+          <TableHead>User</TableHead>
+          <TableHead>When</TableHead>
+          <TableHead>Action</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {#if !events || events.length === 0}
           <TableRow>
-            <TableHead class="w-16">ID</TableHead>
-            <TableHead class="w-20">Ticket</TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>When</TableHead>
-            <TableHead>Action</TableHead>
+            <TableCell colspan={5} class="py-6 text-center text-muted-foreground"
+              >No audit entries found.</TableCell
+            >
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {#if !events || events.length === 0}
+        {:else}
+          {#each events as e (e.id)}
             <TableRow>
-              <TableCell colspan={5} class="py-6 text-center text-muted-foreground"
-                >No audit entries found.</TableCell
+              <TableCell class="text-sm text-muted-foreground">#{e.id}</TableCell>
+              <TableCell class="text-sm">
+                <a
+                  href={resolve(`/tickets/${e.ticketId}`)}
+                  class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  <TicketIcon class="size-3.5" /> #{e.ticketId}
+                </a>
+              </TableCell>
+              <TableCell class="truncate text-sm font-medium" title={getUserString(e.userId)}
+                >{getUserString(e.userId)}</TableCell
               >
+              <TableCell class="text-sm whitespace-nowrap text-muted-foreground"
+                >{new Date(e.createdAt).toLocaleString()}</TableCell
+              >
+              <TableCell class="text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
             </TableRow>
-          {:else}
-            {#each events as e (e.id)}
-              <TableRow>
-                <TableCell class="text-sm text-muted-foreground">#{e.id}</TableCell>
-                <TableCell class="text-sm">
-                  <a
-                    href={resolve(`/tickets/${e.ticketId}`)}
-                    class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                  >
-                    <TicketIcon class="size-3.5" /> #{e.ticketId}
-                  </a>
-                </TableCell>
-                <TableCell class="truncate text-sm font-medium" title={getUserString(e.userId)}
-                  >{getUserString(e.userId)}</TableCell
-                >
-                <TableCell class="text-sm whitespace-nowrap text-muted-foreground"
-                  >{new Date(e.createdAt).toLocaleString()}</TableCell
-                >
-                <TableCell class="text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
-              </TableRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
+          {/each}
+        {/if}
+      </TableBody>
+    </Table>
   </div>
 
   <Pagination

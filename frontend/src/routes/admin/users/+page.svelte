@@ -16,6 +16,12 @@
     DialogHeader,
     DialogTitle,
   } from '$lib/components/ui/dialog';
+  import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+  } from '$lib/components/ui/dropdown-menu';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
   import {
@@ -27,6 +33,7 @@
     TableRow,
   } from '$lib/components/ui/table';
   import { toast } from '$lib/toast';
+  import DotsThreeVerticalIcon from 'phosphor-svelte/lib/DotsThreeVerticalIcon';
   import DownloadSimpleIcon from 'phosphor-svelte/lib/DownloadSimpleIcon';
   import FloppyDiskIcon from 'phosphor-svelte/lib/FloppyDiskIcon';
   import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
@@ -257,88 +264,89 @@
     </div>
   </div>
 
-  <div class="overflow-hidden rounded-lg border border-input">
-    <Table class="table-fixed">
-      <TableHeader>
+  <Table class="table-fixed">
+    <TableHeader>
+      <TableRow>
+        <TableHead class="w-16">ID</TableHead>
+        <TableHead class="w-32">Name</TableHead>
+        <TableHead>Email</TableHead>
+        <TableHead class="w-20">Role</TableHead>
+        <TableHead class="w-20">Status</TableHead>
+        <TableHead class="w-16"></TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {#each sortedUsers as user (user.id)}
         <TableRow>
-          <TableHead class="w-16">ID</TableHead>
-          <TableHead class="w-32">Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead class="w-20">Role</TableHead>
-          <TableHead class="w-20">Status</TableHead>
-          <TableHead class="w-72">Actions</TableHead>
-          <TableHead class="w-14"></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {#each sortedUsers as user (user.id)}
-          <TableRow>
-            <TableCell class="truncate font-mono text-xs text-muted-foreground" title={user.id}
-              >{user.id}</TableCell
-            >
-            <TableCell>
-              <div class="flex min-w-0 items-center gap-2.5">
-                <span
-                  class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
-                >
-                  {initials(user.name)}
-                </span>
-                <span class="min-w-0 truncate font-medium" title={user.name}>{user.name}</span>
-              </div>
-            </TableCell>
-            <TableCell class="truncate text-muted-foreground" title={user.email}>{user.email}</TableCell>
-            <TableCell><Badge variant={roleVariant(user.role)}>{user.role}</Badge></TableCell>
-            <TableCell>
-              <Badge variant={user.active ? 'secondary' : 'outline'}>
-                {user.active ? 'Active' : 'Inactive'}
-              </Badge>
-            </TableCell>
-            <TableCell class="flex flex-wrap items-center gap-1.5 whitespace-normal">
-              {#if user.id === currentUserId}
-                <span class="inline-flex h-7 items-center text-xs text-muted-foreground">(you)</span>
-              {:else}
-                <Button size="sm" variant="outline" onclick={() => handleEdit(user)}
-                  ><PencilSimpleIcon /> Edit</Button
-                >
-                <Button
-                  size="sm"
-                  variant="outline"
-                  class="w-27 justify-center"
-                  onclick={() => handleToggleActive(user)}
-                >
-                  {#if user.active}
-                    <ProhibitIcon /> Deactivate
-                  {:else}
-                    <UserCheckIcon /> Activate
-                  {/if}
-                </Button>
-                <Button size="sm" variant="destructive" onclick={() => handleDelete(user)}
-                  ><TrashIcon /> Delete</Button
-                >
-              {/if}
-            </TableCell>
-            <TableCell>
-              <Button
-                size="sm"
-                variant="outline"
-                title="Download this user's data"
-                onclick={() => handleExportUser(user)}
+          <TableCell class="truncate font-mono text-xs text-muted-foreground" title={user.id}
+            >{user.id}</TableCell
+          >
+          <TableCell>
+            <div class="flex min-w-0 items-center gap-2.5">
+              <span
+                class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
               >
-                <DownloadSimpleIcon />
-              </Button>
-            </TableCell>
-          </TableRow>
-        {/each}
-        {#if sortedUsers.length === 0}
-          <TableRow>
-            <TableCell colspan={7} class="py-6 text-center text-muted-foreground"
-              >No users found.</TableCell
-            >
-          </TableRow>
-        {/if}
-      </TableBody>
-    </Table>
-  </div>
+                {initials(user.name)}
+              </span>
+              <span class="min-w-0 truncate font-medium" title={user.name}>{user.name}</span>
+            </div>
+          </TableCell>
+          <TableCell class="truncate text-muted-foreground" title={user.email}>{user.email}</TableCell>
+          <TableCell><Badge variant={roleVariant(user.role)}>{user.role}</Badge></TableCell>
+          <TableCell>
+            <Badge variant={user.active ? 'secondary' : 'outline'}>
+              {user.active ? 'Active' : 'Inactive'}
+            </Badge>
+          </TableCell>
+          <TableCell class="text-right">
+            {#if user.id === currentUserId}
+              <span class="inline-flex h-7 items-center text-xs text-muted-foreground">(you)</span>
+            {:else}
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  {#snippet child({ props })}
+                    <button
+                      {...props}
+                      type="button"
+                      aria-label="User actions"
+                      class="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <DotsThreeVerticalIcon class="size-4" weight="bold" />
+                    </button>
+                  {/snippet}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onclick={() => handleEdit(user)}>
+                    <PencilSimpleIcon /> Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onclick={() => handleToggleActive(user)}>
+                    {#if user.active}
+                      <ProhibitIcon /> Deactivate
+                    {:else}
+                      <UserCheckIcon /> Activate
+                    {/if}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onclick={() => handleExportUser(user)}>
+                    <DownloadSimpleIcon /> Export data
+                  </DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onclick={() => handleDelete(user)}>
+                    <TrashIcon /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            {/if}
+          </TableCell>
+        </TableRow>
+      {/each}
+      {#if sortedUsers.length === 0}
+        <TableRow>
+          <TableCell colspan={6} class="py-6 text-center text-muted-foreground"
+            >No users found.</TableCell
+          >
+        </TableRow>
+      {/if}
+    </TableBody>
+  </Table>
 
   <Pagination
     page={data.page}
