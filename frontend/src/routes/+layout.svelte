@@ -60,9 +60,13 @@
     </header>
 
     <main class="flex-1 flex flex-col">
-      <div class="mx-auto w-full max-w-4xl px-4 py-10 flex-1 flex flex-col">
+      <div class="mx-auto grid w-full max-w-4xl flex-1 px-4 py-10">
         {#key page.url.pathname}
-          <div class="flex flex-1 flex-col" in:fade={{ duration: 150, delay: 100 }} out:fade={{ duration: 100 }}>
+          <div
+            class="col-start-1 row-start-1 flex flex-col"
+            in:fade={{ duration: 150, delay: 100 }}
+            out:fade={{ duration: 100 }}
+          >
             {@render children()}
           </div>
         {/key}
