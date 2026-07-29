@@ -13,7 +13,7 @@ function toCsvValue(v: unknown): string {
 
 export const GET: RequestHandler = async ({ locals }) => {
     if (locals.user?.role !== 'admin') {
-        throw error(401, "Unauthenticated");
+        throw error(404, "Not Found");
     }
 
     const users = await db.select({

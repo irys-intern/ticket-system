@@ -4,7 +4,7 @@ import { updateSettingsSchema } from "../../../utils/validators.ts";
 
 export const GET: RequestHandler = async ({ locals }) => {
     if (locals.user?.role !== 'admin') {
-        throw error(401, "Unauthenticated");
+        throw error(404, "Not Found");
     }
     const settings = await getSettings();
     return json({ settings });
@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 export const PUT: RequestHandler = async ({ locals, request }) => {
     if (locals.user?.role !== 'admin' || !locals.user.userId) {
-        throw error(401, "Unauthenticated");
+        throw error(404, "Not Found");
     }
     const body = await request.json();
     const parsed = updateSettingsSchema.safeParse(body);

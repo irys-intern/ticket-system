@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Ticket, User, AuditEvent } from '../../../types';
 import { env } from '$env/dynamic/private';
@@ -35,7 +35,7 @@ async function fetchAllPages<T>(
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    redirect(307, '/auth/login');
+    throw error(404, 'Not Found');
   }
 
   const sessionId = cookies.get('sessionId');

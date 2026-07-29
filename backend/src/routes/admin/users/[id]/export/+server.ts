@@ -5,7 +5,7 @@ import { error, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
     if (locals.user?.role !== 'admin') {
-        throw error(401, "Unauthenticated");
+        throw error(404, "Not Found");
     }
     if (params.id === undefined) throw error(400, "No ID provided");
     const targetId = params.id;

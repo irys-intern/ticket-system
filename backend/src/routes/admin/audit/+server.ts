@@ -20,17 +20,17 @@ export const GET: RequestHandler = async ({ locals, request, fetch, url }) => {
         const ticket: Ticket = await (await fetch(`/tickets/${ticket_id}`)).json();
         if (user?.role === 'user') {
             if (ticket.createdBy !== user.userId) {
-                throw error(403, "Forbidden");
+                throw error(404, "Not Found");
             }
         } else if (user?.role === 'agent') {
             if (ticket.assignedTo !== user.userId) {
-                throw error(403, "Forbidden")
+                throw error(404, "Not Found");
             }
         }
         return json({audits: await db.select().from(auditEventsTable).where(eq(auditEventsTable.ticketId, parseInt(ticket_id)))})
     }
     if (!user || !user.role || !user.userId || (user.role !== 'admin')) {
-        throw error(403, "Forbidden")
+        throw error(404, "Not Found")
     }
 
     const parsed = auditQuerySchema.safeParse(Object.fromEntries(url.searchParams));
@@ -84,7 +84,7 @@ export const GET: RequestHandler = async ({ locals, request, fetch, url }) => {
 export const POST: RequestHandler = async ({ request, locals }) => {
     const user = locals.user
     if (!user || !user.role || !user.userId || (user.role === 'guest')) {
-        throw error(403, "Forbidden")
+        throw error(404, "Not Found")
     }
     const req = await request.json()
     const action = req.action

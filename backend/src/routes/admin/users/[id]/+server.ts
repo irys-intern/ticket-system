@@ -68,7 +68,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
     if (locals.user?.role !== 'admin') {
-        throw error(401, "Unauthenticated")
+        throw error(404, "Not Found")
     }
     if (params.id === undefined) throw error(400, "No ID provided")
     if (params.id === locals.user.userId) {

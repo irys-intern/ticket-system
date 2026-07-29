@@ -7,7 +7,7 @@ import { usersQuerySchema } from "../../../utils/validators.ts";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
     if (locals.user?.role !== 'admin') {
-        throw error(401, "Unauthenticated")
+        throw error(404, "Not Found")
     }
     const parsed = usersQuerySchema.safeParse(Object.fromEntries(url.searchParams));
     if (!parsed.success) {

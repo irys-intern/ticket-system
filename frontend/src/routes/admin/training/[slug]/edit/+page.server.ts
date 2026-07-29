@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { env } from '$env/dynamic/private';
 
@@ -6,7 +6,7 @@ const backendUrl = () => env.BACKEND_URL ?? 'http://localhost:5172';
 
 export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    redirect(307, '/auth/login');
+    throw error(404, 'Not Found');
   }
 
   const sessionId = cookies.get('sessionId');
