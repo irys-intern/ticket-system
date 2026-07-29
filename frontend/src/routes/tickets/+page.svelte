@@ -33,9 +33,15 @@
     untrack(() => data.status || (data.userRole === 'agent' ? 'in_progress' : 'all'))
   );
   let searchQuery = $state(untrack(() => data.q));
-  let sortBy = $state('newest');
+  // For admins this drives a server-side ORDER BY (see +page.server.ts /
+  // backend tickets/+server.ts) so it sorts the whole result set, not just
+  // the current page -- reordering only the current page's 20 tickets made
+  // e.g. "sort by priority" look broken, since higher-priority tickets on
+  // page 2+ never surfaced. user/agent still sort their small, unpaginated
+  // set client-side below.
+  let sortBy = $state(untrack(() => (isAdmin ? data.sort : 'newest')));
 
-  function navigate(params: { page?: number; q?: string; status?: string }) {
+  function navigate(params: { page?: number; q?: string; status?: string; sort?: string }) {
     const next = new URLSearchParams(pageStore.url.searchParams);
     if (params.q !== undefined) {
       if (params.q) next.set('q', params.q);
@@ -45,6 +51,11 @@
     if (params.status !== undefined) {
       if (params.status && params.status !== 'all') next.set('status', params.status);
       else next.delete('status');
+      next.delete('page');
+    }
+    if (params.sort !== undefined) {
+      if (params.sort && params.sort !== 'newest') next.set('sort', params.sort);
+      else next.delete('sort');
       next.delete('page');
     }
     if (params.page !== undefined) {
@@ -65,16 +76,19 @@
     if (isAdmin) navigate({ status: statusFilter });
   }
 
+  function onSortChange() {
+    if (isAdmin) navigate({ sort: sortBy });
+  }
+
   let filteredTickets: Ticket[] = $derived.by(() => {
-    let result = tickets;
-    if (!isAdmin) {
-      const q = searchQuery.trim().toLowerCase();
-      result = tickets.filter((t: Ticket) => {
-        if (statusFilter !== 'all' && t.status !== statusFilter) return false;
-        if (!q) return true;
-        return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
-      });
-    }
+    if (isAdmin) return tickets;
+
+    const q = searchQuery.trim().toLowerCase();
+    const result = tickets.filter((t: Ticket) => {
+      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+      if (!q) return true;
+      return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+    });
     if (sortBy === 'oldest')
       return [...result].sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -91,11 +105,9 @@
       return [...result].sort((a, b) =>
         (agentNames[a.createdBy] ?? '').localeCompare(agentNames[b.createdBy] ?? '')
       );
-    return isAdmin
-      ? result
-      : [...result].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+    return [...result].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   });
 </script>
 
@@ -139,6 +151,7 @@
       <select
         id="sort-by"
         bind:value={sortBy}
+        onchange={onSortChange}
         class="h-8 w-28 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <option value="newest">Newest</option>

@@ -10,6 +10,9 @@ const sanitizePage = (raw: string | null) => {
   return Number.isFinite(page) && page > 0 ? page : 1;
 };
 
+const SORT_OPTIONS = new Set(['newest', 'oldest', 'priority', 'agent', 'user']);
+const sanitizeSort = (raw: string | null) => (raw && SORT_OPTIONS.has(raw) ? raw : 'newest');
+
 export const load: PageServerLoad = async ({ locals, cookies, url }) => {
   if (!locals.user) {
     redirect(307, '/auth/login');
@@ -24,6 +27,7 @@ export const load: PageServerLoad = async ({ locals, cookies, url }) => {
   const page = sanitizePage(url.searchParams.get('page'));
   const q = (url.searchParams.get('q') ?? '').slice(0, 200);
   const status = url.searchParams.get('status') ?? '';
+  const sort = sanitizeSort(url.searchParams.get('sort'));
   const limit = 20;
 
   const query = new URLSearchParams();
@@ -32,6 +36,7 @@ export const load: PageServerLoad = async ({ locals, cookies, url }) => {
     query.set('limit', String(limit));
     if (q) query.set('q', q);
     if (status) query.set('status', status);
+    query.set('sort', sort);
   }
 
   let tickets: Ticket[] = [];
@@ -77,6 +82,7 @@ export const load: PageServerLoad = async ({ locals, cookies, url }) => {
     total,
     totalPages,
     q,
-    status
+    status,
+    sort
   };
 };

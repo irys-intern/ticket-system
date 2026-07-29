@@ -69,6 +69,7 @@ export const ticketsQuerySchema = paginationQuerySchema.extend({
     TicketStatus.CLOSED,
     TicketStatus.WAITING_FOR_RESPONSE,
   ]).optional(),
+  sort: z.enum(['newest', 'oldest', 'priority', 'agent', 'user']).default('newest'),
 });
 
 export const usersQuerySchema = paginationQuerySchema.extend({
