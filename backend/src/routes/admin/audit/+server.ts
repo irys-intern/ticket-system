@@ -11,6 +11,7 @@ import {
     dashboardHomeUserCacheKey,
 } from "../../../lib/dashboardCache.ts";
 import { AUDIT_ACTIONS, auditQuerySchema } from "../../../utils/validators.ts";
+import { computePriorityWarning } from "../../../lib/priorityWarning.ts";
 
 export const GET: RequestHandler = async ({ locals, request, fetch, url }) => {
     const user = locals.user
@@ -106,6 +107,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             if (ticket.assignedTo) homeKeys.push(dashboardHomeAgentCacheKey(ticket.assignedTo))
             await invalidateCache(redis, ...homeKeys)
             await notifyForAuditEvent(action, ticket, userId)
+            // Only actions that can shift an agent's priority mix are worth re-checking.
+            if (ticket.assignedTo && ['ticket assigned', 'ticket reassigned', 'ticket updated'].includes(action)) {
+                await notifyAgentIfDistributionSkewed(ticket.assignedTo)
+            }
         }
         return json({ok: true})
     } catch (err) {
@@ -144,4 +149,25 @@ async function notifyForAuditEvent(action: string, ticket: typeof ticketsTable.$
             link: `/tickets/${ticketId}`,
         })),
     )
+}
+
+// Gives an agent a chance to notice and self-correct a skewed priority mix
+// before it's the kind of thing an admin would flag on the stats page.
+async function notifyAgentIfDistributionSkewed(agentId: string) {
+    const agentTickets = await db.select({ priority: ticketsTable.priority }).from(ticketsTable)
+        .where(eq(ticketsTable.assignedTo, agentId))
+    const warning = computePriorityWarning(agentTickets)
+    if (!warning) return
+
+    // Don't re-notify while an identical unread warning is already sitting in their inbox.
+    const [existing] = await db.select().from(notificationsTable)
+        .where(and(eq(notificationsTable.userId, agentId), eq(notificationsTable.read, false), eq(notificationsTable.message, warning)))
+        .limit(1)
+    if (existing) return
+
+    await db.insert(notificationsTable).values({
+        userId: agentId,
+        message: warning,
+        link: '/tickets',
+    })
 }
