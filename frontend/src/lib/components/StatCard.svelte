@@ -3,6 +3,9 @@
   import { Card, CardContent } from '$lib/components/ui/card';
   import type { Component } from 'svelte';
   import { fly } from 'svelte/transition';
+  import { spotlight } from '$lib/actions/spotlight';
+
+  type IconWeight = 'bold' | 'duotone' | 'fill' | 'light' | 'thin' | 'regular';
 
   let {
     icon,
@@ -10,10 +13,10 @@
     value,
     tooltip,
     loading = false,
-    color,
+    color = 'var(--primary)',
     suffix,
   }: {
-    icon: Component<{ class?: string }>;
+    icon: Component<{ class?: string; weight?: IconWeight }>;
     label: string;
     value?: string | number;
     tooltip?: string;
@@ -23,15 +26,20 @@
   } = $props();
 </script>
 
-<Card>
-  <CardContent class="flex items-start gap-3">
+<Card size="sm" class="transition-shadow hover:shadow-md">
+  <CardContent class="flex items-center gap-3.5">
     <div
-      class="flex size-9 shrink-0 items-center justify-center rounded-lg {color ? '' : 'bg-primary/10 text-primary'}"
-      style={color ? `background-color: ${color}1a; color: ${color}` : ''}
+      use:spotlight
+      class="group relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg text-white shadow-sm"
+      style="background-image: linear-gradient(135deg, {color}, color-mix(in srgb, {color} 70%, black));"
     >
+      <div
+        class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style="background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,255,255,0.45), transparent 65%);"
+      ></div>
       {#if icon}
         {@const Icon = icon}
-        <Icon class="size-4.5" />
+        <Icon class="relative size-5" weight="fill" />
       {/if}
     </div>
     <div class="min-w-0">
