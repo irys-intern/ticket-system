@@ -41,12 +41,19 @@ export const GET: RequestHandler = async ({ locals, request, fetch, url }) => {
     const conditions = [];
     if (action) conditions.push(eq(auditEventsTable.action, action));
     if (q) {
-        const term = `%${q}%`;
-        const matchingUsers = await db.select({ id: userTable.id }).from(userTable)
-            .where(or(ilike(userTable.name, term), ilike(userTable.email, term)));
-        const orConditions = [ilike(auditEventsTable.action, term), sql`${auditEventsTable.ticketId}::text ILIKE ${term}`];
-        if (matchingUsers.length) orConditions.push(inArray(auditEventsTable.userId, matchingUsers.map((u) => u.id)));
-        conditions.push(or(...orConditions)!);
+        // A leading `#` (e.g. "#40") means "this exact ticket", so a search for
+        // ticket 40 doesn't also match 140 via substring ILIKE.
+        const exactTicketMatch = /^#(\d+)$/.exec(q.trim());
+        if (exactTicketMatch) {
+            conditions.push(eq(auditEventsTable.ticketId, Number.parseInt(exactTicketMatch[1], 10)));
+        } else {
+            const term = `%${q}%`;
+            const matchingUsers = await db.select({ id: userTable.id }).from(userTable)
+                .where(or(ilike(userTable.name, term), ilike(userTable.email, term)));
+            const orConditions = [ilike(auditEventsTable.action, term), sql`${auditEventsTable.ticketId}::text ILIKE ${term}`];
+            if (matchingUsers.length) orConditions.push(inArray(auditEventsTable.userId, matchingUsers.map((u) => u.id)));
+            conditions.push(or(...orConditions)!);
+        }
     }
     const whereClause = conditions.length ? and(...conditions) : undefined;
 

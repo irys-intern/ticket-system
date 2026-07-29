@@ -124,7 +124,7 @@
             <TableHead class="w-20">Ticket</TableHead>
             <TableHead>User</TableHead>
             <TableHead class="w-44">When</TableHead>
-            <TableHead class="w-32 text-right">Action</TableHead>
+            <TableHead class="w-32 pl-4 text-left">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -152,7 +152,7 @@
                 <TableCell class="text-sm whitespace-nowrap text-muted-foreground"
                   >{new Date(e.createdAt).toLocaleString()}</TableCell
                 >
-                <TableCell class="text-right text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
+                <TableCell class="text-left text-sm"><Badge variant="outline">{e.action}</Badge></TableCell>
               </TableRow>
             {/each}
           {/if}
