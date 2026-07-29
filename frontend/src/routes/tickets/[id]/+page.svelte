@@ -38,8 +38,7 @@
   let agents = $derived(data.agents);
   let selectedAgentId = $state('');
   let showAssignModal = $state(false);
-  let auditTrail: AuditEvent[] = $state([]);
-  let loadingAuditTrail = $state(true);
+  let auditTrail: AuditEvent[] = $derived(data.auditTrail);
   let showStatusDialog = $state(false);
   let pendingStatus = $state('');
   let showCloseDialog = $state(false);
@@ -62,14 +61,6 @@
     })
       .then(() => window.dispatchEvent(new CustomEvent('notifications:refresh')))
       .catch(() => {});
-  });
-
-  $effect(() => {
-    loadingAuditTrail = true;
-    data.auditTrail.then((trail) => {
-      auditTrail = trail;
-      loadingAuditTrail = false;
-    });
   });
 
   async function assignSelectedAgent() {
@@ -461,20 +452,7 @@
     </Dialog>
 
     <!-- Audit trail -->
-    {#if loadingAuditTrail}
-      <Card>
-        <CardHeader>
-          <CardTitle class="text-base">Audit Trail</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="animate-pulse space-y-3">
-            <div class="h-12 rounded-md bg-muted/40"></div>
-            <div class="h-12 rounded-md bg-muted/40"></div>
-            <div class="h-12 rounded-md bg-muted/40"></div>
-          </div>
-        </CardContent>
-      </Card>
-    {:else if auditTrail.length > 0}
+    {#if auditTrail.length > 0}
       <Card>
         <CardHeader>
           <CardTitle class="text-base">Audit Trail</CardTitle>

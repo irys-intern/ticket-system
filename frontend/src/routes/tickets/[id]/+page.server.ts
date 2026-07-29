@@ -80,6 +80,11 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   const authorString = ticket?.createdBy ? await fetchAssignmentString(ticket.createdBy, cookies) : '';
   const agents = locals.user.role === 'admin' ? await fetchAgents(cookies) : [];
 
+  // Awaited (not streamed) so the ticket page doesn't render before its audit
+  // trail is ready -- the two are meant to appear together, not the ticket
+  // first with the audit trail popping in a moment later.
+  const auditTrail = await fetchAuditTrail(id, cookies);
+
   return {
     user: locals.user,
     ticket,
@@ -87,6 +92,6 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     assignmentString,
     authorString,
     agents,
-    auditTrail: fetchAuditTrail(id, cookies)
+    auditTrail,
   };
 };

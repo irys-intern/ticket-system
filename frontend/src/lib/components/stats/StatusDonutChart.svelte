@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import InfoTooltip from '$lib/components/InfoTooltip.svelte';
+  import { Tween } from 'svelte/motion';
+  import { cubicOut } from 'svelte/easing';
   import type { Ticket } from '../../../types/index.ts';
   import { STATUS_COLORS, STATUS_LABELS, STATUSES, type Status } from './statsUtils';
 
@@ -12,23 +14,30 @@
   const DCX = 120;
   const DCY = 120;
 
+  const ACTIVE_STATUSES = STATUSES.filter((s) => s !== 'closed') as readonly Status[];
+
   type DonutSlice = { status: Status; count: number; sweep: number; startAngle: number; endAngle: number };
 
+  // A fixed-length, fixed-order array of per-status counts tweens cleanly
+  // (same shape every time, unlike the filtered/sorted slice list below), so
+  // switching agents glides the arcs to their new sizes instead of popping --
+  // the same idea as the ticket-distribution bars' width transition.
+  const rawCounts = $derived(ACTIVE_STATUSES.map((s) => agentTickets.filter((t) => t.status === s).length));
+  const tweenedCounts = Tween.of(() => rawCounts, { duration: 400, easing: cubicOut });
+  const tweenedTotal = $derived(tweenedCounts.current.reduce((sum, c) => sum + c, 0));
+
   const donutData = $derived.by((): DonutSlice[] => {
-    const activeTickets = agentTickets.filter((t) => t.status !== 'closed');
-    const total = activeTickets.length;
-    if (total === 0) return [];
+    const total = tweenedTotal;
+    if (total < 0.01) return [];
     let cursor = -90;
-    return (STATUSES.filter((s) => s !== 'closed') as readonly Status[])
-      .map((s) => {
-        const count = activeTickets.filter((t) => t.status === s).length;
-        const rawSweep = (count / total) * 360;
-        const sweep = Math.min(rawSweep, 359.9999);
-        const startAngle = cursor;
-        cursor += rawSweep;
-        return { status: s, count, sweep, startAngle, endAngle: startAngle + sweep };
-      })
-      .filter((d) => d.count > 0);
+    return ACTIVE_STATUSES.map((s, i) => {
+      const count = tweenedCounts.current[i];
+      const rawSweep = (count / total) * 360;
+      const sweep = Math.min(rawSweep, 359.9999);
+      const startAngle = cursor;
+      cursor += rawSweep;
+      return { status: s, count, sweep, startAngle, endAngle: startAngle + sweep };
+    }).filter((d) => d.sweep > 0.01);
   });
 
   function polarXY(r: number, deg: number) {
@@ -82,7 +91,7 @@
                   style="background-color: {STATUS_COLORS[d.status]}"
                 ></span>
                 <span class="text-muted-foreground w-28">{STATUS_LABELS[d.status]}</span>
-                <span class="font-semibold tabular-nums">{d.count}</span>
+                <span class="font-semibold tabular-nums">{Math.round(d.count)}</span>
                 <span class="text-muted-foreground text-xs"
                   >{((d.count / agentTickets.length) * 100).toFixed(0)}%</span
                 >

@@ -2,6 +2,7 @@
   import InfoTooltip from '$lib/components/InfoTooltip.svelte';
   import { Card, CardContent } from '$lib/components/ui/card';
   import type { Component } from 'svelte';
+  import { untrack } from 'svelte';
   import { fly } from 'svelte/transition';
   import { spotlight } from '$lib/actions/spotlight';
 
@@ -24,6 +25,21 @@
     color?: string;
     suffix?: string;
   } = $props();
+
+  // Re-key the value on every change (e.g. switching the selected agent on
+  // /admin/stats) so it always replays its enter/exit transition instead of
+  // silently popping to the new number in place -- no in-between values are
+  // shown. A higher value slides in from above (and pushes the old one down);
+  // a lower value slides in from below (and pushes the old one up).
+  let prevValue = $state(untrack(() => value));
+  // Sign of the incoming value's start offset: -1 = from above, 1 = from below.
+  let incomingSign = $state<1 | -1>(1);
+  $effect(() => {
+    if (typeof value === 'number' && typeof prevValue === 'number' && value !== prevValue) {
+      incomingSign = value > prevValue ? -1 : 1;
+    }
+    prevValue = value;
+  });
 </script>
 
 <Card size="sm" class="transition-shadow hover:shadow-md">
@@ -46,9 +62,17 @@
       {#if loading}
         <span class="inline-block h-9 w-10 animate-pulse rounded bg-muted align-middle"></span>
       {:else}
-        <p class="text-3xl font-bold" in:fly|global={{ y: 10 }}>
-          {value}{#if suffix}<span class="text-base font-normal text-muted-foreground ml-1">{suffix}</span>{/if}
-        </p>
+        <div class="grid">
+          {#key value}
+            <p
+              class="col-start-1 row-start-1 text-3xl font-bold tabular-nums"
+              in:fly={{ y: incomingSign * 10}}
+              out:fly={{ y: -incomingSign * 10}}
+            >
+              {value}{#if suffix}<span class="text-base font-normal text-muted-foreground ml-1">{suffix}</span>{/if}
+            </p>
+          {/key}
+        </div>
       {/if}
       <p class="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
