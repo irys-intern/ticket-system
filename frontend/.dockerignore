@@ -1,0 +1,14 @@
+node_modules
+.svelte-kit
+build
+dist
+.output
+.vercel
+.netlify
+.wrangler
+.env
+.env.*
+!.env.example
+test-results
+playwright-report
+*.md

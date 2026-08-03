@@ -1,0 +1,16 @@
+node_modules
+.svelte-kit
+build
+dist
+.output
+.vercel
+.netlify
+.wrangler
+.env
+.env.*
+!.env.example
+drizzle
+test-results
+playwright-report
+training-materials
+*.md
