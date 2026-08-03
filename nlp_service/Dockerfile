@@ -22,5 +22,8 @@ AutoTokenizer.from_pretrained('facebook/bart-large-mnli').save_pretrained('./loc
 AutoModelForSequenceClassification.from_pretrained('facebook/bart-large-mnli').save_pretrained('./local_model')"
 
 EXPOSE 8000
+ENV PORT=8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so $PORT expands -- lets platforms like Railway that inject
+# their own PORT override the default via env var.
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
