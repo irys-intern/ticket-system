@@ -11,6 +11,12 @@ cleanup() {
 }
 trap cleanup TERM INT
 
+redis-server --daemonize no --save "" &
+pids="$pids $!"
+until redis-cli ping >/dev/null 2>&1; do
+  sleep 0.2
+done
+
 cd /app/nlp_service
 PORT="$NLP_PORT" uvicorn main:app --host 0.0.0.0 --port "$NLP_PORT" &
 pids="$pids $!"
