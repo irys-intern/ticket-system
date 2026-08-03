@@ -43,6 +43,7 @@ export const auth = betterAuth({
                     httpOnly: true,
                     sameSite: "none" as const,
                     secure: true,
+                    partitioned: true,
                     path: "/",
                     maxAge: 60 * 60 * 24 * 3,
                 },
