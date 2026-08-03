@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db/index.ts';
 import { appSettingsTable } from '../db/schema.ts';
-import { redis } from './redis.ts';
+import { getRedisSafe } from './redis.ts';
 import { getOrSetCache, invalidateCache } from './cache.ts';
 
 const SETTINGS_ROW_ID = 1;
@@ -27,7 +27,7 @@ async function loadSettingsFromDb(): Promise<AppSettings> {
 }
 
 export async function getSettings(): Promise<AppSettings> {
-  return getOrSetCache(redis, SETTINGS_CACHE_KEY, SETTINGS_CACHE_TTL_SECONDS, loadSettingsFromDb);
+  return getOrSetCache(await getRedisSafe(), SETTINGS_CACHE_KEY, SETTINGS_CACHE_TTL_SECONDS, loadSettingsFromDb);
 }
 
 export async function updateSettings(patch: Partial<AppSettings>, updatedBy: string): Promise<AppSettings> {
@@ -42,6 +42,6 @@ export async function updateSettings(patch: Partial<AppSettings>, updatedBy: str
       set: { ...merged, updatedBy, updatedAt: new Date() },
     });
 
-  await invalidateCache(redis, SETTINGS_CACHE_KEY);
+  await invalidateCache(await getRedisSafe(), SETTINGS_CACHE_KEY);
   return merged;
 }

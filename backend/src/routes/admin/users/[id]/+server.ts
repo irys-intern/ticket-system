@@ -3,7 +3,7 @@ import { assignmentsTable, auditEventsTable, commentsTable, notificationsTable, 
 import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { type RequestHandler, error, json } from "@sveltejs/kit";
 import { DELETED_USER_ID, ensureDeletedUserExists } from "../../../../lib/deletedUser.ts";
-import { redis } from "../../../../lib/redis.ts";
+import { getRedisSafe } from "../../../../lib/redis.ts";
 import { invalidateCache } from "../../../../lib/cache.ts";
 import {
     DASHBOARD_HOME_ADMIN_CACHE_KEY,
@@ -114,7 +114,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
         }
 
         await invalidateCache(
-            redis,
+            await getRedisSafe(),
             DASHBOARD_HOME_ADMIN_CACHE_KEY,
             dashboardHomeUserCacheKey(targetId),
             dashboardHomeAgentCacheKey(targetId),

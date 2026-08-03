@@ -2,7 +2,7 @@ import { initializeDatabase, db } from './db/index.ts';
 import { auth } from './auth/auth.ts';
 import { userTable } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
-import { redis } from './lib/redis.ts';
+import { getRedisSafe } from './lib/redis.ts';
 import { checkRateLimit } from './lib/rateLimit.ts';
 import { env } from './config/env.ts';
 import type { Handle } from '@sveltejs/kit';
@@ -42,19 +42,22 @@ export const handle: Handle = async ({ event, resolve }) => {
         const ip = event.getClientAddress();
         const key = `ratelimit:${event.url.pathname}:${ip}`;
         try {
-            const result = await checkRateLimit(redis, key, rule.limit, rule.windowSeconds);
-            if (!result.allowed) {
-                return new Response(
-                    JSON.stringify({ success: false, errors: ['Too many requests, please try again later'] }),
-                    {
-                        status: 429,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Retry-After': String(result.retryAfterSeconds),
-                            ...corsHeaders,
+            const redis = await getRedisSafe();
+            if (redis) {
+                const result = await checkRateLimit(redis, key, rule.limit, rule.windowSeconds);
+                if (!result.allowed) {
+                    return new Response(
+                        JSON.stringify({ success: false, errors: ['Too many requests, please try again later'] }),
+                        {
+                            status: 429,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Retry-After': String(result.retryAfterSeconds),
+                                ...corsHeaders,
+                            },
                         },
-                    },
-                );
+                    );
+                }
             }
         } catch (err) {
             // Fail open: if Redis is unavailable, skip rate limiting rather than 500ing every request.

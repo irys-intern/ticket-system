@@ -3,14 +3,18 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db/index.ts";
 import { userTable, sessionTable, accountTable, verificationTable } from "../db/schema.ts";
 import { env } from "../config/env.ts";
-import { redis } from "../lib/redis.ts";
+import { getRedisClient } from "../lib/redis.ts";
 
 export const auth = betterAuth({
     secondaryStorage: {
-        get: (key) => redis.get(key),
-        set: (key, value, ttl) =>
-            ttl ? redis.set(key, value, { EX: ttl }) : redis.set(key, value),
-        delete: (key) => redis.del(key).then(() => undefined),
+        get: async (key) => (await getRedisClient()).get(key),
+        set: async (key, value, ttl) => {
+            const redis = await getRedisClient();
+            return ttl ? redis.set(key, value, { EX: ttl }) : redis.set(key, value);
+        },
+        delete: async (key) => {
+            await (await getRedisClient()).del(key);
+        },
     },
     secret: env.auth.secret,
     baseURL: env.backend.url,
@@ -36,9 +40,14 @@ export const auth = betterAuth({
         },
     },
     advanced: {
+        // Firefox requires the __Host- prefix for Partitioned cookies (Chrome only
+        // recommends it). better-auth's automatic HTTPS-detected prefix is always
+        // __Secure-, so useSecureCookies is disabled here and __Host- is applied
+        // to the name directly instead.
+        useSecureCookies: false,
         cookies: {
             session_token: {
-                name: "sessionId",
+                name: "__Host-sessionId",
                 attributes: {
                     httpOnly: true,
                     sameSite: "none" as const,

@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { db } from '../db/index.ts';
-import { redis } from './redis.ts';
+import { getRedisClient } from './redis.ts';
 import { env } from '../config/env.ts';
 
 export interface HealthCheck {
@@ -26,7 +26,7 @@ export async function checkSystemHealth(): Promise<HealthCheck[]> {
       await db.execute(sql`SELECT 1`);
     }),
     timed('redis', async () => {
-      await redis.ping();
+      await (await getRedisClient()).ping();
     }),
     timed('nlp_service', async () => {
       const controller = new AbortController();

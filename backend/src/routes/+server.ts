@@ -2,7 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '../db/index.ts';
 import { ticketsTable, userTable } from '../db/schema.ts';
 import { eq, and, ne, not, or } from 'drizzle-orm';
-import { redis } from '../lib/redis.ts';
+import { getRedisSafe } from '../lib/redis.ts';
 import { getOrSetCache } from '../lib/cache.ts';
 import {
   getDashboardCacheTtlSeconds,
@@ -15,6 +15,7 @@ import { DELETED_USER_ID } from '../lib/deletedUser.ts';
 export async function GET({ locals }: RequestEvent) {
   const user = locals.user;
   const cacheTtl = await getDashboardCacheTtlSeconds();
+  const redis = await getRedisSafe();
   let openUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   let resolvedUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []
   let progressUserTickets: { id: number; title: string; description: string; status: "open" | "in_progress" | "waiting_for_response" | "resolved" | "closed"; priority: "low" | "medium" | "high" | "critical"; category: "bug" | "feature_request" | "support" | "other"; createdBy: string; assignedTo: string | null; createdAt: Date; updatedAt: Date; }[] = []

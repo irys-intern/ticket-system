@@ -3,7 +3,7 @@ import { db } from "../../../db/index.ts";
 import { auditEventsTable, notificationsTable, ticketsTable, userTable } from "../../../db/schema.ts";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 import type { Ticket } from "../../../types/index.ts";
-import { redis } from "../../../lib/redis.ts";
+import { getRedisSafe } from "../../../lib/redis.ts";
 import { invalidateCache } from "../../../lib/cache.ts";
 import {
     DASHBOARD_HOME_ADMIN_CACHE_KEY,
@@ -105,7 +105,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         if (ticket) {
             const homeKeys = [DASHBOARD_HOME_ADMIN_CACHE_KEY, dashboardHomeUserCacheKey(ticket.createdBy)]
             if (ticket.assignedTo) homeKeys.push(dashboardHomeAgentCacheKey(ticket.assignedTo))
-            await invalidateCache(redis, ...homeKeys)
+            await invalidateCache(await getRedisSafe(), ...homeKeys)
             await notifyForAuditEvent(action, ticket, userId)
             // Only actions that can shift an agent's priority mix are worth re-checking.
             if (ticket.assignedTo && ['ticket assigned', 'ticket reassigned', 'ticket updated'].includes(action)) {

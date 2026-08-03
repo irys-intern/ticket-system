@@ -1,17 +1,30 @@
 import { createClient } from 'redis';
 import { env } from '../config/env.ts';
 
-console.log('Connecting to Redis at', env.redis.url.replace(/:[^:@/]+@/, ':***@'));
-console.log(
-  'Env keys containing REDIS:',
-  JSON.stringify(Object.keys(process.env).filter((k) => k.toUpperCase().includes('REDIS'))),
-);
-console.log('FOO_TEST:', process.env.FOO_TEST);
-console.log('Total env var count:', Object.keys(process.env).length);
-console.log('All env keys:', JSON.stringify(Object.keys(process.env).sort()));
+let Redis: ReturnType<typeof createClient> | null = null;
+let connecting = false;
 
-export const redis = createClient({ url: env.redis.url });
-
-redis.on('error', (err) => console.error('Redis error:', err));
-
-await redis.connect();
+export const getRedisClient = async () => {
+  if (Redis) return Redis;
+  if (connecting) {
+    // Wait for the existing connection attempt to finish
+    while (connecting) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return Redis!;
+  }
+  connecting = true;
+  Redis = createClient({ url: env.redis.url });
+  Redis.on('error', (err) => console.error('Redis error:', err));
+  await Redis.connect();
+  connecting = false;
+  return Redis;
+}
+export async function getRedisSafe() {
+  try {
+    return await getRedisClient();
+  } catch (err) {
+    console.error('Failed to connect to Redis:', err);
+    return null;
+  }
+}
