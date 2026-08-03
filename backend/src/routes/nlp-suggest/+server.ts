@@ -23,10 +23,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       body: JSON.stringify({ text }),
       signal: controller.signal,
     });
-    if (!res.ok) throw error(502, 'NLP service unavailable');
+    if (!res.ok) {
+      console.error('NLP responded', res.status, 'for', `${env.nlp.url}/suggest`, ':', await res.text().catch(() => ''));
+      throw error(502, 'NLP service unavailable');
+    }
     return json(await res.json());
   } catch (err) {
     if (err && typeof err === 'object' && 'status' in err) throw err;
+    console.error('NLP request to', `${env.nlp.url}/suggest`, 'failed:', err);
     throw error(502, 'NLP service unavailable');
   } finally {
     clearTimeout(timeout);
