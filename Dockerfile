@@ -1,10 +1,9 @@
 # syntax=docker/dockerfile:1
 #
 # Single-container build that runs all three app services (backend, frontend,
-# nlp_service) plus a local Redis instance via start.sh. Postgres is NOT
-# included here -- point DATABASE_URL at an external instance (e.g. Railway's
-# managed Postgres plugin). Redis has no data worth persisting across
-# restarts (sessions/cache), so running it in-container is fine.
+# nlp_service) side by side via start.sh. Postgres and Redis are NOT included
+# here -- point DATABASE_URL/REDIS_URL at external instances (e.g. Railway's
+# managed Postgres/Redis plugins).
 
 FROM node:24-slim AS frontend-build
 WORKDIR /frontend
@@ -26,10 +25,9 @@ FROM python:3.11-slim AS final
 WORKDIR /app
 
 # Node is needed alongside Python in this stage since backend/frontend are
-# SvelteKit (Node) apps and nlp_service is FastAPI (Python). redis-server
-# provides Redis locally instead of relying on an external instance.
+# SvelteKit (Node) apps and nlp_service is FastAPI (Python).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl gnupg ca-certificates redis-server \
+    && apt-get install -y --no-install-recommends curl gnupg ca-certificates \
     && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -73,7 +71,6 @@ ENV BACKEND_PORT=5172
 # Railway (and similar PaaS) inject PORT for the service's primary public
 # port -- the frontend is what that should point at.
 ENV PORT=5173
-ENV REDIS_URL=redis://localhost:6379
 
 EXPOSE 5173 5172 8000
 
