@@ -6,6 +6,9 @@ console.log(
   'Env keys containing REDIS:',
   JSON.stringify(Object.keys(process.env).filter((k) => k.toUpperCase().includes('REDIS'))),
 );
+console.log('FOO_TEST:', process.env.FOO_TEST);
+console.log('Total env var count:', Object.keys(process.env).length);
+console.log('All env keys:', JSON.stringify(Object.keys(process.env).sort()));
 
 export const redis = createClient({ url: env.redis.url });
 

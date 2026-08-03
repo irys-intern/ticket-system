@@ -1,8 +1,0 @@
-venv
-.venv
-__pycache__
-*.pyc
-local_model
-.env
-.env.*
-!.env.example
