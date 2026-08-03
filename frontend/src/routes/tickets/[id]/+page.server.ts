@@ -7,8 +7,8 @@ import { env } from '$env/dynamic/private';
 const backendUrl = () => env.BACKEND_URL ?? 'http://localhost:5172';
 
 function backendHeaders(cookies: Cookies, extra?: Record<string, string>) {
-  const sessionId = cookies.get('sessionId');
-  return { ...(sessionId ? { cookie: `sessionId=${sessionId}` } : {}), ...extra };
+  const token = cookies.get('authToken');
+  return { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...extra };
 }
 
 async function fetchAssignmentString(userId: string, cookies: Cookies) {

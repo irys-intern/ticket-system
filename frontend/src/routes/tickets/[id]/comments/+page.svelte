@@ -7,6 +7,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Separator } from '$lib/components/ui/separator';
   import { PUBLIC_BACKEND_URL } from '$env/static/public'
+  import { authHeaders } from '$lib/auth';
   import { toast } from '$lib/toast';
   import BackLink from '$lib/components/BackLink.svelte';
   import RelativeTime from '$lib/components/RelativeTime.svelte';
@@ -36,8 +37,7 @@
     try {
       const response = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ content: newComment }),
       });
       if (!response.ok) throw new Error('Failed to post comment. Ensure the ticket is open and you are logged in.');

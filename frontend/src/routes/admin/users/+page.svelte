@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import { page as pageStore } from '$app/state';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import BackLink from '$lib/components/BackLink.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
@@ -112,7 +113,7 @@
     userToDelete = null;
     const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}`, {
       method: 'DELETE',
-      credentials: 'include',
+      headers: authHeaders(),
     });
     const result = await response.json();
     if (!response.ok) {
@@ -129,8 +130,7 @@
     const nextActive = !user.active;
     const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}`, {
       method: 'PATCH',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ active: nextActive }),
     });
     const result = await response.json().catch(() => ({}));
@@ -151,8 +151,7 @@
     if (!selectedUser) return;
     const response = await fetch(PUBLIC_BACKEND_URL + '/admin/users', {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ manageUser: selectedUser.id, modification: selectedUser.role }),
     });
     if (!response.ok) {
@@ -183,7 +182,7 @@
     exportingAll = true;
     try {
       const response = await fetch(PUBLIC_BACKEND_URL + '/admin/users/export', {
-        credentials: 'include',
+        headers: authHeaders(),
       });
       if (!response.ok) {
         toast.error('Unable to export users');
@@ -197,7 +196,7 @@
 
   async function handleExportUser(user: (typeof users)[0]) {
     const response = await fetch(PUBLIC_BACKEND_URL + `/admin/users/${user.id}/export`, {
-      credentials: 'include',
+      headers: authHeaders(),
     });
     if (!response.ok) {
       toast.error(`Unable to export data for "${user.name}"`);

@@ -18,6 +18,7 @@
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import CheckCircleIcon from 'phosphor-svelte/lib/CheckCircleIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
   import PlusCircleIcon from 'phosphor-svelte/lib/PlusCircleIcon';
@@ -51,8 +52,7 @@
 
     const res = await fetch(PUBLIC_BACKEND_URL + '/training', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ title: newTitle, content: newContent }),
     });
 
@@ -86,7 +86,7 @@
 
     const res = await fetch(PUBLIC_BACKEND_URL + `/training/${slug}`, {
       method: 'DELETE',
-      credentials: 'include',
+      headers: authHeaders(),
     });
 
     deletingSlug = '';

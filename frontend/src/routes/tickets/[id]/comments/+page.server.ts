@@ -10,8 +10,8 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   }
 
   const id = params.id;
-  const sessionId = cookies.get('sessionId');
-  const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
+  const token = cookies.get('authToken');
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   let comments: { id: string; userName: string; createdAt: string; content: string; isAutomated: boolean }[] = [];
   let error: string | null = null;

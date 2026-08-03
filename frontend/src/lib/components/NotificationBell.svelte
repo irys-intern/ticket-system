@@ -4,6 +4,7 @@
   import { quintOut } from 'svelte/easing';
   import { goto } from '$app/navigation';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import BellIcon from 'phosphor-svelte/lib/BellIcon';
   import BellSlashIcon from 'phosphor-svelte/lib/BellSlashIcon';
   import CheckCheckIcon from 'phosphor-svelte/lib/ChecksIcon';
@@ -40,7 +41,7 @@
 
   async function fetchUnreadCount() {
     const res = await fetch(PUBLIC_BACKEND_URL + '/notifications/unread-count', {
-      credentials: 'include',
+      headers: authHeaders(),
     });
     if (!res.ok) return;
     const data = await res.json();
@@ -48,7 +49,7 @@
   }
 
   async function fetchNotifications() {
-    const res = await fetch(PUBLIC_BACKEND_URL + '/notifications', { credentials: 'include' });
+    const res = await fetch(PUBLIC_BACKEND_URL + '/notifications', { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
     notifications = data.notifications ?? [];
@@ -65,7 +66,7 @@
     if (!notification.read) {
       const res = await fetch(PUBLIC_BACKEND_URL + `/notifications/${notification.id}/read`, {
         method: 'POST',
-        credentials: 'include',
+        headers: authHeaders(),
       });
       if (res.ok) {
         notification.read = true;
@@ -82,7 +83,7 @@
     if (unreadCount === 0) return;
     const res = await fetch(PUBLIC_BACKEND_URL + '/notifications/read-all', {
       method: 'POST',
-      credentials: 'include',
+      headers: authHeaders(),
     });
     if (!res.ok) return;
     notifications = notifications.map((n) => ({ ...n, read: true }));

@@ -15,8 +15,8 @@ export const load: PageServerLoad = async ({ locals, cookies, url }) => {
     throw error(404, 'Not Found');
   }
 
-  const sessionId = cookies.get('sessionId');
-  const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
+  const token = cookies.get('authToken');
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   const page = sanitizePage(url.searchParams.get('page'));
   const q = (url.searchParams.get('q') ?? '').slice(0, 200);

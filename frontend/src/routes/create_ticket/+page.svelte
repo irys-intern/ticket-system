@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import BackLink from '$lib/components/BackLink.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
@@ -46,8 +47,7 @@
     try {
       const res = await fetch(`${PUBLIC_BACKEND_URL}/nlp-suggest`, {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ text: [title, description].filter(Boolean).join(' — ') }),
       });
       if (!res.ok) return;
@@ -73,8 +73,7 @@
     errors = [];
     const response = await fetch(PUBLIC_BACKEND_URL + '/create_ticket', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ title, description, category, priority }),
     });
     const result = await response.json();

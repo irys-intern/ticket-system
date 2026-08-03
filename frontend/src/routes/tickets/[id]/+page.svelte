@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import BackLink from '$lib/components/BackLink.svelte';
   import PriorityBadge from '$lib/components/PriorityBadge.svelte';
   import { Badge } from '$lib/components/ui/badge';
@@ -57,7 +58,7 @@
     if (id == null) return;
     fetch(`${PUBLIC_BACKEND_URL}/notifications/read-by-ticket/${id}`, {
       method: 'POST',
-      credentials: 'include',
+      headers: authHeaders(),
     })
       .then(() => window.dispatchEvent(new CustomEvent('notifications:refresh')))
       .catch(() => {});
@@ -73,9 +74,8 @@
         : { agent: selectedAgentId, ticketId: ticket.id, action };
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
-      credentials: 'include',
     });
     queueToast(
       res.ok ? 'success' : 'error',
@@ -87,8 +87,7 @@
   async function claimTicket() {
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'claim' }),
     });
     queueToast(
@@ -118,8 +117,7 @@
     if (!ticket || !pendingStatus) return;
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         agent: user?.userId,
         ticketId: ticket.id,
@@ -137,8 +135,7 @@
   async function forfeitTicket() {
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ agent: user?.userId, ticketId: ticket?.id, action: 'forfeit' }),
     });
     queueToast(
@@ -161,8 +158,7 @@
     if (closeMode !== 'user') {
       await fetch(PUBLIC_BACKEND_URL + window.location.pathname + '/comments', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           ticketId: ticket?.id,
           content: `Ticket closed: ${closeReason.trim()}`,
@@ -172,8 +168,7 @@
 
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(
         closeMode === 'agent'
           ? { agent: user?.userId, ticketId: ticket?.id, action: 'close' }
@@ -198,8 +193,7 @@
     if (!ticket) return;
     const res = await fetch(PUBLIC_BACKEND_URL + window.location.pathname, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         agent: user?.userId,
         ticketId: ticket.id,

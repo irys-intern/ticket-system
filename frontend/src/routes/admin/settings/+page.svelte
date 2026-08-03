@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import { invalidateAll } from '$app/navigation';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import BackLink from '$lib/components/BackLink.svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Button } from '$lib/components/ui/button';
@@ -27,8 +28,7 @@
     try {
       const response = await fetch(PUBLIC_BACKEND_URL + '/admin/settings', {
         method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ siteIconUrl, nlpDebounceMs, dashboardCacheTtlSeconds }),
       });
       const result = await response.json().catch(() => ({}));

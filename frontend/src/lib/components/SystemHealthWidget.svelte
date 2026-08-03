@@ -1,5 +1,6 @@
 <script lang="ts">
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import { toast } from '$lib/toast';
@@ -25,7 +26,7 @@
   async function loadHealth() {
     loading = true;
     try {
-      const response = await fetch(PUBLIC_BACKEND_URL + '/admin/health', { credentials: 'include' });
+      const response = await fetch(PUBLIC_BACKEND_URL + '/admin/health', { headers: authHeaders() });
       if (response.ok) {
         const result = await response.json();
         checks = result.checks;
@@ -43,7 +44,7 @@
     try {
       const response = await fetch(PUBLIC_BACKEND_URL + '/admin/cache', {
         method: 'DELETE',
-        credentials: 'include',
+        headers: authHeaders(),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {

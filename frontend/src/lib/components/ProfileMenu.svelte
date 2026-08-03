@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders, clearToken } from '$lib/auth';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import {
@@ -45,11 +46,11 @@
   async function handleLogout() {
     const response = await fetch(`${PUBLIC_BACKEND_URL}/auth/logout`, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
     });
     showLogoutDialog = false;
     if (response.ok) {
+      clearToken();
       toast.success('Signed out.');
       await goto(resolve('/'), { replaceState: true, invalidateAll: true });
     } else {

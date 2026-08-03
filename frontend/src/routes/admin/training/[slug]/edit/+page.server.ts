@@ -9,8 +9,8 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     throw error(404, 'Not Found');
   }
 
-  const sessionId = cookies.get('sessionId');
-  const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
+  const token = cookies.get('authToken');
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   let content = '';
   let errorMsg = '';

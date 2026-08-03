@@ -39,6 +39,13 @@ export const POST: RequestHandler = async ({ request }) => {
         if (setCookie) {
             response.headers.set('set-cookie', setCookie);
         }
+        // The bearer plugin hands back the session token here instead of (or alongside)
+        // the cookie -- the frontend reads this and sends it back as an Authorization header.
+        const authToken = authResponse.headers.get('set-auth-token');
+        if (authToken) {
+            response.headers.set('set-auth-token', authToken);
+            response.headers.set('Access-Control-Expose-Headers', 'set-auth-token');
+        }
         return response;
     } catch {
         return json({ success: false, errors: ['Invalid email or password'] }, { status: 401 });

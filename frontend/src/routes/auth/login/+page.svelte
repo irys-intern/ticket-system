@@ -9,6 +9,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { setToken } from '$lib/auth';
   import EnvelopeSimpleIcon from 'phosphor-svelte/lib/EnvelopeSimpleIcon';
   import LockKeyIcon from 'phosphor-svelte/lib/LockKeyIcon';
   import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
@@ -30,7 +31,6 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include',
       });
 
       const result = await response.json();
@@ -39,6 +39,8 @@
         errors = result.errors ?? [result.message ?? 'Unable to log in'];
         toast.error(errors[0]);
       } else {
+        const token = response.headers.get('set-auth-token');
+        if (token) setToken(token);
         email = '';
         password = '';
         await goto(resolve('/'), { replaceState: true, invalidateAll: true });

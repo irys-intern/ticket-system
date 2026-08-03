@@ -14,8 +14,8 @@ const statsDefaults = {
 };
 
 async function fetchStats(cookies: Cookies) {
-  const sessionId = cookies.get('sessionId');
-  if (!sessionId) {
+  const token = cookies.get('authToken');
+  if (!token) {
     return statsDefaults;
   }
 
@@ -23,7 +23,7 @@ async function fetchStats(cookies: Cookies) {
 
   let res: Response;
   try {
-    res = await fetch(backendUrl, { headers: { cookie: `sessionId=${sessionId}` } });
+    res = await fetch(backendUrl, { headers: { Authorization: `Bearer ${token}` } });
   } catch {
     return statsDefaults;
   }

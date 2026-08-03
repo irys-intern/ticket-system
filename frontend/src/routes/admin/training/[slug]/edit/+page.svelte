@@ -8,6 +8,7 @@
   import { Label } from '$lib/components/ui/label';
   import BackLink from '$lib/components/BackLink.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
+  import { authHeaders } from '$lib/auth';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
   import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
@@ -42,8 +43,7 @@
 
     const res = await fetch(PUBLIC_BACKEND_URL + `/training/${slug}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ content }),
     });
 

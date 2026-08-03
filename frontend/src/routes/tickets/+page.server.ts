@@ -18,8 +18,8 @@ export const load: PageServerLoad = async ({ locals, cookies, url }) => {
     redirect(307, '/auth/login');
   }
 
-  const sessionId = cookies.get('sessionId');
-  const headers: Record<string, string> = sessionId ? { cookie: `sessionId=${sessionId}` } : {};
+  const token = cookies.get('authToken');
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   // Only the admin branch of GET /tickets is paginated/searchable server-side --
   // user/agent ticket sets are already scoped to their own tickets.
