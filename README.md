@@ -277,6 +277,84 @@ Update the `allow_origins` list in `nlp_service/main.py` to include your product
 
 The `local_model/` directory must be present on the server. Either commit the weights out-of-band (e.g. via [Git LFS](https://git-lfs.com/) or a cloud volume) or run the auto-download on first start with an internet connection.
 
+### Railway
+
+This project is also deployed on [Railway](https://railway.app/) as **five separate services** in one project: `backend`, `frontend`, and `nlp_service` (each built from this repo), plus managed `Postgres` and `Redis` plugins &mdash; not a single combined deploy.
+
+#### Databases
+
+Add two Railway plugins to the project: **PostgreSQL** and **Redis**. No further config needed &mdash; the app services below reference their connection strings via Railway's `${{ServiceName.VARIABLE}}` syntax.
+
+#### App services
+
+For each of `backend`, `frontend`, `nlp_service`: "Deploy from GitHub repo" against this repo, then set:
+
+| Service | Root Directory |
+| --- | --- |
+| `nlp_service` | `nlp_service` |
+| `backend` | `backend` |
+| `frontend` | `frontend` |
+
+<!-- TODO: which builder did each service end up using -- Dockerfile or Railpack/Nixpacks? -->
+
+None of the three have a `start` script Railway can auto-detect, so set **Build/Start Commands** explicitly under each service's Settings &rarr; Deploy:
+
+| Service | Build Command | Start Command |
+| --- | --- | --- |
+| `nlp_service` | `Railpack` | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| `backend` | `Railpack` | `npx drizzle-kit push --force && node build` |
+| `frontend` | `Railpack` | `node build` |
+
+`backend`'s start command pushes the Drizzle schema before starting the server on every boot &mdash; safe to leave in permanently, since it's a no-op once the schema already matches.
+
+#### Environment variables
+
+**`nlp_service`**
+
+```
+NLP_API_KEY=<generate with e.g. `openssl rand -hex 32`>
+PORT=8080
+```
+
+**`backend`**
+
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+BETTER_AUTH_SECRET=<generate with e.g. `openssl rand -base64 32`>
+NLP_API_KEY=${{nlp-service.NLP_API_KEY}}$
+NLP_SERVER_URL=${{nlp-service.NLP_URL}}$
+     public domain:   https://<nlp-service's generated domain> -->
+FRONTEND_URL=${{frontend.FRONTEND_URL}}
+BACKEND_URL=<backend's own public domain>
+PUBLIC_BACKEND_URL=<backend's own public domain>
+```
+
+**`frontend`** (build-time variable/arg &mdash; gets inlined into the client bundle, so it must be set *before* building, not just at runtime)
+
+```
+PUBLIC_BACKEND_URL=${{backend.PUBLIC_BACKEND_URL}}$
+FRONTEND_URL=<frontend's own public domain>
+```
+
+#### Networking
+
+- Generate a public domain for **backend**, **frontend**, and **nlp-service** with port 8080 due to Node's preferences (Settings &rarr; Networking) &mdash; the browser calls the backend directly, so both need to be reachable.
+- `nlp_service` needs enough memory to load `facebook/bart-large-mnli` via `transformers`/`torch` at startup, or it will crash-loop.
+
+#### Deploy order
+
+1. `nlp_service` first.
+  * NOTE: The NLP Service is by far the most expensive service of the entire project. It can be safely disabled to avoid high costs.
+2. `backend` next (needs `DATABASE_URL`/`REDIS_URL`/`NLP_SERVER_URL` resolvable).
+3. `frontend` last (needs backend's real domain for the `PUBLIC_BACKEND_URL` build arg).
+
+Once `backend` and `frontend` both have real domains, go back and fill in `FRONTEND_URL`/`BACKEND_URL` on `backend` if they were placeholders, then redeploy it.
+
+#### Notes
+
+Frontend and backend live on unrelated `*.up.railway.app` subdomains, which browsers treat as separate *sites* rather than subdomains of one site &mdash; cross-site cookies proved unreliable across browsers even with `SameSite=None`/`Partitioned` (Firefox in particular wouldn't store the session cookie at all). Auth uses Better Auth's **bearer token** plugin instead of cookies: the frontend stores the session token itself ([`frontend/src/lib/auth.ts`](frontend/src/lib/auth.ts)) and sends it as `Authorization: Bearer <token>`, sidestepping cross-site cookie policy entirely. If frontend and backend ever move to a single custom domain you control, this keeps working unchanged &mdash; no need to revert to cookies.
+
 <!-- REFERENCE -->
 
 ## Reference
