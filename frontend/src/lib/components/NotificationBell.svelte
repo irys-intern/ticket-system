@@ -176,7 +176,7 @@
             onclick={() => (filter = tab.key as 'all' | 'unread')}
             class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors {filter === tab.key
               ? 'bg-accent text-accent-foreground'
-              : 'text-muted-foreground hover:text-foreground'}"
+              : 'text-muted-foreground ' + ((tab.key === 'unread' && allCount === 0) ? '' : 'hover:text-foreground')}"
             disabled={tab.key === 'unread' && allCount === 0}
           >
             {tab.label}
