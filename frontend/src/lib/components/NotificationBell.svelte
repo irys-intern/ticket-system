@@ -20,7 +20,6 @@
 
   let open = $state(false);
   let unreadCount = $state(0);
-  let allCount = $state(0);
   let notifications = $state<Notification[]>([]);
   let filter = $state<'all' | 'unread'>('all');
   let container: HTMLDivElement | undefined = $state();
@@ -54,7 +53,6 @@
     if (!res.ok) return;
     const data = await res.json();
     notifications = data.notifications ?? [];
-    allCount = notifications.length;
   }
 
   async function toggleOpen() {
@@ -176,8 +174,8 @@
             onclick={() => (filter = tab.key as 'all' | 'unread')}
             class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors {filter === tab.key
               ? 'bg-accent text-accent-foreground'
-              : 'text-muted-foreground ' + ((tab.key === 'unread' && allCount === 0) ? '' : 'hover:text-foreground')}"
-            disabled={tab.key === 'unread' && allCount === 0}
+              : 'text-muted-foreground ' + ((tab.key === 'unread' && unreadCount === 0) ? '' : 'hover:text-foreground')}"
+            disabled={tab.key === 'unread' && unreadCount === 0}
           >
             {tab.label}
           </button>
