@@ -59,21 +59,21 @@
       {/if}
     </div>
     <div class="min-w-0">
-      {#if loading}
-        <span class="inline-block h-9 w-10 animate-pulse rounded bg-muted align-middle"></span>
-      {:else}
-        <div class="grid">
-          {#key value}
-            <p
-              class="col-start-1 row-start-1 text-3xl font-bold tabular-nums"
-              in:fly={{ y: incomingSign * 10}}
-              out:fly={{ y: -incomingSign * 10}}
-            >
+      <div class="grid h-9">
+        {#key value}
+          <p
+            class="col-start-1 row-start-1 text-3xl font-bold tabular-nums leading-9"
+            in:fly={{ y: incomingSign * 10}}
+            out:fly={{ y: -incomingSign * 10}}
+          >
+            {#if loading}
+              <span class="inline-block h-9 w-10 animate-pulse rounded bg-muted align-bottom"></span>
+            {:else}
               {value}{#if suffix}<span class="text-base font-normal text-muted-foreground ml-1">{suffix}</span>{/if}
-            </p>
-          {/key}
-        </div>
-      {/if}
+            {/if}
+          </p>
+        {/key}
+      </div>
       <p class="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         {#if tooltip}

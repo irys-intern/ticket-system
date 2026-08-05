@@ -27,7 +27,21 @@
     return Promise.all([promise, new Promise((resolve) => setTimeout(resolve, ms))]).then(([result]) => result);
   }
 
-  let stats = $derived(withMinDelay(data.stats, 600));
+  let statsPromise = $derived(withMinDelay(data.stats, 600));
+
+  // Resolved into state (rather than consumed via {#await}) so the StatCard
+  // components stay mounted across the loading -> loaded swap -- recreating
+  // them via {#await}'s pending/then branches breaks their fly-in transition,
+  // since Svelte doesn't play `in:` transitions on a freshly-created
+  // component's very first render.
+  let stats = $state<Awaited<typeof statsPromise> | null>(null);
+  $effect(() => {
+    stats = null;
+    const promise = statsPromise;
+    promise.then((resolved) => {
+      if (promise === statsPromise) stats = resolved;
+    });
+  });
 </script>
 
 <div class="space-y-5">
@@ -42,19 +56,11 @@
   </div>
 
   {#if data.userRole === 'admin'}
-    {#await stats}
-      <div class="grid gap-3 sm:grid-cols-3">
-        <StatCard icon={TicketIcon} label="Total Tickets" loading />
-        <StatCard icon={TrayIcon} label="Open (Unassigned)" loading />
-        <StatCard icon={UsersIcon} label="Users" loading />
-      </div>
-    {:then stats}
-      <div class="grid gap-3 sm:grid-cols-3">
-        <StatCard icon={TicketIcon} label="Total Tickets" value={stats.adminTotal} />
-        <StatCard icon={TrayIcon} label="Open (Unassigned)" value={stats.adminOpen} />
-        <StatCard icon={UsersIcon} label="Users" value={stats.adminUsers} />
-      </div>
-    {/await}
+    <div class="grid gap-3 sm:grid-cols-3">
+      <StatCard icon={TicketIcon} label="Total Tickets" loading={stats === null} value={stats?.adminTotal} />
+      <StatCard icon={TrayIcon} label="Open (Unassigned)" loading={stats === null} value={stats?.adminOpen} />
+      <StatCard icon={UsersIcon} label="Users" loading={stats === null} value={stats?.adminUsers} />
+    </div>
     <div class="space-y-2.5">
       <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Admin Tools</h2>
       <div class="flex flex-col gap-3">
@@ -104,15 +110,14 @@
     </div>
 
   {:else if data.userRole === 'agent'}
-    {#await stats}
-      <div class="grid gap-3 sm:grid-cols-2">
-        <StatCard icon={TicketIcon} label="Tickets assigned to you" loading />
-      </div>
-    {:then stats}
-      <div class="grid gap-3 sm:grid-cols-2">
-        <StatCard icon={TicketIcon} label="Tickets assigned to you" value={stats.assignedAgentTickets.length} />
-      </div>
-    {/await}
+    <div class="grid gap-3 sm:grid-cols-2">
+      <StatCard
+        icon={TicketIcon}
+        label="Tickets assigned to you"
+        loading={stats === null}
+        value={stats?.assignedAgentTickets.length}
+      />
+    </div>
     <div class="space-y-2.5">
       <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Agent Tools</h2>
       <div class="flex flex-col gap-3">
@@ -141,61 +146,36 @@
     </div>
 
   {:else if data.userRole === 'user'}
-    {#await stats}
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={CircleDashedIcon}
-          label="Open Tickets"
-          loading
-          tooltip="A ticket that has been submitted and is waiting to be picked up by an agent."
-        />
-        <StatCard
-          icon={ArrowsClockwiseIcon}
-          label="In Progress Tickets"
-          loading
-          tooltip="A ticket that is currently being worked on by an agent or awaiting your interaction."
-        />
-        <StatCard
-          icon={CheckCircleIcon}
-          label="Resolved Tickets"
-          loading
-          tooltip="A ticket that has been addressed and is awaiting your confirmation or closure."
-        />
-        <StatCard
-          icon={ArchiveIcon}
-          label="Closed Tickets"
-          loading
-          tooltip="A ticket that has been completed and closed after resolution."
-        />
-      </div>
-    {:then stats}
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={CircleDashedIcon}
-          label="Open Tickets"
-          value={stats.openTicketsUser.length}
-          tooltip="A ticket that has been submitted and is waiting to be picked up by an agent."
-        />
-        <StatCard
-          icon={ArrowsClockwiseIcon}
-          label="In Progress Tickets"
-          value={stats.progressTicketsUser.length}
-          tooltip="A ticket that is currently being worked on by an agent or awaiting your interaction."
-        />
-        <StatCard
-          icon={CheckCircleIcon}
-          label="Resolved Tickets"
-          value={stats.resolvedTicketsUser.length}
-          tooltip="A ticket that has been addressed and is awaiting your confirmation or closure."
-        />
-        <StatCard
-          icon={ArchiveIcon}
-          label="Closed Tickets"
-          value={stats.closedTicketsUser.length}
-          tooltip="A ticket that has been completed and closed after resolution."
-        />
-      </div>
-    {/await}
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <StatCard
+        icon={CircleDashedIcon}
+        label="Open Tickets"
+        loading={stats === null}
+        value={stats?.openTicketsUser.length}
+        tooltip="A ticket that has been submitted and is waiting to be picked up by an agent."
+      />
+      <StatCard
+        icon={ArrowsClockwiseIcon}
+        label="In Progress Tickets"
+        loading={stats === null}
+        value={stats?.progressTicketsUser.length}
+        tooltip="A ticket that is currently being worked on by an agent or awaiting your interaction."
+      />
+      <StatCard
+        icon={CheckCircleIcon}
+        label="Resolved Tickets"
+        loading={stats === null}
+        value={stats?.resolvedTicketsUser.length}
+        tooltip="A ticket that has been addressed and is awaiting your confirmation or closure."
+      />
+      <StatCard
+        icon={ArchiveIcon}
+        label="Closed Tickets"
+        loading={stats === null}
+        value={stats?.closedTicketsUser.length}
+        tooltip="A ticket that has been completed and closed after resolution."
+      />
+    </div>
     <div class="space-y-2.5">
       <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Actions</h2>
       <div class="flex flex-col gap-3">
