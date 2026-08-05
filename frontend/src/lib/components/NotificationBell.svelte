@@ -3,12 +3,17 @@
   import { scale } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import { authHeaders } from '$lib/auth';
   import BellIcon from 'phosphor-svelte/lib/BellIcon';
   import BellSlashIcon from 'phosphor-svelte/lib/BellSlashIcon';
   import CheckCheckIcon from 'phosphor-svelte/lib/ChecksIcon';
+  import TrashSimpleIcon from 'phosphor-svelte/lib/TrashSimpleIcon';
+  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
+  import XIcon from 'phosphor-svelte/lib/XIcon';
   import { Badge } from '$lib/components/ui/badge';
+  import * as Tooltip from '$lib/components/ui/tooltip';
 
   type Notification = {
     id: number;
@@ -18,11 +23,32 @@
     createdAt: string;
   };
 
+  type WaitingTicket = { id: number; title: string };
+
+  const WAITING_DISMISSED_KEY = 'waitingTicketsDismissed';
+
   let open = $state(false);
   let unreadCount = $state(0);
   let notifications = $state<Notification[]>([]);
   let filter = $state<'all' | 'unread'>('all');
   let container: HTMLDivElement | undefined = $state();
+  let waitingTickets = $state<WaitingTicket[]>([]);
+  let waitingDismissed = $state(false);
+
+  let showWaitingCard = $derived(waitingTickets.length > 0 && !waitingDismissed);
+
+  function waitingKey(tickets: WaitingTicket[]) {
+    return tickets.map((t) => t.id).sort((a, b) => a - b).join(',');
+  }
+
+  function dismissWaitingCard() {
+    waitingDismissed = true;
+    try {
+      localStorage.setItem(WAITING_DISMISSED_KEY, waitingKey(waitingTickets));
+    } catch {
+      // localStorage unavailable (e.g. private browsing) -- dismissal just won't persist
+    }
+  }
 
   let visibleNotifications = $derived(
     filter === 'unread' ? notifications.filter((n) => !n.read) : notifications
@@ -53,6 +79,25 @@
     if (!res.ok) return;
     const data = await res.json();
     notifications = data.notifications ?? [];
+  }
+
+  async function fetchWaitingTickets() {
+    const res = await fetch(PUBLIC_BACKEND_URL + '/', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.userRole !== 'user') return;
+    const tickets = (data.progressTicketsUser ?? []) as { id: number; title: string; status: string }[];
+    waitingTickets = tickets
+      .filter((t) => t.status === 'waiting_for_response')
+      .map((t) => ({ id: t.id, title: t.title }));
+
+    let dismissedKey: string | null = null;
+    try {
+      dismissedKey = localStorage.getItem(WAITING_DISMISSED_KEY);
+    } catch {
+      // localStorage unavailable -- treat as nothing dismissed
+    }
+    waitingDismissed = dismissedKey !== null && dismissedKey === waitingKey(waitingTickets);
   }
 
   async function toggleOpen() {
@@ -91,6 +136,17 @@
     open = false;
   }
 
+  async function clearAll() {
+    if (notifications.length === 0) return;
+    const res = await fetch(PUBLIC_BACKEND_URL + '/notifications/clear', {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!res.ok) return;
+    notifications = [];
+    unreadCount = 0;
+  }
+
   function handleClickOutside(event: MouseEvent) {
     if (open && container && !container.contains(event.target as Node)) {
       open = false;
@@ -106,12 +162,17 @@
   // count doesn't wait for the next 30s poll.
   function handleExternalRefresh() {
     fetchUnreadCount();
+    fetchWaitingTickets();
     if (open) fetchNotifications();
   }
 
   onMount(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30_000);
+    fetchWaitingTickets();
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchWaitingTickets();
+    }, 30_000);
     window.addEventListener('click', handleClickOutside);
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('notifications:refresh', handleExternalRefresh);
@@ -143,6 +204,42 @@
     {/if}
   </button>
 
+  {#if showWaitingCard && !open}
+    <div
+      transition:scale={{ start: 0.96, duration: 140, easing: quintOut }}
+      class="absolute right-0 z-50 mt-2 w-max max-w-[calc(100vw-2rem)] origin-top-right rounded-xl bg-popover p-3 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10"
+    >
+      <div class="flex gap-2.5">
+        <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-amber-600 dark:text-amber-400" />
+        <div class="min-w-0 flex-1">
+          <p class="font-medium whitespace-nowrap">
+            {waitingTickets.length === 1
+              ? 'A ticket is waiting for your response.'
+              : `${waitingTickets.length} tickets are waiting for your response.`}
+          </p>
+          <p class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-muted-foreground">
+            {#each waitingTickets as ticket, i (ticket.id)}
+              <a
+                href={resolve(`/tickets/${ticket.id}`)}
+                class="underline underline-offset-2 hover:text-foreground"
+              >
+                #{ticket.id} {ticket.title}
+              </a>{#if i < waitingTickets.length - 1}<span class="text-muted-foreground/50">&middot;</span>{/if}
+            {/each}
+          </p>
+        </div>
+        <button
+          type="button"
+          onclick={dismissWaitingCard}
+          aria-label="Dismiss"
+          class="inline-flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <XIcon class="size-3.5" />
+        </button>
+      </div>
+    </div>
+  {/if}
+
   {#if open}
     <div
       transition:scale={{ start: 0.96, duration: 140, easing: quintOut }}
@@ -155,14 +252,42 @@
             <Badge variant="secondary" class="h-4.5 px-1.5 text-[10px]">{unreadCount} new</Badge>
           {/if}
         </div>
-        <button
-          type="button"
-          onclick={markAllRead}
-          disabled={unreadCount === 0}
-          class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground/50 disabled:hover:text-muted-foreground/50"
-        >
-          <CheckCheckIcon class="size-3.5" /> Mark all read
-        </button>
+        <div class="flex items-center gap-0.5">
+          <Tooltip.Root>
+            <Tooltip.Trigger>
+              {#snippet child({ props })}
+                <button
+                  {...props}
+                  type="button"
+                  onclick={markAllRead}
+                  disabled={unreadCount === 0}
+                  aria-label="Mark all read"
+                  class="inline-flex size-7 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:text-muted-foreground/50 disabled:hover:bg-transparent"
+                >
+                  <CheckCheckIcon class="size-3.5" />
+                </button>
+              {/snippet}
+            </Tooltip.Trigger>
+            <Tooltip.Content>Mark all read</Tooltip.Content>
+          </Tooltip.Root>
+          <Tooltip.Root>
+            <Tooltip.Trigger>
+              {#snippet child({ props })}
+                <button
+                  {...props}
+                  type="button"
+                  onclick={clearAll}
+                  disabled={notifications.length === 0}
+                  aria-label="Clear notifications"
+                  class="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:text-muted-foreground/50 disabled:hover:bg-transparent"
+                >
+                  <TrashSimpleIcon class="size-3.5" />
+                </button>
+              {/snippet}
+            </Tooltip.Trigger>
+            <Tooltip.Content>Clear notifications</Tooltip.Content>
+          </Tooltip.Root>
+        </div>
       </div>
 
       <div class="border-t border-border/40"></div>

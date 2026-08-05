@@ -1,13 +1,11 @@
 <title>Homepage</title>
 <script lang="ts">
-  import { resolve } from '$app/paths';
   import { Badge } from '$lib/components/ui/badge';
   import StatCard from '$lib/components/StatCard.svelte';
   import ToolLinkCard from '$lib/components/ToolLinkCard.svelte';
   import type { PageData } from './$types';
 
   import TicketIcon from 'phosphor-svelte/lib/TicketIcon';
-  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
   import TrayIcon from 'phosphor-svelte/lib/TrayIcon';
   import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
   import CircleDashedIcon from 'phosphor-svelte/lib/CircleDashedIcon';
@@ -143,33 +141,6 @@
     </div>
 
   {:else if data.userRole === 'user'}
-    {#await stats then s}
-      {@const waitingTickets = (s.progressTicketsUser as { id: number; title: string; status: string }[]).filter(
-        (t) => t.status === 'waiting_for_response'
-      )}
-      {#if waitingTickets.length > 0}
-        <div class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
-          <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400" />
-          <div class="min-w-0">
-            <p class="font-medium text-yellow-700 dark:text-yellow-400">
-              {waitingTickets.length === 1
-                ? 'A ticket is waiting for your response.'
-                : `${waitingTickets.length} tickets are waiting for your response.`}
-            </p>
-            <p class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-muted-foreground">
-              {#each waitingTickets as ticket, i (ticket.id)}
-                <a
-                  href={resolve(`/tickets/${ticket.id}`)}
-                  class="underline underline-offset-2 hover:text-foreground"
-                >
-                  #{ticket.id} {ticket.title}
-                </a>{#if i < waitingTickets.length - 1}<span class="text-muted-foreground/50">&middot;</span>{/if}
-              {/each}
-            </p>
-          </div>
-        </div>
-      {/if}
-    {/await}
     {#await stats}
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
