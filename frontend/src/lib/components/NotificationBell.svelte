@@ -23,7 +23,7 @@
     createdAt: string;
   };
 
-  type WaitingTicket = { id: number; title: string };
+  type WaitingTicket = { id: number; title: string; updatedAt: string };
 
   const WAITING_DISMISSED_KEY = 'waitingTicketsDismissed';
 
@@ -34,11 +34,20 @@
   let container: HTMLDivElement | undefined = $state();
   let waitingTickets = $state<WaitingTicket[]>([]);
   let waitingDismissed = $state(false);
+  let listEl: HTMLDivElement | undefined = $state();
+  let listScrolled = $state(false);
+
+  function handleListScroll() {
+    listScrolled = (listEl?.scrollTop ?? 0) > 0;
+  }
 
   let showWaitingCard = $derived(waitingTickets.length > 0 && !waitingDismissed);
 
   function waitingKey(tickets: WaitingTicket[]) {
-    return tickets.map((t) => t.id).sort((a, b) => a - b).join(',');
+    return tickets
+      .map((t) => `${t.id}:${t.updatedAt}`)
+      .sort()
+      .join(',');
   }
 
   function dismissWaitingCard() {
@@ -86,10 +95,15 @@
     if (!res.ok) return;
     const data = await res.json();
     if (data.userRole !== 'user') return;
-    const tickets = (data.progressTicketsUser ?? []) as { id: number; title: string; status: string }[];
+    const tickets = (data.progressTicketsUser ?? []) as {
+      id: number;
+      title: string;
+      status: string;
+      updatedAt: string;
+    }[];
     waitingTickets = tickets
       .filter((t) => t.status === 'waiting_for_response')
-      .map((t) => ({ id: t.id, title: t.title }));
+      .map((t) => ({ id: t.id, title: t.title, updatedAt: t.updatedAt }));
 
     let dismissedKey: string | null = null;
     try {
@@ -103,6 +117,7 @@
   async function toggleOpen() {
     open = !open;
     if (open) {
+      listScrolled = false;
       await fetchNotifications();
     }
   }
@@ -296,7 +311,11 @@
         {#each [{ key: 'all', label: 'All' }, { key: 'unread', label: 'Unread' }] as tab (tab.key)}
           <button
             type="button"
-            onclick={() => (filter = tab.key as 'all' | 'unread')}
+            onclick={() => {
+              filter = tab.key as 'all' | 'unread';
+              if (listEl) listEl.scrollTop = 0;
+              listScrolled = false;
+            }}
             class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors {filter === tab.key
               ? 'bg-accent text-accent-foreground'
               : 'text-muted-foreground ' + ((tab.key === 'unread' && unreadCount === 0) ? '' : 'hover:text-foreground')}"
@@ -307,7 +326,17 @@
         {/each}
       </div>
 
-      <div class="max-h-80 overflow-y-auto p-1.5">
+      <div class="relative">
+        <div
+          class="pointer-events-none absolute inset-x-0 top-0 z-10 h-4 bg-linear-to-b from-popover to-transparent transition-opacity duration-150 {listScrolled
+            ? 'opacity-100'
+            : 'opacity-0'}"
+        ></div>
+        <div
+          bind:this={listEl}
+          onscroll={handleListScroll}
+          class="max-h-80 overflow-y-auto p-1.5"
+        >
         {#if visibleNotifications.length === 0}
           <div class="flex flex-col items-center gap-2 px-3 py-10 text-center">
             <BellSlashIcon class="size-6 text-muted-foreground/50" />
@@ -320,9 +349,7 @@
             <button
               type="button"
               onclick={() => markRead(notification)}
-              class="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors hover:bg-accent {notification.read
-                ? ''
-                : 'bg-primary/5'}"
+              class="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors hover:bg-accent"
             >
               <span
                 class="mt-1.5 size-1.5 shrink-0 rounded-full {notification.read
@@ -340,6 +367,7 @@
             </button>
           {/each}
         {/if}
+        </div>
       </div>
     </div>
   {/if}

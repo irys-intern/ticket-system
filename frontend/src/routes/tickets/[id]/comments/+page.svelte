@@ -12,7 +12,6 @@
   import BackLink from '$lib/components/BackLink.svelte';
   import RelativeTime from '$lib/components/RelativeTime.svelte';
   import PaperPlaneTiltIcon from 'phosphor-svelte/lib/PaperPlaneTiltIcon';
-  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
   import RobotIcon from 'phosphor-svelte/lib/RobotIcon';
   import { fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
@@ -22,7 +21,6 @@
 
   let comments = $derived(data.comments);
   let error = $derived(data.error);
-  let awaitingResponse = $derived(data.awaitingResponse);
   let isClosed = $derived(data.isClosed);
   let ticketUrl = $derived(resolve('/tickets/[id]', { id: data.ticketId }));
 
@@ -70,15 +68,6 @@
     </Alert>
   {/if}
 
-  {#if awaitingResponse}
-    <div class="flex shrink-0 gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
-      <WarningIcon class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400" />
-      <div>
-        <p class="font-medium text-yellow-700 dark:text-yellow-400">The agent is waiting for your response.</p>
-        <p class="text-muted-foreground mt-0.5">Posting a comment will move this ticket back to in progress.</p>
-      </div>
-    </div>
-  {/if}
   {#if !isClosed}
     <div class="shrink-0 space-y-2">
       <Textarea

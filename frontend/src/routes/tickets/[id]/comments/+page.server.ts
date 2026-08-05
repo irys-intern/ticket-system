@@ -24,24 +24,21 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     error = err instanceof Error ? err.message : 'An error occurred';
   }
 
-  let awaitingResponse = false;
   let isClosed = false;
   try {
     const res = await fetch(`${backendUrl()}/tickets/${id}`, { headers });
     if (res.ok) {
       const ticket = await res.json();
-      awaitingResponse = locals.user.role === 'user' && ticket.status === 'waiting_for_response';
       isClosed = ticket.status === 'closed';
     }
   } catch {
-    awaitingResponse = false;
+    isClosed = false;
   }
 
   return {
     ticketId: id,
     comments,
     error,
-    awaitingResponse,
     isClosed
   };
 };

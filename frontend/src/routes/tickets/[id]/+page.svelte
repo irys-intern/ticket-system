@@ -23,7 +23,6 @@
   import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
   import HandPalmIcon from 'phosphor-svelte/lib/HandPalmIcon';
   import UserSwitchIcon from 'phosphor-svelte/lib/UserSwitchIcon';
-  import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
   import XCircleIcon from 'phosphor-svelte/lib/XCircleIcon';
   import type { AuditEvent } from '../../../types/index.ts';
   import type { PageData } from './$types';
@@ -245,24 +244,6 @@
         {/if}
 
         <Separator />
-
-        {#if user.role === 'user' && ticket.status === 'waiting_for_response'}
-          <div
-            class="flex gap-2.5 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm"
-          >
-            <WarningIcon
-              class="size-4 shrink-0 translate-y-0.5 text-yellow-600 dark:text-yellow-400"
-            />
-            <div>
-              <p class="font-medium text-yellow-700 dark:text-yellow-400">
-                The agent is waiting for your response.
-              </p>
-              <p class="mt-0.5 text-muted-foreground">
-                Reply in the comments to resume work on this ticket.
-              </p>
-            </div>
-          </div>
-        {/if}
 
         <div class="flex flex-wrap gap-2">
           <Button
